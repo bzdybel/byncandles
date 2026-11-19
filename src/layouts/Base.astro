@@ -4,6 +4,7 @@ import { Font } from 'astro:assets';
 import Seo from '../components/Seo.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import CartDrawer from '../components/CartDrawer.astro';
 import type { Props as SeoProps } from '../components/Seo.astro';
 import { SITE } from '../lib/site';
 
@@ -30,5 +31,6 @@ const props = Astro.props;
       <slot />
     </main>
     <Footer />
+    <CartDrawer />
   </body>
 </html>

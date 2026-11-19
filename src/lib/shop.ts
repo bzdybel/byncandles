@@ -39,7 +39,7 @@ export type Ustawienia = CollectionEntry<'ustawienia'>['data'];
 
 export async function ustawienia(): Promise<Ustawienia> {
   const e = await getEntry('ustawienia', 'sklep');
-  return e?.data ?? { wysylkaPaczkomat: 0, email: undefined, wysylkaKurier: undefined, darmowaWysylkaOd: undefined, producent: undefined };
+  return e?.data ?? { wysylkaPaczkomat: 0, email: undefined, wysylkaKurier: undefined, darmowaWysylkaOd: undefined, promocja2plus1: false, producent: undefined };
 }
 
 export const urlProduktu = (p: Produkt) => `/sklep/${p.id}/`;

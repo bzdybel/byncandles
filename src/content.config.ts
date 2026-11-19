@@ -68,6 +68,7 @@ const ustawienia = defineCollection({
     wysylkaPaczkomat: z.number().nonnegative().nullish().transform((v) => v ?? 0),
     wysylkaKurier: opt(z.number().nonnegative()),
     darmowaWysylkaOd: opt(z.number().nonnegative()),
+    promocja2plus1: z.boolean().nullish().transform((v) => v ?? false),
     producent: opt(z.object({ nazwa: optText, adres: optText, kontakt: optText })),
   }),
 });

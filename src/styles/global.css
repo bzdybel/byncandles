@@ -9,7 +9,8 @@
   --c-surface: #fbf9f6;       /* karty, panele, sekcje wyróżnione */
   --c-surface-alt: #ebe4dc;   /* pasy, stopka (greige) */
   --c-blush: #ead9e0;         /* pudrowy róż — akcenty, cytaty */
-  --c-border: #e3dad2;
+  --c-border: #e3dad2;        /* linie dekoracyjne */
+  --c-border-strong: #8c8186; /* 3.3:1 — ramki pól formularzy (WCAG 1.4.11) */
   --c-text: #2b2527;          /* 13.4:1 */
   --c-text-muted: #6e6268;    /* 5.2:1 */
   --c-accent: #87506f;        /* 5.5:1 — wrzos: linki, focus, hover */
@@ -78,6 +79,7 @@
 
 /* — Reset — */
 *, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body {
   margin: 0;

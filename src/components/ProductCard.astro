@@ -2,8 +2,9 @@
 import { Picture } from 'astro:assets';
 import { cenaAktualna, formatPLN, naStanie, STATUS_LABEL, urlProduktu, type Produkt } from '../lib/shop';
 
-interface Props { produkt: Produkt; eager?: boolean }
-const { produkt, eager = false } = Astro.props;
+interface Props { produkt: Produkt; eager?: boolean; headingLevel?: 2 | 3 }
+const { produkt, eager = false, headingLevel = 3 } = Astro.props;
+const H = `h${headingLevel}` as 'h2' | 'h3';
 const p = produkt.data;
 const [glowne] = p.zdjecia;
 const promo = p.cenaPromocyjna !== undefined;
@@ -13,7 +14,7 @@ const promo = p.cenaPromocyjna !== undefined;
     <div class="frame media">
       <Picture
         src={glowne.zdjecie}
-        alt={glowne.alt}
+        alt={glowne.alt.trim() === p.nazwa.trim() ? '' : glowne.alt}
         formats={['avif', 'webp']}
         widths={[320, 480, 640, 960]}
         sizes="(min-width: 64rem) 22rem, (min-width: 40rem) 45vw, 92vw"
@@ -23,7 +24,7 @@ const promo = p.cenaPromocyjna !== undefined;
       {!naStanie(p) && <span class="badge">{STATUS_LABEL[p.status]}</span>}
       {promo && naStanie(p) && <span class="badge badge--promo">Promocja</span>}
     </div>
-    <h3 class="name">{p.nazwa}</h3>
+    <H class="name">{p.nazwa}</H>
   </a>
   <p class="price">
     {promo && <s><span class="visually-hidden">Cena regularna </span>{formatPLN(p.cena)}</s>}
