@@ -12,5 +12,8 @@
   },
   "workers_dev": true,
   // Osobny link podglądu dla każdej gałęzi / PR.
-  "preview_urls": true
+  "preview_urls": true,
+  // Wymagane przez `wrangler preview` (build podglądu gałęzi w Workers Builds).
+  // Pusty blok = podgląd dziedziczy assets i ustawienia z poziomu głównego.
+  "previews": {}
 }
