@@ -1,0 +1,197 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { getEntry } from 'astro:content';
+import { getImage, Picture } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import {
+  cenaAktualna, dostepnoscSchema, formatPLN, naStanie, produktyPubliczne, STATUS_LABEL,
+  toGrosze, urlKategorii, urlProduktu, ustawienia,
+} from '../../lib/shop';
+import { SITE, SITE_URL } from '../../lib/site';
+
+export const getStaticPaths = (async () =>
+  (await produktyPubliczne()).map((produkt) => ({ params: { slug: produkt.id }, props: { produkt } }))) satisfies GetStaticPaths;
+
+const { produkt } = Astro.props;
+const p = produkt.data;
+const kat = p.kategoria ? await getEntry(p.kategoria) : undefined;
+const ust = await ustawienia();
+const cena = cenaAktualna(p);
+const kupno = naStanie(p);
+const url = new URL(urlProduktu(produkt), SITE_URL).href;
+
+
+const szczegoly = [
+  ['Wosk', p.szczegoly?.wosk],
+  ['Knot', p.szczegoly?.knot],
+  ['Gramatura', p.szczegoly?.gramatura && `${p.szczegoly.gramatura} g`],
+  ['Czas palenia', p.szczegoly?.czasPalenia && `ok. ${p.szczegoly.czasPalenia} h`],
+  ['Pojemnik', p.szczegoly?.pojemnik],
+].filter((r): r is [string, string] => Boolean(r[1]));
+
+const nuty = [
+  ['Głowa', p.zapach?.nutyGlowy],
+  ['Serce', p.zapach?.nutySerca],
+  ['Baza', p.zapach?.nutyBazy],
+].filter((r): r is [string, string] => Boolean(r[1]));
+
+// JPEG 1200 px — ten sam plik dla Open Graph i Google (szeroka kompatybilność).
+const zdjeciaLd = await Promise.all(
+  p.zdjecia.map(async (z) => new URL((await getImage({ src: z.zdjecie, width: 1200, format: 'jpeg', quality: 80 })).src, SITE_URL).href),
+);
+
+const jsonLd = {
+  '@type': 'Product',
+  '@id': `${url}#product`,
+  name: p.nazwa,
+  description: p.krotkiOpis,
+  image: zdjeciaLd,
+  sku: produkt.id,
+  brand: { '@type': 'Brand', name: SITE.name },
+  ...(kat && { category: kat.data.nazwa }),
+  ...(p.szczegoly?.gramatura && { weight: { '@type': 'QuantitativeValue', value: p.szczegoly.gramatura, unitCode: 'GRM' } }),
+  offers: {
+    '@type': 'Offer',
+    url,
+    priceCurrency: 'PLN',
+    price: (toGrosze(cena) / 100).toFixed(2),
+    availability: dostepnoscSchema(p),
+    itemCondition: 'https://schema.org/NewCondition',
+    seller: { '@id': `${SITE_URL}/#organization` },
+    shippingDetails: {
+      '@type': 'OfferShippingDetails',
+      shippingRate: { '@type': 'MonetaryAmount', value: (ust.wysylkaPaczkomat ?? 0).toFixed(2), currency: 'PLN' },
+      shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'PL' },
+    },
+    hasMerchantReturnPolicy: {
+      '@type': 'MerchantReturnPolicy',
+      applicableCountry: 'PL',
+      returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+      merchantReturnDays: 14,
+      returnMethod: 'https://schema.org/ReturnByMail',
+    },
+  },
+};
+
+const crumbs = [
+  { label: 'Sklep', href: '/sklep/' },
+  ...(kat ? [{ label: kat.data.nazwa, href: urlKategorii(kat) }] : []),
+  { label: p.nazwa, href: urlProduktu(produkt) },
+];
+---
+<Base
+  title={p.seo?.tytul ?? p.nazwa}
+  description={p.seo?.opis ?? p.krotkiOpis}
+  type="product"
+  image={zdjeciaLd[0]}
+  jsonLd={jsonLd}
+>
+  <div class="container section">
+    <Breadcrumbs items={crumbs} />
+    <div class="product">
+      <div class="gallery" aria-label="Zdjęcia produktu">
+        {p.zdjecia.map((z, i) => (
+          <Picture
+            src={z.zdjecie}
+            alt={z.alt}
+            formats={['avif', 'webp']}
+            widths={[480, 720, 960, 1280]}
+            sizes="(min-width: 56rem) 55vw, 92vw"
+            loading={i === 0 ? 'eager' : 'lazy'}
+            fetchpriority={i === 0 ? 'high' : 'auto'}
+          />
+        ))}
+      </div>
+
+      <div class="info">
+        <h1>{p.nazwa}</h1>
+        <p class="price">
+          {p.cenaPromocyjna !== undefined && <s>{formatPLN(p.cena)}</s>}
+          <strong>{formatPLN(cena)}</strong>
+        </p>
+        {p.cenaPromocyjna !== undefined && p.najnizszaCena30dni !== undefined && (
+          <p class="omnibus">Najniższa cena z 30 dni przed obniżką: {formatPLN(p.najnizszaCena30dni)}</p>
+        )}
+        <p class="lead">{p.krotkiOpis}</p>
+
+        <button
+          class="btn add"
+          type="button"
+          data-add-to-cart
+          data-id={produkt.id}
+          data-name={p.nazwa}
+          data-price={toGrosze(cena)}
+          data-max={p.stan}
+          disabled={!kupno}
+        >
+          {kupno ? 'Dodaj do koszyka' : STATUS_LABEL[p.status]}
+        </button>
+        {kupno && p.stan <= 3 && <p class="stock">Zostało tylko {p.stan} szt.</p>}
+
+        {p.opis && <div class="desc">{p.opis.split(/\n{2,}/).map((para) => <p>{para}</p>)}</div>}
+
+        {nuty.length > 0 && (
+          <section>
+            <h2 class="h3">Kompozycja zapachowa</h2>
+            <dl>{nuty.map(([k, v]) => <><dt>{k}</dt><dd>{v}</dd></>)}</dl>
+          </section>
+        )}
+
+        {szczegoly.length > 0 && (
+          <section>
+            <h2 class="h3">Szczegóły</h2>
+            <dl>{szczegoly.map(([k, v]) => <><dt>{k}</dt><dd>{v}</dd></>)}</dl>
+          </section>
+        )}
+
+        <details>
+          <summary>Bezpieczeństwo i producent</summary>
+          {p.bezpieczenstwo && <div class="safety">{p.bezpieczenstwo.split('\n').map((l) => <p>{l}</p>)}</div>}
+          <p>Nigdy nie pozostawiaj palącej się świecy bez nadzoru. Przechowuj poza zasięgiem dzieci i zwierząt.</p>
+          {ust.producent?.nazwa && (
+            <p class="producer">
+              Producent: {ust.producent.nazwa}
+              {ust.producent.adres && <><br />{ust.producent.adres}</>}
+              {ust.producent.kontakt && <><br />{ust.producent.kontakt}</>}
+            </p>
+          )}
+        </details>
+
+        <details>
+          <summary>Dostawa i zwroty</summary>
+          <p>
+            Wysyłka do Paczkomatu InPost{ust.wysylkaPaczkomat ? ` — ${formatPLN(ust.wysylkaPaczkomat)}` : ''}.
+            {ust.darmowaWysylkaOd && ` Darmowa dostawa od ${formatPLN(ust.darmowaWysylkaOd)}.`}
+            {' '}Masz 14 dni na zwrot. <a href="/dostawa-i-zwroty/">Szczegóły</a>
+          </p>
+        </details>
+      </div>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .product { display: grid; gap: var(--s-5); }
+  @media (min-width: 56rem) { .product { grid-template-columns: 1.2fr 1fr; align-items: start; } .info { position: sticky; top: var(--s-4); } }
+  .gallery { display: grid; gap: var(--s-3); }
+  @media (max-width: 55.99rem) {
+    .gallery { grid-auto-flow: column; grid-auto-columns: 88%; overflow-x: auto; scroll-snap-type: x mandatory; }
+    .gallery :global(picture) { scroll-snap-align: start; }
+  }
+  .gallery :global(img) { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; background: var(--c-line); }
+  .price { font-size: 1.4rem; display: flex; gap: var(--s-3); align-items: baseline; }
+  .price s { font-size: 1rem; color: var(--c-muted); }
+  .omnibus, .stock { font-size: 0.85rem; color: var(--c-muted); }
+  .lead { color: var(--c-muted); }
+  .add { border: 0; cursor: pointer; width: 100%; margin-block: var(--s-3) var(--s-2); font: inherit; font-size: 0.9rem; }
+  .add:disabled { background: var(--c-line); color: var(--c-muted); cursor: not-allowed; }
+  .h3 { font-size: 1.15rem; margin-top: var(--s-5); }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--s-1) var(--s-4); margin: 0; }
+  dt { color: var(--c-muted); }
+  dd { margin: 0; }
+  details { border-top: 1px solid var(--c-line); padding-block: var(--s-3); margin-top: var(--s-4); }
+  details + details { margin-top: 0; }
+  summary { cursor: pointer; letter-spacing: 0.06em; }
+  .producer { font-size: 0.85rem; color: var(--c-muted); }
+</style>

@@ -1,0 +1,25 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Base from '../../../layouts/Base.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import ProductGrid from '../../../components/ProductGrid.astro';
+import { kategorie, produktyPubliczne, urlKategorii } from '../../../lib/shop';
+
+export const getStaticPaths = (async () => {
+  const produkty = await produktyPubliczne();
+  return (await kategorie())
+    .map((k) => ({ params: { slug: k.id }, props: { k, produkty: produkty.filter((p) => p.data.kategoria?.id === k.id) } }))
+    .filter(({ props }) => props.produkty.length > 0); // bez pustych stron (thin content)
+}) satisfies GetStaticPaths;
+
+const { k, produkty } = Astro.props;
+const description = k.data.opis?.split('\n')[0].slice(0, 160) ?? `${k.data.nazwa} — ręcznie robione świece by N.`;
+---
+<Base title={k.data.nazwa} description={description}>
+  <section class="container section">
+    <Breadcrumbs items={[{ label: 'Sklep', href: '/sklep/' }, { label: k.data.nazwa, href: urlKategorii(k) }]} />
+    <h1>{k.data.nazwa}</h1>
+    {k.data.opis?.split(/\n{2,}/).map((para) => <p>{para}</p>)}
+    <ProductGrid produkty={produkty} eagerFirst={2} />
+  </section>
+</Base>
