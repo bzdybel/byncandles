@@ -1,19 +1,21 @@
 ---
 import Logo from './Logo.astro';
-import { NAV, SITE } from '../lib/site';
+import { brand, cart, nav } from '../i18n/pl';
+import { fill } from '../lib/i18n';
+import { NAV } from '../lib/site';
 const path = Astro.url.pathname;
 ---
 <header class="site-header">
   <div class="container inner">
-    <a href="/" class="home" aria-label={`${SITE.name} — strona główna`}><Logo /></a>
-    <nav aria-label="Główna nawigacja">
+    <a href="/" class="home" aria-label={fill(brand.homeLabel, { name: brand.name })}><Logo /></a>
+    <nav aria-label={nav.label}>
       <ul>
         {NAV.map((item) => (
           <li><a href={item.href} aria-current={path.startsWith(item.href) ? 'page' : undefined}>{item.label}</a></li>
         ))}
       </ul>
     </nav>
-    <a href="/zamowienie/" class="cart-btn" data-cart-open aria-label="Koszyk">
+    <a href="/zamowienie/" class="icon-btn cart" data-cart-open aria-label={cart.open}>
       <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3">
         <path d="M5 8h14l-1.2 11.2a1 1 0 0 1-1 .8H7.2a1 1 0 0 1-1-.8L5 8Z" /><path d="M9 10V6.5a3 3 0 0 1 6 0V10" />
       </svg>
@@ -23,9 +25,7 @@ const path = Astro.url.pathname;
 </header>
 
 <style>
-  .site-header { background: var(--c-bg); }
   .inner { display: flex; align-items: center; gap: var(--sp-2) var(--sp-5); min-height: 5.5rem; flex-wrap: wrap; padding-block: var(--sp-3); }
-  @media (max-width: 30rem) { nav { order: 3; width: 100%; } nav ul { justify-content: space-between; } }
   .home { text-decoration: none; display: inline-flex; min-height: var(--tap); align-items: center; margin-right: auto; }
   ul { display: flex; gap: clamp(var(--sp-2), 2.5vw, var(--sp-6)); list-style: none; margin: 0; padding: 0; }
   nav a {
@@ -35,11 +35,10 @@ const path = Astro.url.pathname;
     transition: background-size var(--t-base) var(--ease), color var(--t-fast) var(--ease);
   }
   nav a:hover, nav a[aria-current='page'] { background-size: 100% 1px; }
-  .cart-btn { position: relative; display: grid; place-items: center; width: var(--tap); height: var(--tap); border-radius: var(--r-pill); text-decoration: none; margin-right: calc(-1 * var(--sp-2)); }
-  .cart-btn:hover { background: var(--c-surface-alt); color: var(--c-text); }
+  .cart { margin-right: calc(-1 * var(--sp-2)); }
   .count {
-    position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-pill);
-    background: var(--c-accent); color: var(--c-on-accent); font-size: 11px; line-height: 18px; text-align: center; font-variant-numeric: tabular-nums;
+    position: absolute; top: var(--sp-1); right: 2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-pill);
+    background: var(--c-accent); color: var(--c-on-accent); font-size: var(--fs-2xs); line-height: 18px; text-align: center; font-variant-numeric: tabular-nums;
   }
-  @media (max-width: 26rem) { ul { gap: 0; } nav a { padding-inline: var(--sp-2); letter-spacing: 0.14em; } }
+  @media (max-width: 30rem) { nav { order: 3; width: 100%; } nav ul { justify-content: space-between; gap: 0; } nav a { padding-inline: var(--sp-2); letter-spacing: var(--tracking-button); } }
 </style>

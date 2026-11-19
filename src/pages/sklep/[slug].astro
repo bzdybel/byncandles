@@ -1,90 +1,58 @@
 ---
+import Img from '../../components/Img.astro';
 import type { GetStaticPaths } from 'astro';
 import { getEntry } from 'astro:content';
-import { getImage, Picture } from 'astro:assets';
+import { getImage } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
-import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import Accordion from '../../components/Accordion.astro';
-import {
-  cenaAktualna, dostepnoscSchema, formatPLN, naStanie, produktyPubliczne, STATUS_LABEL,
-  toGrosze, urlKategorii, urlProduktu, ustawienia,
-} from '../../lib/shop';
-import { SITE, SITE_URL } from '../../lib/site';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import Price from '../../components/Price.astro';
+import { nav, product as t, status, wax } from '../../i18n/pl';
+import { fill } from '../../lib/i18n';
+import { SHARE, THUMB } from '../../lib/media';
+import { formatZl, toGrosze } from '../../lib/money';
+import { productJsonLd } from '../../lib/schema';
+import { cenaAktualna, naStanie, produktyPubliczne, urlKategorii, urlProduktu, ustawienia } from '../../lib/shop';
+import { SITE_URL } from '../../lib/site';
 
 export const getStaticPaths = (async () =>
   (await produktyPubliczne()).map((produkt) => ({ params: { slug: produkt.id }, props: { produkt } }))) satisfies GetStaticPaths;
 
 const { produkt } = Astro.props;
 const p = produkt.data;
-const kat = p.kategoria ? await getEntry(p.kategoria) : undefined;
-const ust = await ustawienia();
-const cena = cenaAktualna(p);
+const kategoria = p.kategoria ? await getEntry(p.kategoria) : undefined;
+const u = await ustawienia();
 const kupno = naStanie(p);
-const url = new URL(urlProduktu(produkt), SITE_URL).href;
+const paras = (text?: string) => text?.split(/\n{2,}/) ?? [];
+
 const wysylka = [
-  `Paczkomat InPost${ust.wysylkaPaczkomat ? ` ${formatPLN(ust.wysylkaPaczkomat)}` : ''}`,
-  ust.darmowaWysylkaOd ? `darmowa dostawa od ${formatPLN(ust.darmowaWysylkaOd)}` : undefined,
-  '14 dni na zwrot',
+  `${t.shippingLocker}${u.wysylkaPaczkomat ? ` ${formatZl(u.wysylkaPaczkomat)}` : ''}`,
+  u.darmowaWysylkaOd !== undefined && fill(t.shippingFreeFrom, { price: formatZl(u.darmowaWysylkaOd) }),
+  t.returnDays,
 ].filter(Boolean).join(' · ');
 
-const WOSK: Record<string, string> = { sojowy: 'sojowy', rzepakowy: 'rzepakowy', kokosowy: 'kokosowy', mieszanka: 'mieszanka wosków', inny: 'inny' };
-const szczegoly = [
-  ['Wymiary', p.szczegoly?.wymiary],
-  ['Wosk', p.szczegoly?.wosk && WOSK[p.szczegoly.wosk]],
-  ['Knot', p.szczegoly?.knot],
-  ['Gramatura', p.szczegoly?.gramatura && `${p.szczegoly.gramatura} g`],
-  ['Czas palenia', p.szczegoly?.czasPalenia && `ok. ${p.szczegoly.czasPalenia} h`],
-  ['Pojemnik', p.szczegoly?.pojemnik],
+const s = p.szczegoly;
+const z = p.zapach;
+const specs = [
+  [t.specs.wosk, s?.wosk && wax[s.wosk]],
+  [t.specs.knot, s?.knot],
+  [t.specs.gramatura, s?.gramatura && fill(t.grams, { n: s.gramatura })],
+  [t.specs.czasPalenia, s?.czasPalenia && fill(t.burnHours, { n: s.czasPalenia })],
+  [t.specs.pojemnik, s?.pojemnik],
+  [t.specs.nutyGlowy, z?.nutyGlowy],
+  [t.specs.nutySerca, z?.nutySerca],
+  [t.specs.nutyBazy, z?.nutyBazy],
 ].filter((r): r is [string, string] => Boolean(r[1]));
 
-const nuty = [
-  ['Nuty głowy', p.zapach?.nutyGlowy],
-  ['Nuty serca', p.zapach?.nutySerca],
-  ['Nuty bazy', p.zapach?.nutyBazy],
-].filter((r): r is [string, string] => Boolean(r[1]));
-
-// JPEG 1200 px — ten sam plik dla Open Graph i Google (szeroka kompatybilność).
-const miniatura = await getImage({ src: p.zdjecia[0].zdjecie, width: 144, format: 'webp', quality: 70 });
-const zdjeciaLd = await Promise.all(
-  p.zdjecia.map(async (z) => new URL((await getImage({ src: z.zdjecie, width: 1200, format: 'jpeg', quality: 80 })).src, SITE_URL).href),
-);
-
-const jsonLd = {
-  '@type': 'Product',
-  '@id': `${url}#product`,
-  name: p.nazwa,
-  description: p.krotkiOpis,
-  image: zdjeciaLd,
-  sku: produkt.id,
-  brand: { '@type': 'Brand', name: SITE.name },
-  ...(kat && { category: kat.data.nazwa }),
-  ...(p.szczegoly?.gramatura && { weight: { '@type': 'QuantitativeValue', value: p.szczegoly.gramatura, unitCode: 'GRM' } }),
-  offers: {
-    '@type': 'Offer',
-    url,
-    priceCurrency: 'PLN',
-    price: (toGrosze(cena) / 100).toFixed(2),
-    availability: dostepnoscSchema(p),
-    itemCondition: 'https://schema.org/NewCondition',
-    seller: { '@id': `${SITE_URL}/#organization` },
-    shippingDetails: {
-      '@type': 'OfferShippingDetails',
-      shippingRate: { '@type': 'MonetaryAmount', value: (ust.wysylkaPaczkomat ?? 0).toFixed(2), currency: 'PLN' },
-      shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'PL' },
-    },
-    hasMerchantReturnPolicy: {
-      '@type': 'MerchantReturnPolicy',
-      applicableCountry: 'PL',
-      returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
-      merchantReturnDays: 14,
-      returnMethod: 'https://schema.org/ReturnByMail',
-    },
-  },
-};
+const [miniatura, ...share] = await Promise.all([
+  getImage({ src: p.zdjecia[0].zdjecie, ...THUMB }),
+  ...p.zdjecia.map((img) => getImage({ src: img.zdjecie, ...SHARE })),
+]);
+const shareUrls = share.map((img) => new URL(img.src, SITE_URL).href);
 
 const crumbs = [
-  { label: 'Sklep', href: '/sklep/' },
-  ...(kat ? [{ label: kat.data.nazwa, href: urlKategorii(kat) }] : []),
+  { label: nav.shop, href: '/sklep/' },
+  ...(kategoria ? [{ label: kategoria.data.nazwa, href: urlKategorii(kategoria) }] : []),
   { label: p.nazwa, href: urlProduktu(produkt) },
 ];
 ---
@@ -92,39 +60,28 @@ const crumbs = [
   title={p.seo?.tytul ?? p.nazwa}
   description={p.seo?.opis ?? p.krotkiOpis}
   type="product"
-  image={zdjeciaLd[0]}
-  jsonLd={jsonLd}
+  image={shareUrls[0]}
+  jsonLd={productJsonLd(produkt, { kategoria, ustawienia: u, images: shareUrls })}
 >
   <div class="container section--tight">
     <Breadcrumbs items={crumbs} />
-    <div class="product">
-      <div class:list={['gallery', { multi: p.zdjecia.length > 1 }]} aria-label="Zdjęcia produktu">
-        {p.zdjecia.map((z, i) => (
-          <div class="frame">
-            <Picture
-              src={z.zdjecie}
-              alt={z.alt}
-              formats={['avif', 'webp']}
-              widths={[480, 720, 960, 1280]}
-              sizes="(min-width: 56rem) 55vw, 92vw"
-              loading={i === 0 ? 'eager' : 'lazy'}
-              fetchpriority={i === 0 ? 'high' : 'auto'}
-            />
+    <div class="split split--top" style="--split: 1.15fr 1fr">
+      <div class:list={['gallery', { multi: p.zdjecia.length > 1 }]} aria-label={t.gallery}>
+        {p.zdjecia.map((img, i) => (
+          <div class="frame frame--portrait">
+            <Img src={img.zdjecie} alt={img.alt} widths={[480, 720, 960, 1280]} sizes="(min-width: 56rem) 55vw, 86vw" eager={i === 0} />
           </div>
         ))}
       </div>
 
       <div class="info">
         <h1 class="title">{p.nazwa}</h1>
-        <p class="price">
-          {p.cenaPromocyjna !== undefined && <s><span class="visually-hidden">Cena regularna </span>{formatPLN(p.cena)}</s>}
-          <span>{p.cenaPromocyjna !== undefined && <span class="visually-hidden">Cena promocyjna </span>}{formatPLN(cena)}</span>
-        </p>
+        <Price produkt={p} size="lg" />
         {p.cenaPromocyjna !== undefined && p.najnizszaCena30dni !== undefined && (
-          <p class="note">Najniższa cena z 30 dni przed obniżką: {formatPLN(p.najnizszaCena30dni)}</p>
+          <p class="note">{fill(t.omnibus, { price: formatZl(p.najnizszaCena30dni) })}</p>
         )}
         <p class="t-lead">{p.krotkiOpis}</p>
-        {p.szczegoly?.wymiary && <p class="dims"><span class="t-muted">Wymiary:</span> {p.szczegoly.wymiary}</p>}
+        {s?.wymiary && <p class="dims"><span class="t-muted">{t.dimensions}:</span> {s.wymiary}</p>}
 
         <button
           class="btn btn--block btn--lg"
@@ -132,47 +89,39 @@ const crumbs = [
           data-add-to-cart
           data-id={produkt.id}
           data-name={p.nazwa}
-          data-price={toGrosze(cena)}
+          data-price={toGrosze(cenaAktualna(p))}
           data-max={p.stan}
           data-img={miniatura.src}
           data-url={urlProduktu(produkt)}
           disabled={!kupno}
         >
-          {kupno ? 'Dodaj do koszyka' : STATUS_LABEL[p.status]}
+          {kupno ? t.addToCart : status[p.status]}
         </button>
-        <p class="note shipping">{wysylka}</p>
-        {kupno && p.stan <= 3 && <p class="note stock">Zostało {p.stan} szt. — każda świeca to ręcznie odlany egzemplarz.</p>}
+        <p class="note center">{wysylka}</p>
+        {kupno && p.stan <= 3 && <p class="note center">{fill(t.lowStock, { n: p.stan })}</p>}
 
-        {p.opis && <div class="desc">{p.opis.split(/\n{2,}/).map((para) => <p>{para}</p>)}</div>}
+        {p.opis && <div class="desc">{paras(p.opis).map((para) => <p>{para}</p>)}</div>}
 
-        {(nuty.length > 0 || szczegoly.some(([k]) => k !== 'Wymiary')) && (
-          <dl class="specs">
-            {szczegoly.filter(([k]) => k !== 'Wymiary').map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
-            {nuty.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
-          </dl>
-        )}
+        {specs.length > 0 && <dl class="specs">{specs.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}</dl>}
 
         <div class="accs">
-          <Accordion title="Pielęgnacja i palenie">
-            <p>Przed każdym zapaleniem przytnij knot do ok. 5 mm. Pal świecę na stabilnej, niepalnej podstawce, z dala od przeciągów.</p>
-            <p>Świece-rzeźby zmieniają kształt podczas palenia — jeśli chcesz zachować formę, traktuj je jako dekorację.</p>
-          </Accordion>
-          <Accordion title="Bezpieczeństwo i producent">
-            {p.bezpieczenstwo && p.bezpieczenstwo.split('\n').map((l) => <p>{l}</p>)}
-            <p>Nigdy nie pozostawiaj palącej się świecy bez nadzoru. Przechowuj poza zasięgiem dzieci i zwierząt.</p>
-            {ust.producent?.nazwa && (
+          <Accordion title={t.careTitle}>{t.care.map((c) => <p>{c}</p>)}</Accordion>
+          <Accordion title={t.safetyTitle}>
+            {p.bezpieczenstwo?.split('\n').map((l) => <p>{l}</p>)}
+            <p>{t.safety}</p>
+            {u.producent?.nazwa && (
               <p>
-                Producent: {ust.producent.nazwa}
-                {ust.producent.adres && <><br />{ust.producent.adres}</>}
-                {ust.producent.kontakt && <><br />{ust.producent.kontakt}</>}
+                {fill(t.producer, { name: u.producent.nazwa })}
+                {u.producent.adres && <><br />{u.producent.adres}</>}
+                {u.producent.kontakt && <><br />{u.producent.kontakt}</>}
               </p>
             )}
           </Accordion>
-          <Accordion title="Dostawa i zwroty">
+          <Accordion title={t.deliveryTitle}>
             <p>
-              Wysyłka do Paczkomatu InPost{ust.wysylkaPaczkomat ? ` — ${formatPLN(ust.wysylkaPaczkomat)}` : ''}.
-              {ust.darmowaWysylkaOd && ` Darmowa dostawa od ${formatPLN(ust.darmowaWysylkaOd)}.`}
-              {' '}Masz 14 dni na odstąpienie od umowy. <a href="/dostawa-i-zwroty/">Szczegóły dostawy i zwrotów</a>
+              {fill(t.delivery, { price: u.wysylkaPaczkomat ? ` — ${formatZl(u.wysylkaPaczkomat)}` : '' })}
+              {u.darmowaWysylkaOd !== undefined && fill(t.deliveryFree, { price: formatZl(u.darmowaWysylkaOd) })}
+              {t.withdrawal}<a href="/dostawa-i-zwroty/">{t.deliveryLink}</a>
             </p>
           </Accordion>
         </div>
@@ -182,22 +131,18 @@ const crumbs = [
 </Base>
 
 <style>
-  .product { display: grid; gap: var(--sp-7); }
-  @media (min-width: 56rem) { .product { grid-template-columns: 1.15fr 1fr; gap: var(--sp-8); align-items: start; } .info { position: sticky; top: var(--sp-5); } }
   .gallery { display: grid; gap: var(--sp-4); }
-  .gallery .frame { aspect-ratio: 4 / 5; }
   @media (max-width: 55.99rem) {
     .gallery.multi { grid-auto-flow: column; grid-auto-columns: 86%; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: var(--sp-2); }
     .gallery.multi .frame { scroll-snap-align: start; }
   }
-  .title { font-size: var(--fs-3xl); margin-bottom: var(--sp-3); }
-  .price { font-size: var(--fs-xl); display: flex; gap: var(--sp-3); align-items: baseline; margin-bottom: var(--sp-2); font-variant-numeric: tabular-nums; }
-  .price s { font-size: var(--fs-base); color: var(--c-text-muted); }
+  @media (min-width: 56rem) { .info { position: sticky; top: var(--sp-5); } }
+  .title { margin-bottom: var(--sp-3); }
   .note { font-size: var(--fs-sm); color: var(--c-text-muted); margin-bottom: var(--sp-2); }
+  .center { text-align: center; max-width: none; }
   .t-lead { margin-block: var(--sp-4); }
   .dims { margin-bottom: var(--sp-5); }
-  .shipping { margin-top: var(--sp-3); text-align: center; max-width: none; }
-  .stock { text-align: center; max-width: none; }
+  .btn + .note { margin-top: var(--sp-3); }
   .desc { margin-top: var(--sp-6); }
   .specs { display: grid; margin: var(--sp-6) 0; border-top: 1px solid var(--c-border); }
   .specs div { display: grid; grid-template-columns: 9rem 1fr; gap: var(--sp-4); padding-block: var(--sp-3); border-bottom: 1px solid var(--c-border); font-size: var(--fs-sm); }

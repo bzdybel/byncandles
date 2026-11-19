@@ -1,235 +1,225 @@
 ---
 import Base from '../layouts/Base.astro';
-import { toGrosze, ustawienia } from '../lib/shop';
+import CartTotals from '../components/CartTotals.astro';
+import { cart, checkout as t, common } from '../i18n/pl';
+import type { Field } from '../lib/checkout';
 import { SITE } from '../lib/site';
+import { STORAGE_KEY } from '../scripts/cart-store';
 
-const ust = await ustawienia();
 // Token Geowidgetu z Managera Paczek InPost (zmienna buildu). Bez tokenu — pole na kod paczkomatu.
 const geoToken = import.meta.env.PUBLIC_INPOST_GEOWIDGET_TOKEN ?? '';
-// Adres API zamówień/płatności (kolejny etap). Bez niego — podsumowanie do wysłania na Instagramie.
+// API zamówień/płatności (kolejny etap). Bez niego — podsumowanie do wysłania na Instagramie.
 const endpoint = import.meta.env.PUBLIC_CHECKOUT_ENDPOINT ?? '';
+
+const ERRORS: Record<Field, string> = { name: t.nameError, email: t.emailError, phone: t.phoneError, locker: t.lockerError, terms: t.termsError };
+// Teksty potrzebne skryptowi strony — osadzone tutaj, a nie importowane w JS (mniejsza wspólna paczka).
+const clientTexts = {
+  text: t.text, free: cart.free, submitting: t.submitting, submitPay: t.submitPay, submitError: t.submitError,
+  copied: t.copied, copyFailed: t.copyFailed, lockerSelected: t.lockerSelected,
+};
+export type ClientTexts = typeof clientTexts;
+
+const fields = [
+  { name: 'name', label: t.name, type: 'text', autocomplete: 'name' },
+  { name: 'email', label: t.email, type: 'email', autocomplete: 'email', inputmode: 'email', hint: t.emailHint },
+  { name: 'phone', label: t.phone, type: 'tel', autocomplete: 'tel', inputmode: 'tel', hint: t.phoneHint },
+] as const;
 ---
-<Base title="Zamówienie" noindex>
+<Base title={t.metaTitle} noindex>
   <section class="container section--tight">
-    <h1>Zamówienie</h1>
+    <h1>{t.title}</h1>
 
-    <div class="empty" data-co-empty hidden>
-      <p class="t-lead">Twój koszyk jest pusty.</p>
-      <a class="btn" href="/sklep/">Przejdź do sklepu</a>
-    </div>
-
-    <script is:inline>
+    <script is:inline define:vars={{ key: STORAGE_KEY }}>
       /* Przed pierwszym renderem: pusty koszyk → od razu komunikat, bez przeskoku układu (CLS). */
-      (function () {
-        var n = 0;
-        try { n = (JSON.parse(localStorage.getItem('byn-cart-v1') || '[]') || []).length; } catch (e) {}
-        if (!n) document.documentElement.classList.add('co-empty');
-      })();
+      try { if (!(JSON.parse(localStorage.getItem(key) || '[]') || []).length) document.documentElement.classList.add('co-empty'); }
+      catch (e) { document.documentElement.classList.add('co-empty'); }
     </script>
 
-    <div class="layout" data-co-main>
-      <form class="form" novalidate data-co-form data-endpoint={endpoint}>
-        <fieldset>
-          <legend><span class="step">1</span> Dane kontaktowe</legend>
-          <div class="field">
-            <label for="co-name">Imię i nazwisko</label>
-            <input id="co-name" name="name" autocomplete="name" required aria-describedby="co-name-err" />
-            <p class="err" id="co-name-err" data-msg="Podaj imię i nazwisko — będą na etykiecie paczki."></p>
-          </div>
-          <div class="two">
-            <div class="field">
-              <label for="co-email">E-mail</label>
-              <input id="co-email" name="email" type="email" autocomplete="email" inputmode="email" required aria-describedby="co-email-err co-email-hint" />
-              <p class="hint" id="co-email-hint">Wyślę na niego potwierdzenie zamówienia.</p>
-              <p class="err" id="co-email-err" data-msg="Wpisz adres e-mail w formacie nazwa@domena.pl."></p>
+    <div class="empty" data-co-empty hidden>
+      <p class="t-lead">{cart.emptyLead}</p>
+      <a class="btn" href="/sklep/">{common.goToShop}</a>
+    </div>
+
+    <div class="split split--top layout" style="--split: 1.4fr 1fr" data-co-main>
+      <form novalidate data-co-form data-endpoint={endpoint}>
+        <fieldset class="contact">
+          <legend><span class="step">1</span> {t.stepContact}</legend>
+          {fields.map((f) => (
+            <div class="field" data-field={f.name}>
+              <label for={`co-${f.name}`}>{f.label}</label>
+              <input
+                id={`co-${f.name}`}
+                name={f.name}
+                type={f.type}
+                autocomplete={f.autocomplete}
+                inputmode={'inputmode' in f ? f.inputmode : undefined}
+                required
+                aria-describedby={`co-${f.name}-err${'hint' in f ? ` co-${f.name}-hint` : ''}`}
+              />
+              {'hint' in f && <p class="hint" id={`co-${f.name}-hint`}>{f.hint}</p>}
+              <p class="err" id={`co-${f.name}-err`} data-msg={ERRORS[f.name]}></p>
             </div>
-            <div class="field">
-              <label for="co-phone">Telefon</label>
-              <input id="co-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required aria-describedby="co-phone-err co-phone-hint" />
-              <p class="hint" id="co-phone-hint">InPost wyśle SMS z kodem odbioru.</p>
-              <p class="err" id="co-phone-err" data-msg="Wpisz 9-cyfrowy numer telefonu (może być z +48)."></p>
-            </div>
-          </div>
+          ))}
         </fieldset>
 
         <fieldset>
-          <legend><span class="step">2</span> Dostawa — Paczkomat InPost</legend>
-          {geoToken && (
-            <button type="button" class="btn btn--ghost" data-geo-open>Wybierz paczkomat na mapie</button>
-          )}
+          <legend><span class="step">2</span> {t.stepDelivery}</legend>
+          {geoToken && <button type="button" class="btn btn--ghost" data-geo-open>{t.mapOpen}</button>}
           <div class="field">
-            <label for="co-locker">Kod paczkomatu</label>
-            <input id="co-locker" name="locker" required autocapitalize="characters" spellcheck="false" placeholder="np. KRA01M" aria-describedby="co-locker-err co-locker-hint" />
+            <label for="co-locker">{t.locker}</label>
+            <input id="co-locker" name="locker" required autocapitalize="characters" spellcheck="false" placeholder={t.lockerPlaceholder} aria-describedby="co-locker-err co-locker-hint" />
             <p class="hint" id="co-locker-hint" data-locker-hint>
-              {geoToken ? 'Wybierz na mapie albo wpisz kod ręcznie.' : <>Kod znajdziesz na <a href="https://inpost.pl/znajdz-paczkomat" target="_blank" rel="noopener">mapie paczkomatów InPost</a>.</>}
+              {geoToken ? t.lockerHintMap : <>{t.lockerHintBefore}<a href="https://inpost.pl/znajdz-paczkomat" target="_blank" rel="noopener">{t.lockerHintLink}</a>.</>}
             </p>
-            <p class="err" id="co-locker-err" data-msg="Podaj kod paczkomatu, np. KRA01M."></p>
+            <p class="err" id="co-locker-err" data-msg={ERRORS.locker}></p>
           </div>
         </fieldset>
 
         <fieldset>
-          <legend><span class="step">3</span> Uwagi</legend>
-          <label class="check">
-            <input type="checkbox" name="gift" />
-            <span>Zapakuj na prezent <span class="t-muted">(różowe pudełko lub celofan ze sznurkiem)</span></span>
-          </label>
+          <legend><span class="step">3</span> {t.stepNotes}</legend>
+          <label class="check"><input type="checkbox" name="gift" /><span>{t.gift} <span class="t-muted">{t.giftHint}</span></span></label>
           <div class="field">
-            <label for="co-notes">Uwagi do zamówienia <span class="t-muted">(opcjonalnie)</span></label>
+            <label for="co-notes">{t.notes} <span class="t-muted">{t.optional}</span></label>
             <textarea id="co-notes" name="notes" rows="3"></textarea>
           </div>
         </fieldset>
 
-        <label class="check consent">
-          <input type="checkbox" name="terms" required aria-describedby="co-terms-err" />
-          <span>Akceptuję <a href="/regulamin/" target="_blank">regulamin</a> sklepu. Informacje o przetwarzaniu danych znajdziesz w <a href="/polityka-prywatnosci/" target="_blank">polityce prywatności</a>.</span>
+        <label class="check">
+          <input id="co-terms" type="checkbox" name="terms" required aria-describedby="co-terms-err" />
+          <span>{t.termsBefore}<a href="/regulamin/" target="_blank">{t.termsLink}</a>{t.termsMiddle}<a href="/polityka-prywatnosci/" target="_blank">{t.privacyLink}</a>.</span>
         </label>
-        <p class="err" id="co-terms-err" data-msg="Zaakceptuj regulamin, aby złożyć zamówienie."></p>
+        <p class="err" id="co-terms-err" data-msg={ERRORS.terms}></p>
 
-        <button class="btn btn--block btn--lg" type="submit" data-co-submit>{endpoint ? 'Zamawiam z obowiązkiem zapłaty' : 'Przygotuj zamówienie'}</button>
-        {endpoint && <p class="t-small t-muted center">Płatność kartą, BLIK lub przelewem przez Przelewy24.</p>}
+        <button class="btn btn--block btn--lg" type="submit" data-co-submit>{endpoint ? t.submitPay : t.submitPrepare}</button>
+        {endpoint && <p class="t-small t-muted center">{t.payments}</p>}
       </form>
 
       <aside class="side" aria-labelledby="co-sum">
-        <h2 id="co-sum" class="h3">Podsumowanie</h2>
-        <ul class="lines" role="list" data-co-lines><li class="ph" aria-hidden="true"><span>&nbsp;</span></li></ul>
-        <dl class="totals">
-          <div><dt>Produkty</dt><dd data-co-subtotal>&nbsp;</dd></div>
-          <div class="disc" data-co-discount-row hidden><dt>Promocja 2+1</dt><dd data-co-discount></dd></div>
-          <div><dt>Paczkomat InPost</dt><dd data-co-shipping>&nbsp;</dd></div>
-          <div class="grand"><dt>Do zapłaty</dt><dd data-co-total>&nbsp;</dd></div>
-        </dl>
-        <button type="button" class="edit" data-cart-open>Edytuj koszyk</button>
+        <h2 id="co-sum" class="h3">{t.summary}</h2>
+        <ul class="lines" role="list" data-co-lines><li aria-hidden="true">&nbsp;</li></ul>
+        <CartTotals shippingLabel={t.lockerShipping} totalLabel={t.due} />
+        <button type="button" class="link-btn" data-cart-open>{t.editCart}</button>
       </aside>
     </div>
 
-    <!-- Tymczasowo, do czasu uruchomienia płatności online -->
     <div class="fallback" data-co-fallback hidden tabindex="-1">
-      <h2>Prawie gotowe!</h2>
-      <p class="t-lead">Płatności online uruchomię już wkrótce. Do tego czasu wyślij mi podsumowanie w wiadomości na Instagramie — potwierdzę zamówienie i podam dane do przelewu.</p>
+      <h2>{t.fallbackTitle}</h2>
+      <p class="t-lead">{t.fallbackLead}</p>
       <pre class="summary-text" data-co-text></pre>
-      <div class="cta">
-        <button type="button" class="btn btn--lg" data-co-copy>Skopiuj podsumowanie</button>
-        <a class="btn btn--ghost btn--lg" href={SITE.instagram} target="_blank" rel="noopener">Otwórz Instagram</a>
+      <div class="actions">
+        <button type="button" class="btn btn--lg" data-co-copy>{t.copy}</button>
+        <a class="btn btn--ghost btn--lg" href={SITE.instagram} target="_blank" rel="noopener">{common.openInstagram}</a>
       </div>
       <p class="t-small t-muted" aria-live="polite" data-co-copied></p>
     </div>
   </section>
 
+  <script type="application/json" id="checkout-texts" set:html={JSON.stringify(clientTexts)} />
+
   {geoToken && (
-    <dialog class="geo" data-geo aria-label="Wybór paczkomatu">
-      <button type="button" class="geo-close" data-geo-close aria-label="Zamknij mapę">×</button>
+    <dialog class="geo" data-geo aria-label={t.mapLabel}>
+      <button type="button" class="icon-btn geo-close" data-geo-close aria-label={t.mapClose}>×</button>
       <div class="geo-map" data-geo-map data-token={geoToken}></div>
     </dialog>
   )}
-
-  <div hidden data-cart-config-ref
-    data-shipping={toGrosze(ust.wysylkaPaczkomat ?? 0)}
-    data-free-from={ust.darmowaWysylkaOd !== undefined ? toGrosze(ust.darmowaWysylkaOd) : ''}
-    data-promo={String(ust.promocja2plus1)}></div>
 </Base>
 
 <script>
-  import { CHANGE_EVENT, fmt, read, readConfig, totals } from '../scripts/cart';
+  import { FIELDS, normalizeLocker, normalizePhone, summaryText, validate, type Field, type OrderForm } from '../lib/checkout';
+  import { fill } from '../lib/i18n';
+  import { formatGrosze } from '../lib/money';
+  import { totals } from '../lib/pricing';
+  import { CHANGE_EVENT, read, readConfig, sync } from '../scripts/cart-store';
+  import { renderTotals } from '../scripts/cart-ui';
 
-  const cfg = readConfig(document.querySelector<HTMLElement>('[data-cart-config-ref]'));
-  const q = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
+  const q = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector<T>(s)!;
   const form = q<HTMLFormElement>('[data-co-form]');
+  const cfg = readConfig();
+  const t = JSON.parse(q('#checkout-texts').textContent ?? '{}') as import('./zamowienie.astro').ClientTexts;
 
-  function renderSummary() {
+  const cell = (text: string) => Object.assign(document.createElement('span'), { textContent: text });
+
+  function render() {
     const items = read();
-    const t = totals(items, cfg);
+    const sum = totals(items, cfg);
     document.documentElement.classList.remove('co-empty');
     q('[data-co-empty]').hidden = items.length > 0;
     q('[data-co-main]').hidden = items.length === 0 || !q('[data-co-fallback]').hidden;
-    if (items.length === 0) return { items, t };
     q('[data-co-lines]').replaceChildren(
       ...items.map((i) => {
         const li = document.createElement('li');
-        const name = document.createElement('span');
-        name.textContent = `${i.name} × ${i.qty}`;
-        const price = document.createElement('span');
-        price.textContent = fmt(i.price * i.qty);
-        li.append(name, price);
+        li.append(cell(`${i.name} × ${i.qty}`), cell(formatGrosze(i.price * i.qty)));
         return li;
       }),
     );
-    q('[data-co-subtotal]').textContent = fmt(t.subtotal);
-    q('[data-co-discount-row]').hidden = t.discount === 0;
-    q('[data-co-discount]').textContent = `−${fmt(t.discount)}`;
-    q('[data-co-shipping]').textContent = t.shipping === 0 ? 'gratis' : fmt(t.shipping);
-    q('[data-co-total]').textContent = fmt(t.total);
-    return { items, t };
+    renderTotals(document, sum);
+    return { items, sum };
   }
 
-  // — Walidacja (liberalna: akceptujemy spacje, myślniki, +48) —
-  const normPhone = (v: string) => v.replace(/[\s\-()]/g, '').replace(/^(\+48|0048)/, '');
-  const rules: Record<string, (v: string, el: HTMLInputElement) => boolean> = {
-    name: (v) => v.trim().split(/\s+/).length >= 2,
-    email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()),
-    phone: (v) => /^\d{9}$/.test(normPhone(v)),
-    locker: (v) => /^[A-Z0-9-]{4,12}$/.test(v.trim().toUpperCase()),
-    terms: (_v, el) => el.checked,
-  };
-
-  function validate(el: HTMLInputElement) {
-    const rule = rules[el.name];
-    if (!rule) return true;
-    const ok = rule(el.value, el);
-    const err = document.getElementById(`${el.id || 'co-terms'}-err`) ?? document.getElementById('co-terms-err');
-    el.setAttribute('aria-invalid', String(!ok));
-    if (err) err.textContent = ok ? '' : err.dataset.msg ?? '';
-    return ok;
+  function readForm(): OrderForm {
+    const d = new FormData(form);
+    const str = (k: string) => String(d.get(k) ?? '');
+    return { name: str('name'), email: str('email'), phone: str('phone'), locker: str('locker'), notes: str('notes'), gift: d.has('gift'), terms: d.has('terms') };
   }
 
-  form.querySelectorAll<HTMLInputElement>('input').forEach((el) => {
-    el.addEventListener('blur', () => el.value && validate(el));
-    el.addEventListener('input', () => el.getAttribute('aria-invalid') === 'true' && validate(el));
-    el.addEventListener('change', () => el.type === 'checkbox' && validate(el));
+  function showError(field: Field, invalid: boolean) {
+    const err = q(`#co-${field}-err`);
+    q(`#co-${field}`).setAttribute('aria-invalid', String(invalid));
+    err.textContent = invalid ? (err.dataset.msg ?? '') : '';
+  }
+
+  const check = (field: Field) => showError(field, validate(readForm()).includes(field));
+
+  FIELDS.forEach((field) => {
+    const input = q<HTMLInputElement>(`#co-${field}`);
+    input.addEventListener('blur', () => (input.type === 'checkbox' || input.value) && check(field));
+    input.addEventListener('input', () => input.getAttribute('aria-invalid') === 'true' && check(field));
+    input.addEventListener('change', () => input.type === 'checkbox' && check(field));
   });
   q<HTMLInputElement>('#co-locker').addEventListener('change', (e) => {
     const el = e.target as HTMLInputElement;
-    el.value = el.value.trim().toUpperCase();
+    el.value = normalizeLocker(el.value);
   });
+
+  async function submitToApi(endpoint: string, data: OrderForm, items: ReturnType<typeof read>) {
+    // Kolejny etap: API przelicza ceny po stronie serwera, rezerwuje stan atomowo i zwraca link do Przelewy24.
+    const btn = q<HTMLButtonElement>('[data-co-submit]');
+    btn.dataset.state = 'loading';
+    btn.disabled = true;
+    btn.textContent = t.submitting;
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, phone: normalizePhone(data.phone), locker: normalizeLocker(data.locker), items: items.map(({ id, qty }) => ({ id, qty })) }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.redirect) throw new Error(json.error);
+      location.href = json.redirect;
+    } catch {
+      btn.dataset.state = '';
+      btn.disabled = false;
+      btn.textContent = t.submitPay;
+      alert(t.submitError);
+    }
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const fields = [...form.querySelectorAll<HTMLInputElement>('input[name]')].filter((el) => rules[el.name]);
-    const invalid = fields.filter((el) => !validate(el));
-    if (invalid.length) { invalid[0].focus(); return; }
-
-    const data = Object.fromEntries(new FormData(form)) as Record<string, string>;
-    const { items, t } = renderSummary();
-    const endpoint = form.dataset.endpoint;
-
-    if (endpoint) {
-      // Kolejny etap: API tworzy zamówienie, przelicza ceny po stronie serwera i zwraca link do Przelewy24.
-      const btn = q<HTMLButtonElement>('[data-co-submit]');
-      btn.dataset.state = 'loading'; btn.disabled = true; btn.textContent = 'Przekierowuję do płatności…';
-      try {
-        const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...data, phone: normPhone(data.phone), items: items.map(({ id, qty }) => ({ id, qty })) }) });
-        const json = await res.json();
-        if (!res.ok || !json.redirect) throw new Error(json.error ?? 'Błąd');
-        location.href = json.redirect;
-      } catch {
-        btn.dataset.state = ''; btn.disabled = false; btn.textContent = 'Zamawiam z obowiązkiem zapłaty';
-        alert('Nie udało się utworzyć zamówienia. Spróbuj ponownie za chwilę albo napisz do mnie na Instagramie.');
-      }
+    const data = readForm();
+    const invalid = validate(data);
+    FIELDS.forEach((f) => showError(f, invalid.includes(f)));
+    if (invalid.length) {
+      q(`#co-${invalid[0]}`).focus();
       return;
     }
+    await sync(true); // ostatnie uzgodnienie cen i stanów przed złożeniem zamówienia
+    const { items, sum } = render();
+    if (items.length === 0) return;
 
-    // Tymczasowo: podsumowanie do wysłania w wiadomości
-    const lines = [
-      'Zamówienie by N. candles',
-      ...items.map((i) => `• ${i.name} × ${i.qty} — ${fmt(i.price * i.qty)}`),
-      ...(t.discount ? [`Promocja 2+1: −${fmt(t.discount)}`] : []),
-      `Dostawa (Paczkomat ${data.locker.toUpperCase()}): ${t.shipping ? fmt(t.shipping) : 'gratis'}`,
-      `Razem: ${fmt(t.total)}`,
-      '',
-      `${data.name} · ${data.email} · ${normPhone(data.phone)}`,
-      ...(data.gift ? ['Pakowanie na prezent: tak'] : []),
-      ...(data.notes ? [`Uwagi: ${data.notes}`] : []),
-    ];
-    q('[data-co-text]').textContent = lines.join('\n');
+    if (form.dataset.endpoint) return submitToApi(form.dataset.endpoint, data, items);
+
+    q('[data-co-text]').textContent = summaryText(items, sum, data, t);
     q('[data-co-main]').hidden = true;
     const fb = q('[data-co-fallback]');
     fb.hidden = false;
@@ -237,41 +227,35 @@ const endpoint = import.meta.env.PUBLIC_CHECKOUT_ENDPOINT ?? '';
   });
 
   q('[data-co-copy]').addEventListener('click', async () => {
-    const out = q('[data-co-copied]');
     try {
       await navigator.clipboard.writeText(q('[data-co-text]').textContent ?? '');
-      out.textContent = 'Skopiowano — wklej podsumowanie w wiadomości na Instagramie.';
+      q('[data-co-copied]').textContent = t.copied;
     } catch {
-      out.textContent = 'Nie udało się skopiować automatycznie — zaznacz tekst powyżej i skopiuj go ręcznie.';
+      q('[data-co-copied]').textContent = t.copyFailed;
     }
   });
 
-  // — InPost Geowidget (ładowany dopiero po kliknięciu) —
+  // InPost Geowidget — ładowany dopiero po kliknięciu
   const geo = document.querySelector<HTMLDialogElement>('[data-geo]');
   if (geo) {
     let loaded = false;
     q('[data-geo-open]').addEventListener('click', () => {
       if (!loaded) {
         loaded = true;
-        const css = Object.assign(document.createElement('link'), { rel: 'stylesheet', href: 'https://geowidget.inpost.pl/inpost-geowidget.css' });
-        const js = Object.assign(document.createElement('script'), { src: 'https://geowidget.inpost.pl/inpost-geowidget.js', defer: true });
         const map = q('[data-geo-map]');
         const el = document.createElement('inpost-geowidget');
-        el.setAttribute('token', map.dataset.token ?? '');
-        el.setAttribute('language', 'pl');
-        el.setAttribute('config', 'parcelcollect');
-        el.setAttribute('onpoint', 'byn-point');
+        Object.entries({ token: map.dataset.token ?? '', language: 'pl', config: 'parcelcollect', onpoint: 'byn-point' }).forEach(([k, v]) => el.setAttribute(k, v));
         map.append(el);
-        document.head.append(css, js);
+        document.head.append(
+          Object.assign(document.createElement('link'), { rel: 'stylesheet', href: 'https://geowidget.inpost.pl/inpost-geowidget.css' }),
+          Object.assign(document.createElement('script'), { src: 'https://geowidget.inpost.pl/inpost-geowidget.js', defer: true }),
+        );
         document.addEventListener('byn-point', (ev) => {
-          const point = (ev as CustomEvent).detail;
+          const name = (ev as CustomEvent<{ name?: string }>).detail?.name ?? '';
           const input = q<HTMLInputElement>('#co-locker');
-          input.value = point?.name ?? '';
-          const addr = point?.address_details ?? point?.address;
-          q('[data-locker-hint]').textContent = addr
-            ? `Wybrano: ${point.name} — ${[addr.street, addr.building_number, addr.city].filter(Boolean).join(' ')}`
-            : `Wybrano: ${point?.name}`;
-          validate(input);
+          input.value = name;
+          q('[data-locker-hint]').textContent = fill(t.lockerSelected, { name });
+          check('locker');
           geo.close();
           input.focus();
         });
@@ -281,23 +265,23 @@ const endpoint = import.meta.env.PUBLIC_CHECKOUT_ENDPOINT ?? '';
     q('[data-geo-close]').addEventListener('click', () => geo.close());
   }
 
-  document.addEventListener(CHANGE_EVENT, renderSummary);
-  renderSummary();
+  document.addEventListener(CHANGE_EVENT, render);
+  render();
+  void sync(true);
 </script>
 
 <style>
-  .layout { display: grid; gap: var(--sp-7); align-items: start; margin-top: var(--sp-6); }
-  @media (min-width: 56rem) { .layout { grid-template-columns: 1.4fr 1fr; gap: var(--sp-8); } .side { position: sticky; top: var(--sp-5); } }
+  .layout { margin-top: var(--sp-6); }
   .empty { padding: var(--sp-7) 0; }
   :global(html.co-empty) [data-co-main] { display: none; }
   :global(html.co-empty) [data-co-empty] { display: block !important; }
+  @media (min-width: 56rem) { .side { position: sticky; top: var(--sp-5); } }
 
   fieldset { border: 0; padding: 0; margin: 0 0 var(--sp-7); display: grid; gap: var(--sp-4); }
+  @media (min-width: 40rem) { .contact { grid-template-columns: 1fr 1fr; } .contact [data-field='name'] { grid-column: 1 / -1; } }
   legend { font-family: var(--f-serif); font-size: var(--fs-xl); margin-bottom: var(--sp-4); display: flex; align-items: center; gap: var(--sp-3); }
   .step { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: var(--r-pill); background: var(--c-text); color: var(--c-surface); font: 400 var(--fs-sm) var(--f-sans); }
-  .two { display: grid; gap: var(--sp-4); }
-  @media (min-width: 40rem) { .two { grid-template-columns: 1fr 1fr; } }
-  .field { display: grid; gap: var(--sp-1); }
+  .field { display: grid; gap: var(--sp-1); align-content: start; }
   label { font-size: var(--fs-sm); }
   input:not([type='checkbox']), textarea {
     font: inherit; min-height: var(--tap); padding: var(--sp-2) var(--sp-4); border: 1px solid var(--c-border-strong); border-radius: var(--r-sm);
@@ -306,34 +290,26 @@ const endpoint = import.meta.env.PUBLIC_CHECKOUT_ENDPOINT ?? '';
   input:hover, textarea:hover { border-color: var(--c-text); }
   input:focus-visible, textarea:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 1px; border-color: var(--c-accent); }
   input[aria-invalid='true'] { border-color: var(--c-error); }
-  .hint { font-size: var(--fs-sm); color: var(--c-text-muted); margin: 0; }
-  .err { font-size: var(--fs-sm); color: var(--c-error); margin: 0; }
+  .hint, .err { font-size: var(--fs-sm); margin: 0; }
+  .hint { color: var(--c-text-muted); }
+  .err { color: var(--c-error); }
   .err:empty { display: none; }
   .check { display: flex; gap: var(--sp-3); align-items: flex-start; min-height: var(--tap); cursor: pointer; }
   .check input { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--c-accent); flex: none; }
-  .consent { margin-bottom: var(--sp-2); }
   .center { text-align: center; max-width: none; margin-top: var(--sp-3); }
 
   .side { background: var(--c-surface); border-radius: var(--r-md); padding: var(--sp-6); }
   .h3 { font-size: var(--fs-xl); }
-  .lines { list-style: none; margin: 0 0 var(--sp-4); padding: 0; display: grid; gap: var(--sp-2); font-size: var(--fs-sm); }
+  .lines { list-style: none; margin: 0 0 var(--sp-4); padding: 0 0 var(--sp-4); display: grid; gap: var(--sp-2); font-size: var(--fs-sm); border-bottom: 1px solid var(--c-border); }
   .lines :global(li) { display: flex; justify-content: space-between; gap: var(--sp-4); }
-  .totals { margin: 0; display: grid; gap: var(--sp-1); font-size: var(--fs-sm); border-top: 1px solid var(--c-border); padding-top: var(--sp-4); }
-  .totals div { display: flex; justify-content: space-between; gap: var(--sp-4); }
-  .totals dt { color: var(--c-text-muted); }
-  .totals dd { margin: 0; font-variant-numeric: tabular-nums; }
-  .disc dd { color: var(--c-success); }
-  .grand { margin-top: var(--sp-2); padding-top: var(--sp-2); border-top: 1px solid var(--c-border); font-size: var(--fs-base); }
-  .grand dt { color: var(--c-text); }
-  .grand dd { font-weight: 500; }
-  .edit { background: none; border: 0; min-height: var(--tap); padding: 0; margin-top: var(--sp-3); cursor: pointer; font-size: var(--fs-sm); text-decoration: underline; text-underline-offset: 0.2em; }
+  .side .link-btn { margin-top: var(--sp-3); }
 
   .fallback { max-width: 44rem; margin-top: var(--sp-6); outline: none; }
   .summary-text { white-space: pre-wrap; font: var(--fs-sm) / 1.6 var(--f-sans); background: var(--c-surface); border-radius: var(--r-md); padding: var(--sp-5); margin: var(--sp-5) 0; }
-  .fallback .cta { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+  .fallback .actions { margin-bottom: var(--sp-3); }
 
   .geo { width: min(60rem, 96vw); height: min(40rem, 90dvh); padding: 0; border: 0; border-radius: var(--r-md); }
   .geo::backdrop { background: var(--c-overlay); }
   .geo-map { width: 100%; height: 100%; }
-  .geo-close { position: absolute; top: var(--sp-2); right: var(--sp-2); z-index: 2; width: var(--tap); height: var(--tap); border: 0; border-radius: var(--r-pill); background: var(--c-surface); font-size: 1.5rem; cursor: pointer; }
+  .geo-close { position: absolute; top: var(--sp-2); right: var(--sp-2); z-index: 2; background: var(--c-surface); font-size: var(--fs-xl); }
 </style>

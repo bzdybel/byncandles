@@ -1,4 +1,5 @@
 ---
+import { brand } from '../i18n/pl';
 import { NOINDEX_PATHS, SITE } from '../lib/site';
 
 export interface Props {
@@ -10,10 +11,10 @@ export interface Props {
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
-const { title, description = SITE.description, image, type = 'website', jsonLd } = Astro.props;
+const { title, description = brand.description, image, type = 'website', jsonLd } = Astro.props;
 const noindex = Astro.props.noindex || NOINDEX_PATHS.includes(Astro.url.pathname);
 const canonical = new URL(Astro.url.pathname, Astro.site);
-const fullTitle = title === SITE.name ? title : `${title} | ${SITE.name}`;
+const fullTitle = title === brand.name ? title : `${title} | ${brand.name}`;
 const ogImage = image ? new URL(image, Astro.site).href : undefined;
 const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 ---
@@ -22,9 +23,9 @@ const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 <link rel="canonical" href={canonical.href} />
 {noindex && <meta name="robots" content="noindex, follow" />}
 
-<meta property="og:site_name" content={SITE.name} />
+<meta property="og:site_name" content={brand.name} />
 <meta property="og:locale" content={SITE.locale} />
-<meta property="og:type" content={type === 'product' ? 'product' : type} />
+<meta property="og:type" content={type} />
 <meta property="og:title" content={fullTitle} />
 <meta property="og:description" content={description} />
 <meta property="og:url" content={canonical.href} />

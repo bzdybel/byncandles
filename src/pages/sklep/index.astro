@@ -1,44 +1,25 @@
 ---
 import Base from '../../layouts/Base.astro';
-import ProductGrid from '../../components/ProductGrid.astro';
+import CategoryNav from '../../components/CategoryNav.astro';
 import EmptyShop from '../../components/EmptyShop.astro';
-import { kategorie, produktyPubliczne, urlKategorii } from '../../lib/shop';
+import ProductGrid from '../../components/ProductGrid.astro';
+import { shop } from '../../i18n/pl';
+import { kategorieZProduktami, produktyPubliczne } from '../../lib/shop';
 
 const produkty = await produktyPubliczne();
-const kat = (await kategorie()).filter((k) => produkty.some((p) => p.data.kategoria?.id === k.id));
+const kategorie = await kategorieZProduktami(produkty);
 ---
-<Base
-  title="Sklep — ręcznie robione świece sojowe i z wosku pszczelego"
-  description="Świece-rzeźby by N.: róże, muszle, krówki Highland i inne formy z wosku sojowego i pszczelego. Ręcznie odlewane, gotowe na prezent."
->
+<Base title={shop.metaTitle} description={shop.metaDescription}>
   <section class="container section--tight">
     <header class="head">
-      <h1>Kolekcja świec</h1>
-      <p class="t-lead">
-        Ręcznie odlewane świece z wosku sojowego i pszczelego — każda powstaje w małej partii, więc każdy egzemplarz jest trochę inny.
-      </p>
+      <h1>{shop.title}</h1>
+      <p class="t-lead">{shop.lead}</p>
     </header>
-
-    {kat.length > 1 && (
-      <nav aria-label="Kategorie" class="cats">
-        <ul>
-          <li><a href="/sklep/" aria-current="page">Wszystkie</a></li>
-          {kat.map((k) => <li><a href={urlKategorii(k)}>{k.data.nazwa}</a></li>)}
-        </ul>
-      </nav>
-    )}
-
+    <CategoryNav kategorie={kategorie} />
     {produkty.length > 0 ? <ProductGrid produkty={produkty} eagerFirst={2} headingLevel={2} /> : <EmptyShop />}
   </section>
 </Base>
 
 <style>
   .head { margin-bottom: var(--sp-7); }
-  .cats ul { list-style: none; padding: 0; margin: 0 0 var(--sp-6); display: flex; flex-wrap: wrap; gap: var(--sp-2); }
-  .cats a {
-    display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 var(--sp-5); border: 1px solid var(--c-border);
-    border-radius: var(--r-pill); text-decoration: none; font-size: var(--fs-xs); letter-spacing: var(--tracking-button); text-transform: uppercase;
-  }
-  .cats a:hover { border-color: var(--c-text); }
-  .cats a[aria-current='page'] { background: var(--c-text); border-color: var(--c-text); color: var(--c-surface); }
 </style>

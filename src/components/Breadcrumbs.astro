@@ -1,4 +1,5 @@
 ---
+import { common } from '../i18n/pl';
 import { SITE_URL } from '../lib/site';
 interface Props { items: { label: string; href: string }[] }
 const { items } = Astro.props;
@@ -8,7 +9,7 @@ const ld = {
   itemListElement: items.map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it.label, item: new URL(it.href, SITE_URL).href })),
 };
 ---
-<nav aria-label="Okruszki" class="crumbs">
+<nav aria-label={common.breadcrumbs} class="crumbs">
   <ol>
     {items.map((it, i) => (
       <li>{i < items.length - 1 ? <a href={it.href}>{it.label}</a> : <span aria-current="page">{it.label}</span>}</li>

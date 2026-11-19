@@ -1,15 +1,16 @@
 ---
+import { common, shop } from '../i18n/pl';
 import { SITE } from '../lib/site';
 ---
 <div class="empty">
-  <p class="t-lead">Pierwsze świece trafią do sklepu już wkrótce.</p>
-  <p>Do tego czasu możesz zamówić je przez wiadomość na Instagramie — odpiszę i pomogę wybrać.</p>
-  <div class="cta">
-    <a class="btn" href={SITE.instagram} rel="noopener" target="_blank">Napisz na Instagramie</a>
-    <a class="btn btn--ghost" href="/kontakt/">Zamówienie indywidualne</a>
+  <p class="t-lead">{shop.emptyLead}</p>
+  <p>{shop.emptyText}</p>
+  <div class="actions">
+    <a class="btn" href={SITE.instagram} rel="noopener" target="_blank">{common.instagramCta}</a>
+    <a class="btn btn--ghost" href="/kontakt/">{common.customOrder}</a>
   </div>
 </div>
 <style>
   .empty { padding: var(--sp-7) var(--sp-6); background: var(--c-surface); border-radius: var(--r-md); max-width: 44rem; }
-  .cta { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+  .actions { margin-top: var(--sp-5); }
 </style>
