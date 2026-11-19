@@ -94,10 +94,6 @@ export const home = {
     { title: 'Wosk i zapach', text: 'Roztapiam wosk sojowy lub pszczeli i dodaję olejek zapachowy, odmierzany co do kropli.' },
     { title: 'Odlewanie', text: 'Wosk wlewam powoli do formy. Potem świeca musi spokojnie zastygnąć — tego etapu nie da się przyspieszyć.' },
   ],
-  galleryOverline: 'Moje prace',
-  galleryTitle: 'Trochę sztuki, trochę ironii,',
-  galleryTitleEm: 'trochę candlecore',
-  galleryMore: 'Więcej na Instagramie',
   materialsTitle: 'Z czego powstają świece',
   materialsTitleEm: 'by N.',
   materials: [
