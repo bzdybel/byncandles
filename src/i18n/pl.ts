@@ -55,6 +55,9 @@ export const footer = {
   privacy: 'Polityka prywatności',
   instagram: 'Instagram {handle}',
   instagramStrip: 'Obserwuj {handle}',
+  carouselLabel: 'Zdjęcia z Instagrama',
+  carouselPrev: 'Poprzednie zdjęcia',
+  carouselNext: 'Następne zdjęcia',
   copyright: '© {year} {name} · {tagline}',
 } as const;
 
@@ -337,4 +340,10 @@ export const images = {
   prezentAlpaka: 'Świeca-alpaka zapakowana w przezroczysty celofan ze sznurkiem, trzymana w dłoni',
   moai: 'Szaro-beżowa świeca w kształcie głowy Moai obok białego kwiatu',
   czaszka: 'Różowa świeca w kształcie czaszki na żółtej półce z książkami',
+  krowaMech: 'Różowa świeca w kształcie kudłatej krowy Highland w zielonym mchu, w tle drewniany płot',
+  dawid: 'Biała świeca w kształcie popiersia Dawida obok ryflowanego dyfuzora zapachowego',
+  alpaki: 'Trzy świece-alpaki w kolorach szarym, ceglastym i beżowym na tle drewnianego płotu',
+  lawenda: 'Dwie świece sojowe z lawendą w ryflowanych osłonkach, czarnej i białej, przed książką',
+  cytryna: 'Żółta świeca w kształcie cytryny na ręcznie malowanej ceramicznej tacce, obok miska z cytrynami',
+  buddy: 'Dwie świece w kształcie małego Buddy, niebieska i kremowa, w tle figurka słonia',
 } as const;

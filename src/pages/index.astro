@@ -1,9 +1,11 @@
 ---
+import { getImage } from 'astro:assets';
 import Img from '../components/Img.astro';
 import Base from '../layouts/Base.astro';
 import ProductGrid from '../components/ProductGrid.astro';
 import { brand, common, home } from '../i18n/pl';
 import { IMG } from '../lib/images';
+import { SHARE } from '../lib/media';
 import { produktyPubliczne } from '../lib/shop';
 import { SITE, SITE_URL } from '../lib/site';
 
@@ -11,18 +13,24 @@ const wszystkie = await produktyPubliczne();
 const wyroznione = wszystkie.filter((p) => p.data.wyrozniony);
 const polecane = (wyroznione.length ? wyroznione : wszystkie).slice(0, 4);
 
+// Górny rząd mozaiki (3 zdjęcia) jest widoczny bez przewijania na ekranach od ~1080 px wysokości — bez lazy-load.
 // Zdjęcia na stronie nie powinny się powtarzać (także ze stopką). 4 najlepsze prace — same zdjęcia, bez podpisów (asortyment i opisy są w sklepie).
-const prace = (['moai', 'krowki', 'muszle', 'buldog'] as const).map((key) => IMG[key]);
+const prace = (['wSzkle', 'krowki', 'muszle', 'buldog'] as const).map((key) => IMG[key]);
 const proces = [IMG.procesKnot, IMG.procesZapach, IMG.procesOdlewanie];
+// Sekcja „Jak powstają świece” chwilowo ukryta — zmień na true, żeby ją przywrócić.
+const pokazProces = false;
+
+// Obrazek do udostępniania (Facebook, Messenger, WhatsApp) — zdjęcie z hero
+const ogImage = new URL((await getImage({ src: IMG.roze.src, ...SHARE })).src, SITE_URL).href;
 
 const jsonLd = [
-  { '@type': 'Organization', '@id': `${SITE_URL}/#organization`, name: brand.name, url: SITE_URL, sameAs: [SITE.instagram], founder: { '@type': 'Person', name: brand.author } },
+  { '@type': 'Organization', '@id': `${SITE_URL}/#organization`, name: brand.name, url: SITE_URL, image: ogImage, sameAs: [SITE.instagram], founder: { '@type': 'Person', name: brand.author } },
   { '@type': 'WebSite', '@id': `${SITE_URL}/#website`, name: brand.name, url: SITE_URL, inLanguage: 'pl-PL', publisher: { '@id': `${SITE_URL}/#organization` } },
 ];
 ---
-<Base title={home.metaTitle} description={home.metaDescription} jsonLd={jsonLd}>
-  <!-- Hero: pudrowy pas, tekst + zdjęcie w łuku z gwiazdkami -->
-  <section class="band--blush">
+<Base title={home.metaTitle} description={home.metaDescription} image={ogImage} jsonLd={jsonLd}>
+  <!-- Hero: pas latte, tekst + zdjęcie w łuku -->
+  <section class="band--latte">
     <div class="container split hero" style="--split: 1.1fr 1fr">
       <div class="hero-text">
         <h1 class="t-display">{home.heroTitle}</h1>
@@ -36,9 +44,7 @@ const jsonLd = [
         </div>
       </div>
       <div class="hero-img">
-        <span class="star star--a" aria-hidden="true">✦</span>
-        <span class="star star--b" aria-hidden="true">✦</span>
-        <div class="frame frame--arch frame--portrait">
+        <div class="frame frame--arch frame--portrait" data-parallax>
           <Img {...IMG.roze} widths={[420, 640, 860, 1100]} sizes="(min-width: 56rem) 40vw, 92vw" eager />
         </div>
       </div>
@@ -48,8 +54,8 @@ const jsonLd = [
   <!-- 1. Wiodąca sekcja: wybrane świece ze sklepu, a dopóki ich brak — mozaika prac (1 duże zdjęcie + 3 mniejsze + kafel z tytułem) -->
   {polecane.length > 0 ? (
     <section class="container section" aria-labelledby="featured">
-      <div class="section-head">
-        <h2 id="featured">{home.featured}</h2>
+      <div class="section-head" data-reveal>
+        <h2 id="featured" data-reveal-item>{home.featured}</h2>
         <a class="link-arrow" href="/sklep/"><span>{home.featuredMore}</span></a>
       </div>
       <ProductGrid produkty={polecane} />
@@ -59,10 +65,10 @@ const jsonLd = [
       <ul class="gallery" role="list" data-reveal>
         {prace.map((img, i) => (
           <li class:list={['frame', { 'is-lead': i === 0 }]} style={`--i: ${i}`} data-reveal-item>
-            <Img {...img} widths={i === 0 ? [640, 960, 1280] : [360, 560, 760]} sizes={i === 0 ? '(min-width: 56rem) 48vw, 92vw' : '(min-width: 56rem) 23vw, 46vw'} />
+            <Img {...img} widths={i === 0 ? [640, 960, 1280] : [360, 560, 760]} sizes={i === 0 ? '(min-width: 56rem) 48vw, 92vw' : '(min-width: 56rem) 23vw, 46vw'} noLazy={i < 3} />
           </li>
         ))}
-        <li class="gallery-title">
+        <li class="gallery-title" style="--i: 4" data-reveal-item>
           <h2 id="studio">{home.galleryOverline}</h2>
           <a class="link-arrow" href={SITE.instagram} rel="noopener" target="_blank"><span>{home.galleryMore}</span></a>
         </li>
@@ -70,8 +76,8 @@ const jsonLd = [
     </section>
   )}
 
-  <!-- 2. Proces -->
-  <section class="container section center-head" aria-labelledby="process">
+  <!-- 2. Proces (chwilowo ukryty) -->
+  {pokazProces && <section class="container section center-head" aria-labelledby="process">
     <h2 id="process">{home.processTitle} <em>{home.processTitleEm}</em></h2>
     <ol class="steps" role="list" data-reveal>
       {home.processSteps.map((k, i) => (
@@ -85,18 +91,18 @@ const jsonLd = [
         </li>
       ))}
     </ol>
-  </section>
+  </section>}
 
   <!-- 3. Materiały -->
   <section class="band--sand" aria-labelledby="materials">
-    <div class="container section split" style="--split: 1fr 1.1fr">
-      <div class="frame frame--portrait matted">
-        <Img {...IMG.pszczeli} widths={[400, 640, 900]} sizes="(min-width: 56rem) 40vw, 92vw" />
+    <div class="container section split" style="--split: 1fr 1.1fr" data-reveal>
+      <div class="frame frame--portrait matted" data-reveal-item data-parallax>
+        <Img {...IMG.cytryna} widths={[400, 640, 900]} sizes="(min-width: 56rem) 40vw, 92vw" />
       </div>
       <div>
-        <h2 id="materials">{home.materialsTitle} <em>{home.materialsTitleEm}</em></h2>
-        {home.materials.map((m) => (
-          <div class="mat">
+        <h2 id="materials" style="--i: 1" data-reveal-item>{home.materialsTitle} <em>{home.materialsTitleEm}</em></h2>
+        {home.materials.map((m, i) => (
+          <div class="mat" style={`--i: ${i + 2}`} data-reveal-item>
             <h3>{m.title}</h3>
             <p class="t-muted">{m.text}</p>
           </div>
@@ -106,8 +112,8 @@ const jsonLd = [
   </section>
 
   <!-- 4. Na prezent i na zamówienie -->
-  <section id="gift" class="container section split" aria-labelledby="gift-title">
-    <div>
+  <section id="gift" class="container section split" aria-labelledby="gift-title" data-reveal>
+    <div data-reveal-item>
       <h2 id="gift-title">{home.giftTitle} <em>{home.giftTitleEm}</em></h2>
       {home.giftText.map((t) => <p>{t}</p>)}
       <div class="actions gift-actions">
@@ -115,9 +121,8 @@ const jsonLd = [
         <a class="btn btn--ghost" href="/sklep/">{home.giftSecondary}</a>
       </div>
     </div>
-    <div class="gift-imgs">
-      <div class="frame frame--portrait matted"><Img {...IMG.prezentPudelka} widths={[320, 480, 640]} sizes="(min-width: 56rem) 26vw, 55vw" /></div>
-      <div class="frame frame--portrait matted offset"><Img {...IMG.prezentAlpaka} widths={[280, 420, 560]} sizes="(min-width: 56rem) 20vw, 42vw" /></div>
+    <div class="frame gift-img" style="--i: 1" data-reveal-item data-parallax>
+      <Img {...IMG.prezentPudelka} widths={[480, 640, 810]} sizes="(min-width: 56rem) 52vw, 92vw" />
     </div>
   </section>
 </Base>
@@ -130,13 +135,16 @@ const jsonLd = [
   .hero-quote { margin: 0 0 var(--sp-6); }
   .hero-quote blockquote { margin: 0; }
   .hero-quote p { font-family: var(--f-serif); font-style: italic; font-size: var(--fs-xl); line-height: 1.5; color: var(--c-text-muted); max-width: 46ch; margin: 0; }
-  .hero-quote figcaption { margin-top: var(--sp-2); font-family: var(--f-script); font-size: 2.25rem; line-height: 1; color: var(--c-accent); }
+  .hero-quote figcaption { width: fit-content; margin-top: var(--sp-2); font-family: var(--f-script); font-size: 2.25rem; line-height: 1; color: var(--c-accent); }
   .hero-img { position: relative; max-width: 30rem; width: 100%; justify-self: center; }
   .hero-img .frame { box-shadow: 0 0 0 10px var(--c-bg); }
-  .star { position: absolute; color: var(--c-ink); line-height: 1; z-index: 1; }
-  .star--a { font-size: 1.75rem; right: -0.6rem; top: 18%; }
-  .star--b { font-size: 1.1rem; left: 0.6rem; bottom: 22%; color: var(--c-accent); }
-  @media (min-width: 56rem) { .star--b { left: -1.4rem; } }
+
+  /* Intro przy pierwszej wizycie: tytuł, cytat, podpis „pisany” ręką, przyciski; zdjęcie wypływa jak w karuzeli */
+  :global(.js-intro) .hero h1 { animation: rise 1000ms var(--ease-out) 150ms both; }
+  :global(.js-intro) .hero-quote p { animation: rise 1000ms var(--ease-out) 350ms both; }
+  :global(.js-intro) .hero-quote figcaption { animation: write 1500ms var(--ease) 950ms both; }
+  :global(.js-intro) .hero .actions { animation: rise 1000ms var(--ease-out) 600ms both; }
+  :global(.js-intro) .hero-img { animation: rise 1100ms var(--ease-out) 300ms both; }
 
   /* Nagłówki wyśrodkowane */
   .center-head { text-align: center; }
@@ -148,15 +156,13 @@ const jsonLd = [
   .gallery .is-lead { grid-column: 1 / -1; }
   .gallery-title {
     display: grid; place-content: center; justify-items: center; gap: var(--sp-3); text-align: center;
-    padding: var(--sp-5); background: var(--c-blush); border-radius: var(--r-md);
+    padding: var(--sp-5); background: var(--c-latte); border-radius: var(--r-md);
   }
   .gallery-title h2 { margin: 0; }
   @media (min-width: 56rem) {
     .gallery { grid-template-columns: 2fr 1fr 1fr; gap: var(--sp-4); }
     .gallery .is-lead { grid-column: 1; grid-row: 1 / span 2; aspect-ratio: auto; }
   }
-  .gallery :global(img) { transition: transform 1400ms var(--ease) calc(var(--i) * 140ms); }
-  :global(.js-reveal) .gallery:not(.is-in) :global(img) { transform: scale(1.12); }
   @media (hover: hover) { .gallery.is-in li:hover :global(img) { transform: scale(1.05); transition-duration: var(--t-slower); transition-delay: 0ms; } }
 
   /* Proces */
@@ -167,12 +173,13 @@ const jsonLd = [
   .steps h3 { margin-bottom: var(--sp-2); text-transform: uppercase; letter-spacing: var(--tracking-heading); font-size: var(--fs-lg); }
 
   /* Zdjęcie w białym passe-partout (jak kadry w inspiracjach) */
-  .matted { box-shadow: 0 0 0 10px var(--c-surface), 0 18px 40px -24px rgb(47 42 43 / 0.35); }
+  .matted { box-shadow: 0 0 0 10px var(--c-surface), 0 18px 40px -24px rgb(47 38 32 / 0.35); }
 
   .mat { padding-top: var(--sp-5); margin-top: var(--sp-5); border-top: 1px solid color-mix(in srgb, var(--c-text) 18%, transparent); }
   .mat h3 { margin-bottom: var(--sp-2); text-transform: uppercase; letter-spacing: var(--tracking-heading); font-size: var(--fs-lg); }
 
   .gift-actions { margin-top: var(--sp-5); }
-  .gift-imgs { display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--sp-5); align-items: start; padding: 10px; }
-  .offset { margin-top: var(--sp-8); }
+  /* Jedno zdjęcie pudełek prezentowych w poziomie (4:3, kadr ze środka pionowego oryginału); kolumna zdjęcia szersza od tekstu */
+  .gift-img { aspect-ratio: 4 / 3; width: 100%; }
+  @media (min-width: 56rem) { #gift { --split: 1fr 1.25fr; } }
 </style>
