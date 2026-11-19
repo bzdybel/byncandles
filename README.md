@@ -6,7 +6,7 @@ Instagram: [@by_n.candles](https://www.instagram.com/by_n.candles/)
 ## Stack
 
 - [Astro](https://astro.build) — statyczny HTML, minimum JS (priorytet: SEO i szybkość)
-- Hosting: Cloudflare Pages (darmowy, domena tymczasowa `byncandles.pages.dev`)
+- Hosting: Cloudflare Workers — statyczne assets (darmowe, adres tymczasowy `*.workers.dev`)
 - Keystatic (CMS na plikach w repo)
 - Planowane: Cloudflare D1 (zamówienia), InPost Geowidget + ShipX, Przelewy24
 
@@ -33,7 +33,8 @@ src/
   content.config.ts    # schematy kolekcji (zgodne z keystatic.config.ts)
   content/             # dane produktów, kategorii, ustawień (YAML)
   styles/global.css    # tokeny designu (robocze — do dopasowania pod Instagram)
-public/_headers        # nagłówki Cloudflare Pages (cache, bezpieczeństwo)
+public/_headers        # nagłówki Cloudflare (cache, bezpieczeństwo)
+wrangler.jsonc         # konfiguracja Cloudflare Workers
 ```
 
 ## Panel treści (Keystatic)
@@ -53,8 +54,15 @@ Logowanie przez GitHub dla Natalii (edycja bez lokalnego środowiska) — kolejn
 - Kanoniczne URL-e zakończone `/` (`trailingSlash: 'always'`).
 - Strona bez docelowej treści → dopisz ją do `NOINDEX_PATHS` w `src/lib/site.ts`
   (dostaje `noindex` i znika z sitemapy). Po uzupełnieniu treści — usuń z listy.
-- Zmiana domeny: ustaw `SITE_URL` w zmiennych środowiskowych Cloudflare Pages.
+- Zmiana domeny: ustaw `SITE_URL` w zmiennych buildu Cloudflare (patrz Deploy).
 
-## Deploy (Cloudflare Pages)
+## Deploy (Cloudflare Workers)
 
-Build command: `npm run build` · Output: `dist` · Zmienna `NODE_VERSION=24`.
+Repo jest podpięte do Workers Builds — każdy push na `main` wdraża stronę, a każda gałąź/PR
+dostaje własny link podglądu. Konfiguracja: `wrangler.jsonc` (sama statyczna strona, bez skryptu Workera).
+
+- Build command: `npm run build` · Deploy command: `npx wrangler deploy`
+- Wersja Node z `.nvmrc`
+- Adres strony (canonical, sitemap, Open Graph): zmienna `SITE_URL` w ustawieniach buildu
+  (Settings → Build → Variables) — do czasu zakupu własnej domeny adres `*.workers.dev`.
+- Ręcznie: `npm run deploy` (wymaga `npx wrangler login`).
