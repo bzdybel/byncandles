@@ -1,8 +1,6 @@
 ---
-import Img from '../components/Img.astro';
 import Base from '../layouts/Base.astro';
 import { common, contact } from '../i18n/pl';
-import { IMG } from '../lib/images';
 import { ustawienia } from '../lib/shop';
 import { SITE, SITE_URL } from '../lib/site';
 
@@ -10,8 +8,8 @@ const { email } = await ustawienia();
 const jsonLd = { '@type': 'ContactPage', url: `${SITE_URL}/kontakt/`, about: { '@id': `${SITE_URL}/#organization` } };
 ---
 <Base title={contact.metaTitle} description={contact.metaDescription} jsonLd={jsonLd}>
-  <section class="container section--tight split split--top" style="--split: 1.1fr 0.9fr">
-    <div>
+  <section class="container section--tight">
+    <div class="content">
       <h1>{contact.title} <em>{contact.titleEm}</em></h1>
       <p class="t-lead">{contact.lead}</p>
       <ul class="channels" role="list">
@@ -30,13 +28,12 @@ const jsonLd = { '@type': 'ContactPage', url: `${SITE_URL}/kontakt/`, about: { '
       <h2 class="h3">{contact.customTitle}</h2>
       <p>{contact.customText}</p>
     </div>
-    <div class="frame frame--portrait">
-      <Img {...IMG.prezentPudelka} widths={[400, 640, 810]} sizes="(min-width: 56rem) 36vw, 92vw" eager />
-    </div>
   </section>
 </Base>
 
 <style>
+  /* Sama treść, bez zdjęcia — jedna kolumna o wygodnej szerokości czytania */
+  .content { max-width: 44rem; }
   .channels { list-style: none; padding: 0; margin: var(--sp-6) 0 var(--sp-7); display: grid; gap: var(--sp-5); }
   .channels li { display: grid; }
   .channels .overline { margin-bottom: 0; }
