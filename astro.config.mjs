@@ -12,7 +12,7 @@ const isDev = process.argv.includes('dev');
 // https://astro.build/config
 export default defineConfig({
   site: SITE_URL,
-  // Cloudflare Pages serwuje /strona/index.html pod /strona/ — trzymamy jeden kanoniczny wariant.
+  // Cloudflare serwuje /strona/index.html pod /strona/ — trzymamy jeden kanoniczny wariant.
   trailingSlash: 'always',
   build: { format: 'directory', inlineStylesheets: 'auto' },
   prefetch: { prefetchAll: true, defaultStrategy: 'hover' },

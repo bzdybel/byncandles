@@ -1,6 +1,6 @@
 /**
  * Globalne dane marki. Domena tymczasowa — po zakupie własnej zmień SITE_URL
- * (lub ustaw zmienną środowiskową SITE_URL w Cloudflare Pages).
+ * (lub ustaw zmienną buildu SITE_URL w Cloudflare Workers).
  */
 export const SITE_URL: string =
   (typeof process !== 'undefined' && process.env.SITE_URL) || 'https://byncandles.pages.dev';

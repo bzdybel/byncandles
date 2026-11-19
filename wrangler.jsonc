@@ -1,0 +1,16 @@
+{
+  // Cloudflare Workers — strona w 100% statyczna (tylko assets, bez skryptu Workera).
+  // Żądania do plików statycznych są darmowe i nie liczą się do limitów Workers.
+  // Jawna konfiguracja wyłącza automatyczną konfigurację Cloudflare podczas buildu.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "byncandles",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "workers_dev": true,
+  // Osobny link podglądu dla każdej gałęzi / PR.
+  "preview_urls": true
+}
