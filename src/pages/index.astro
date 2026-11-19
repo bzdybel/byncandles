@@ -11,6 +11,8 @@ const wszystkie = await produktyPubliczne();
 const wyroznione = wszystkie.filter((p) => p.data.wyrozniony);
 const polecane = (wyroznione.length ? wyroznione : wszystkie).slice(0, 4);
 
+// 4 najlepsze prace — same zdjęcia, bez podpisów (asortyment i opisy są w sklepie).
+const prace = (['rozaWrzosowa', 'krowki', 'muszle', 'buldog'] as const).map((key) => IMG[key]);
 const proces = [IMG.procesKnot, IMG.procesZapach, IMG.procesOdlewanie];
 
 const jsonLd = [
@@ -43,7 +45,8 @@ const jsonLd = [
     </div>
   </section>
 
-  {polecane.length > 0 && (
+  <!-- 1. Wiodąca sekcja: wybrane świece ze sklepu, a dopóki ich brak — 4 najlepsze prace -->
+  {polecane.length > 0 ? (
     <section class="container section" aria-labelledby="featured">
       <div class="section-head">
         <h2 id="featured">{home.featured}</h2>
@@ -51,8 +54,19 @@ const jsonLd = [
       </div>
       <ProductGrid produkty={polecane} />
     </section>
+  ) : (
+    <section class="container section center-head" aria-labelledby="studio">
+      <p id="studio" class="overline">{home.galleryOverline}</p>
+      <ul class="gallery" role="list" data-reveal>
+        {prace.map((img, i) => (
+          <li class="frame" style={`--i: ${i}`} data-reveal-item><Img {...img} widths={[320, 480, 640]} sizes="(min-width: 56rem) 23vw, 46vw" /></li>
+        ))}
+      </ul>
+      <a class="link-arrow" href={SITE.instagram} rel="noopener" target="_blank"><span>{home.galleryMore}</span></a>
+    </section>
   )}
 
+  <!-- 2. Proces -->
   <section class="container section center-head" aria-labelledby="process">
     <h2 id="process">{home.processTitle} <em>{home.processTitleEm}</em></h2>
     <ol class="steps" role="list" data-reveal>
@@ -69,6 +83,7 @@ const jsonLd = [
     </ol>
   </section>
 
+  <!-- 3. Materiały -->
   <section class="band--sand" aria-labelledby="materials">
     <div class="container section split" style="--split: 1fr 1.1fr">
       <div class="frame frame--portrait matted">
@@ -86,6 +101,7 @@ const jsonLd = [
     </div>
   </section>
 
+  <!-- 4. Na prezent i na zamówienie -->
   <section id="gift" class="container section split" aria-labelledby="gift-title">
     <div>
       <h2 id="gift-title">{home.giftTitle} <em>{home.giftTitleEm}</em></h2>
@@ -121,6 +137,14 @@ const jsonLd = [
   /* Nagłówki wyśrodkowane */
   .center-head { text-align: center; }
   .center-head > h2 { margin-inline: auto; max-width: 26ch; margin-bottom: var(--sp-7); }
+
+  /* Galeria prac */
+  .gallery { list-style: none; margin: 0 0 var(--sp-6); padding: 0; display: grid; gap: var(--sp-3); grid-template-columns: repeat(2, 1fr); }
+  .gallery .frame { aspect-ratio: 4 / 5; }
+  @media (min-width: 56rem) { .gallery { grid-template-columns: repeat(4, 1fr); gap: var(--sp-4); } }
+  .gallery :global(img) { transition: transform 1400ms var(--ease) calc(var(--i) * 140ms); }
+  :global(.js-reveal) .gallery:not(.is-in) :global(img) { transform: scale(1.12); }
+  @media (hover: hover) { .gallery.is-in li:hover :global(img) { transform: scale(1.05); transition-duration: var(--t-slower); transition-delay: 0ms; } }
 
   /* Proces */
   .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-7) var(--sp-5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); }
