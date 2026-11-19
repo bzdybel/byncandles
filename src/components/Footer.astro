@@ -1,5 +1,5 @@
 ---
-/** Stopka w stylu inspiracji: 3 duże zdjęcia z Instagrama, logo na środku między kolumnami linków, grafitowy pasek z prawami autorskimi. */
+/** Stopka: karuzela zdjęć z Instagrama, logo na środku między kolumnami linków, grafitowy pasek z prawami autorskimi. */
 import Img from './Img.astro';
 import Logo from './Logo.astro';
 import { brand, common, footer } from '../i18n/pl';
@@ -11,21 +11,29 @@ const groups = [
   { id: 'f-shop', title: footer.shop, links: [['/sklep/', footer.allCandles], ['/dostawa-i-zwroty/', footer.delivery], ['/kontakt/', footer.customOrders]] },
   { id: 'f-info', title: footer.info, links: [['/kontakt/', footer.contact], ['/regulamin/', footer.terms], ['/polityka-prywatnosci/', footer.privacy]] },
 ] as const;
-// Inne zdjęcia niż na stronie głównej — nic się nie powtarza.
-const insta = [IMG.misie, IMG.kurka, IMG.czaszka];
+// Karuzela: prace z Instagrama, których nie ma na stronie głównej (nic się nie powtarza). Bez zdjęć z procesu.
+const insta = [IMG.krowaMech, IMG.misie, IMG.dawid, IMG.alpaki, IMG.kurka, IMG.lawenda, IMG.prezentAlpaka, IMG.rozaWrzosowa, IMG.buddy, IMG.czaszka, IMG.moai];
 ---
 <footer class="site-footer">
   <section class="container insta" aria-labelledby="f-insta">
     <a class="insta-label overline" id="f-insta" href={SITE.instagram} rel="me noopener" target="_blank">{fill(footer.instagramStrip, { handle: common.instagramHandle })}</a>
-    <ul class="strip" role="list" data-reveal>
+    <div class="carousel" data-carousel>
+    <ul class="strip" role="list" aria-label={footer.carouselLabel} data-reveal data-track>
       {insta.map((img, i) => (
-        <li style={`--i: ${i}`} data-reveal-item>
+        <li style={`--i: ${Math.min(i, 3)}`} data-reveal-item>
           <a class="frame" href={SITE.instagram} rel="me noopener" target="_blank" tabindex="-1" aria-hidden="true">
-            <Img src={img.src} alt="" widths={[480, 720, 960]} sizes="(min-width: 40rem) 31vw, 80vw" />
+            <Img {...img} widths={[480, 720, 960]} sizes="(min-width: 40rem) 31vw, 80vw" />
           </a>
         </li>
       ))}
     </ul>
+    <button class="nav-btn prev" type="button" aria-label={footer.carouselPrev} data-dir="-1" disabled>
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M15 5l-7 7 7 7" /></svg>
+    </button>
+    <button class="nav-btn next" type="button" aria-label={footer.carouselNext} data-dir="1">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 5l7 7-7 7" /></svg>
+    </button>
+    </div>
   </section>
 
   <div class="container grid">
@@ -35,7 +43,6 @@ const insta = [IMG.misie, IMG.kurka, IMG.czaszka];
     </nav>
     <div class="brand">
       <Logo />
-      <span class="sparkle" aria-hidden="true">✦</span>
       <p class="t-muted">{fill(footer.intro, { author: brand.author })}</p>
     </div>
     <nav aria-labelledby={groups[1].id}>
@@ -51,16 +58,30 @@ const insta = [IMG.misie, IMG.kurka, IMG.czaszka];
 <style>
   .site-footer { margin-top: var(--sp-8); font-size: var(--fs-sm); }
 
-  /* Instagram: 3 duże kadry 3:4 (proporcje zdjęć — bez przycinania); na telefonie przewijane w poziomie */
+  /* Instagram: karuzela kadrów 3:4 — na telefonie ~1 zdjęcie, od 40rem 3 naraz; przewijanie palcem/kółkiem lub strzałkami */
   .insta { text-align: center; }
   .insta-label { display: inline-block; text-decoration: none; margin-bottom: var(--sp-5); }
   .insta-label:hover { color: var(--c-accent); }
+  .carousel { position: relative; }
   .strip {
-    list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); justify-items: stretch;
+    list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3);
     grid-auto-flow: column; grid-auto-columns: 80%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
+    overscroll-behavior-x: contain; scroll-behavior: smooth;
   }
-  .strip li { scroll-snap-align: center; }
-  @media (min-width: 40rem) { .strip { grid-auto-flow: row; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); overflow: visible; } }
+  .strip::-webkit-scrollbar { display: none; }
+  .strip li { scroll-snap-align: start; }
+  @media (min-width: 40rem) { .strip { grid-auto-columns: calc((100% - 2 * var(--sp-4)) / 3); gap: var(--sp-4); } }
+  .nav-btn {
+    position: absolute; top: 50%; translate: 0 -50%; z-index: 1; display: none; place-items: center;
+    width: var(--tap); height: var(--tap); border: 0; border-radius: var(--r-pill); cursor: pointer;
+    background: var(--c-surface); color: var(--c-text); box-shadow: var(--e-2);
+    transition: opacity var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+  }
+  .nav-btn:hover { background: var(--c-ink); color: var(--c-on-ink); }
+  .nav-btn:disabled { opacity: 0; pointer-events: none; }
+  .prev { left: var(--sp-3); }
+  .next { right: var(--sp-3); }
+  @media (min-width: 40rem) { .nav-btn { display: grid; } }
   .strip .frame { display: block; aspect-ratio: 3 / 4; }
   .strip :global(img) { transition: transform var(--t-slower) var(--ease); }
   @media (hover: hover) { .strip .frame:hover :global(img) { transform: scale(1.04); } }
@@ -81,3 +102,21 @@ const insta = [IMG.misie, IMG.kurka, IMG.czaszka];
   .bottom { background: var(--c-ink); color: var(--c-on-ink-muted); }
   .bottom p { margin-inline: auto; padding-block: var(--sp-4); font-size: var(--fs-xs); letter-spacing: 0.06em; text-align: center; max-width: none; }
 </style>
+
+<script>
+  // Strzałki karuzeli: przewijają o szerokość widocznego fragmentu; chowają się na początku/końcu.
+  document.querySelectorAll<HTMLElement>('[data-carousel]').forEach((root) => {
+    const track = root.querySelector<HTMLElement>('[data-track]')!;
+    const [prev, next] = root.querySelectorAll<HTMLButtonElement>('[data-dir]');
+    const update = () => {
+      prev.disabled = track.scrollLeft <= 2;
+      next.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
+    };
+    root.querySelectorAll<HTMLButtonElement>('[data-dir]').forEach((btn) =>
+      btn.addEventListener('click', () => track.scrollBy({ left: Number(btn.dataset.dir) * track.clientWidth }))
+    );
+    track.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  });
+</script>

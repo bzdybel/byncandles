@@ -40,7 +40,17 @@ export default defineConfig({
       fallbacks: ['system-ui', 'sans-serif'],
     },
     {
-      // Pismo odręczne — logo i wyróżnione słowa w nagłówkach
+      // Znak słowny „by N. candles” — kontrastowa kursywa
+      provider: fontProviders.fontsource(),
+      name: 'Bodoni Moda',
+      cssVariable: '--font-logo',
+      weights: ['500'],
+      styles: ['italic'],
+      subsets: ['latin', 'latin-ext'],
+      fallbacks: ['Georgia', 'serif'],
+    },
+    {
+      // Pismo odręczne — wyróżnione słowa w nagłówkach
       provider: fontProviders.fontsource(),
       name: 'Corinthia',
       cssVariable: '--font-script',

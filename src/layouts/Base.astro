@@ -18,12 +18,17 @@ const config = await shopConfig();
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <Font cssVariable="--font-display" preload={[{ subset: 'latin', style: 'normal' }]} />
+    <Font cssVariable="--font-display" preload={[{ subset: 'latin', weight: '400', style: 'normal' }]} />
     <Font cssVariable="--font-body" preload={[{ subset: 'latin' }]} />
     <Font cssVariable="--font-script" preload={[{ subset: 'latin' }]} />
+    <Font cssVariable="--font-logo" preload={[{ subset: 'latin', style: 'italic' }]} />
     <script is:inline>
       // Animacje pojawiania się — tylko z JS i bez „ogranicz ruch” (inaczej treść jest od razu widoczna).
-      if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('js-reveal');
+      // Intro strony głównej (.js-intro) — tylko przy pierwszym wejściu w sesji, żeby nie męczyło przy powrotach.
+      if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.classList.add('js-reveal');
+        try { if (location.pathname === '/' && !sessionStorage.getItem('intro')) { document.documentElement.classList.add('js-intro'); sessionStorage.setItem('intro', '1'); } } catch {}
+      }
     </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="sitemap" href="/sitemap-index.xml" />

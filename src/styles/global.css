@@ -4,31 +4,32 @@
  * Nazewnictwo: --c-* kolor, --fs-* rozmiar fontu, --sp-* odstęp, --r-* zaokrąglenie, --e-* elewacja, --t-* czas ruchu.
  */
 :root {
-  /* — Kolor: semantyka — styl „pudrowy edytorski”: biel, pudrowy róż, piasek, grafit — */
-  --c-bg: #fffcfa;            /* tło strony (ciepła biel) */
-  --c-surface: #ffffff;       /* karty, panele */
-  --c-surface-alt: #f6efeb;   /* tło pod ładującymi się zdjęciami, hover ikon */
-  --c-blush: #f4e6e2;         /* pas pudrowy (hero, prezent) — tekst 11.6:1 */
-  --c-sand: #ebe0d6;          /* kafle, pas piaskowy — tekst 10.9:1 */
-  --c-ink: #3a3536;           /* grafit: górny pasek, pas z cytatem, przyciski, dół stopki */
-  --c-on-ink: #fbf6f3;        /* tekst na grafitowym — 11.2:1 */
-  --c-on-ink-muted: #cfc4c0;  /* drobny tekst na grafitowym — 7.1:1 */
-  --c-border: #e8dcd6;        /* linie dekoracyjne */
-  --c-border-strong: #8c8186; /* 3.3:1 — ramki pól formularzy (WCAG 1.4.11) */
-  --c-text: #2f2a2b;          /* 13.8:1 */
-  --c-text-muted: #6b6062;    /* 5.9:1 (4.97:1 na pudrowym) */
-  --c-accent: #8d5864;        /* 5.5:1 — zgaszony róż: pismo odręczne, linki, hover, focus. Na piasku tylko duży tekst */
-  --c-accent-hover: #74454f;
+  /* — Kolor: semantyka — styl „ciepłe beże”: kremowe tło, latte, piasek, espresso, akcent cynamonowy — */
+  --c-bg: #f5eee5;            /* tło strony (jasny beż) */
+  --c-surface: #fbf8f3;       /* karty, panele (krem) */
+  --c-surface-alt: #ece3d7;   /* tło pod ładującymi się zdjęciami, hover ikon */
+  --c-latte: #eadfd0;         /* pas latte (hero, kafle) — tekst 11.3:1 */
+  --c-sand: #e1d2bf;          /* pas piaskowy (materiały) — tekst 10.0:1 */
+  --c-ink: #3d322b;           /* espresso: górny pasek, przyciski, dół stopki */
+  --c-on-ink: #f8f1e8;        /* tekst na espresso — 11.1:1 */
+  --c-on-ink-muted: #d6c8b8;  /* drobny tekst na espresso — 7.6:1 */
+  --c-border: #dfd2c2;        /* linie dekoracyjne */
+  --c-border-strong: #8f7e6d; /* 3.4:1 — ramki pól formularzy (WCAG 1.4.11) */
+  --c-text: #2f2620;          /* 12.9:1 */
+  --c-text-muted: #665849;    /* 6.0:1 (4.6:1 na piasku) */
+  --c-accent: #8a4f35;        /* 5.6:1 — cynamon: pismo odręczne, linki, hover, focus. Na piasku tylko duży tekst */
+  --c-accent-hover: #713f29;  /* 7.5:1 */
   --c-on-accent: #fff;
   --c-honey: #c9a25a;         /* wosk pszczeli — wyłącznie dekoracja, nigdy tekst */
   --c-success: #4f6b4a;       /* 5.3:1 */
   --c-error: #a3362f;         /* 6.0:1 */
-  --c-overlay: rgb(47 42 43 / 0.4);
+  --c-overlay: rgb(47 38 32 / 0.4);
 
   /* — Typografia — */
   --f-serif: var(--font-display), 'Cormorant Garamond', Georgia, serif;
   --f-sans: var(--font-body), 'Jost', system-ui, sans-serif;
-  --f-script: var(--font-script), 'Corinthia', cursive;  /* pismo odręczne — logo i wyróżnienia w nagłówkach */
+  --f-script: var(--font-script), 'Corinthia', cursive;  /* pismo odręczne — wyróżnienia w nagłówkach */
+  --f-logo: var(--font-logo), 'Bodoni Moda', Georgia, serif; /* znak słowny (kursywa) */
 
   /* Skala 1.25 (tercja wielka), bazowo 17 px; nagłówki płynne */
   --fs-2xs: 0.6875rem;                                   /* 11 — licznik w ikonie koszyka */
@@ -62,9 +63,9 @@
 
   /* — Zaokrąglenia — */
   --r-sm: 2px;      /* pola formularzy, przyciski */
-  --r-md: 2px;      /* zdjęcia, karty — proste rogi */
+  --r-md: 20px;     /* zdjęcia, karty */
   --r-pill: 999px;  /* przyciski, znaczniki */
-  --r-arch: 50% 50% 0 0 / 34% 34% 0 0; /* łuk — znak marki, max 1 na ekran */
+  --r-arch: 50% 50% var(--r-md) var(--r-md) / 32% 32% var(--r-md) var(--r-md); /* łuk — znak marki, max 1 na ekran */
 
   /* — Elewacja (strona płaska z założenia) — */
   --e-1: 0 1px 0 var(--c-border);
@@ -76,6 +77,7 @@
   --t-slow: 400ms;
   --t-slower: 600ms;          /* powiększenie zdjęcia na hover */
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* długie, miękkie wyhamowanie — odsłanianie zdjęć */
 
   /* — Układ — */
   --container: 76rem;
@@ -114,8 +116,6 @@ h1 em, h2 em {
   font-family: var(--f-script); font-style: normal; text-transform: none; letter-spacing: 0;
   font-size: 1.45em; line-height: 0.7; color: var(--c-accent); white-space: nowrap;
 }
-/* Ozdobna gwiazdka ✦ */
-.sparkle { display: block; color: var(--c-accent); font-size: var(--fs-lg); line-height: 1; text-align: center; }
 p { margin: 0 0 var(--sp-4); max-width: 62ch; text-wrap: pretty; }
 strong { font-weight: 500; }
 a { color: inherit; text-underline-offset: 0.25em; text-decoration-thickness: 1px; transition: color var(--t-fast) var(--ease); }
@@ -205,15 +205,33 @@ a:hover { color: var(--c-accent); }
 .frame--arch { border-radius: var(--r-arch); }
 .frame--portrait { aspect-ratio: 4 / 5; }
 
-/* — Pasy tła (świadomie: pudrowy, piaskowy, grafitowy — jak w inspiracjach) — */
-.band--blush { background: var(--c-blush); }
+/* — Pasy tła: latte, piaskowy, espresso — */
+.band--latte { background: var(--c-latte); }
 .band--sand { background: var(--c-sand); }
 .band--ink { background: var(--c-ink); color: var(--c-on-ink); }
 .band--ink a:hover { color: var(--c-on-ink); }
 
-/* — Pojawianie się przy przewijaniu: elementy [data-reveal-item] w kontenerze [data-reveal]; ukrywa je dopiero skrypt w Base — */
-.js-reveal [data-reveal]:not(.is-in) [data-reveal-item] { opacity: 0; transform: translateY(2.5rem); }
+/* — Ruch przy przewijaniu —
+   Kontener [data-reveal] dostaje .is-in, gdy wjedzie w ekran (skrypt w Base); dzieci [data-reveal-item] animują się kaskadą (--i).
+   Efekt: „wypłynięcie” z dołu z wyciszeniem (jak w karuzeli w stopce).
+   Wszystko ukrywa dopiero klasa .js-reveal (JS + brak „ogranicz ruch”), więc bez JS treść jest od razu widoczna. */
 [data-reveal-item] { transition: opacity 900ms var(--ease), transform 900ms var(--ease); transition-delay: calc(var(--i, 0) * 140ms); }
+.js-reveal [data-reveal]:not(.is-in) [data-reveal-item] { opacity: 0; transform: translateY(2.5rem); }
+/* Słowo pismem odręcznym w nagłówku „dopisuje się” po pojawieniu sekcji */
+.js-reveal [data-reveal] h2 em { display: inline-block; clip-path: inset(-60% -15% -70% -5%); transition: clip-path 1400ms var(--ease-out) 450ms; }
+.js-reveal [data-reveal]:not(.is-in) h2 em { clip-path: inset(-60% 100% -70% -5%); }
+
+/* Paralaksa: zdjęcie z [data-parallax] lekko przesuwa się w ramce przy przewijaniu (CSS scroll-driven; bez wsparcia — stoi w miejscu) */
+@supports (animation-timeline: view()) {
+  .js-reveal [data-parallax] img { scale: 1.12; animation: drift linear both; animation-timeline: view(); }
+}
+@keyframes drift { from { translate: 0 -5%; } to { translate: 0 5%; } }
+
+/* Intro strony głównej (.js-intro, raz na sesję) — wspólne klatki */
+@keyframes rise { from { opacity: 0; transform: translateY(1.75rem); } to { opacity: 1; transform: none; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes write { from { clip-path: inset(-30% 100% -30% 0); } to { clip-path: inset(-30% 0 -30% 0); } }
+.js-intro .site-header .logo { animation: fade 1200ms var(--ease) both; }
 
 /* — Dostępność — */
 .visually-hidden {

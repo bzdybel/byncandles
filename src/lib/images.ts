@@ -17,12 +17,19 @@ import prezentPudelka from '../assets/site/prezent-rozowe-pudelka-swiece.jpg';
 import prezentAlpaka from '../assets/site/prezent-alpaka-zapakowana.jpg';
 import moai from '../assets/site/swieca-moai.jpg';
 import czaszka from '../assets/site/swieca-rozowa-czaszka.jpg';
+import krowaMech from '../assets/site/swieca-krowa-w-mchu.jpg';
+import dawid from '../assets/site/swieca-dawid-popiersie.jpg';
+import alpaki from '../assets/site/swiece-alpaki-plot.jpg';
+import lawenda from '../assets/site/swiece-lawenda-ksiazka.jpg';
+import buddy from '../assets/site/swiece-buddy-slon.jpg';
+import cytryna from '../assets/site/swieca-cytryna.jpg';
 
 export interface SiteImage { src: ImageMetadata; alt: string }
 
 const sources = {
   roze, muszle, rozaWrzosowa, krowki, pszczeli, misie, kurka, buldog, wSzkle,
   procesKnot, procesZapach, procesOdlewanie, prezentPudelka, prezentAlpaka, moai, czaszka,
+  krowaMech, dawid, alpaki, lawenda, buddy, cytryna,
 } satisfies Record<keyof typeof alt, ImageMetadata>;
 
 export const IMG = Object.fromEntries(
