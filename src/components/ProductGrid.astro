@@ -1,11 +1,11 @@
 ---
 import ProductCard from './ProductCard.astro';
 import type { Produkt } from '../lib/shop';
-interface Props { produkty: Produkt[]; eagerFirst?: number }
-const { produkty, eagerFirst = 0 } = Astro.props;
+interface Props { produkty: Produkt[]; eagerFirst?: number; headingLevel?: 2 | 3 }
+const { produkty, eagerFirst = 0, headingLevel = 3 } = Astro.props;
 ---
 <ul class="grid" role="list">
-  {produkty.map((p, i) => <li><ProductCard produkt={p} eager={i < eagerFirst} /></li>)}
+  {produkty.map((p, i) => <li><ProductCard produkt={p} eager={i < eagerFirst} headingLevel={headingLevel} /></li>)}
 </ul>
 <style>
   .grid { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-7) var(--sp-5);

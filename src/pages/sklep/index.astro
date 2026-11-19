@@ -28,7 +28,7 @@ const kat = (await kategorie()).filter((k) => produkty.some((p) => p.data.katego
       </nav>
     )}
 
-    {produkty.length > 0 ? <ProductGrid produkty={produkty} eagerFirst={2} /> : <EmptyShop />}
+    {produkty.length > 0 ? <ProductGrid produkty={produkty} eagerFirst={2} headingLevel={2} /> : <EmptyShop />}
   </section>
 </Base>
 

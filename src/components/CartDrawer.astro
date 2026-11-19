@@ -1,0 +1,227 @@
+---
+import { toGrosze, ustawienia } from '../lib/shop';
+const ust = await ustawienia();
+---
+<dialog
+  id="cart"
+  class="drawer"
+  aria-labelledby="cart-title"
+  data-cart-config
+  data-shipping={toGrosze(ust.wysylkaPaczkomat ?? 0)}
+  data-free-from={ust.darmowaWysylkaOd !== undefined ? toGrosze(ust.darmowaWysylkaOd) : ''}
+  data-promo={String(ust.promocja2plus1)}
+>
+  <div class="panel">
+    <header class="top">
+      <h2 id="cart-title" class="title">Koszyk</h2>
+      <button type="button" class="close" data-cart-close aria-label="Zamknij koszyk">
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 2l14 14M16 2L2 16" stroke="currentColor" stroke-width="1.2" fill="none" /></svg>
+      </button>
+    </header>
+
+    {ust.promocja2plus1 && <p class="promo-bar">Promocja 2+1 — przy trzech świecach najtańsza gratis</p>}
+
+    <div class="body">
+      <ul class="items" role="list" data-cart-items></ul>
+      <div class="empty" data-cart-empty hidden>
+        <p class="t-lead">Twój koszyk jest pusty.</p>
+        <p class="t-muted">Zajrzyj do kolekcji — każda świeca to ręcznie odlany egzemplarz.</p>
+        <a class="btn" href="/sklep/">Przejdź do sklepu</a>
+      </div>
+    </div>
+
+    <footer class="summary" data-cart-summary hidden>
+      <div class="free" data-cart-free hidden>
+        <p class="t-small" data-cart-free-text></p>
+        <div class="bar" aria-hidden="true"><span data-cart-free-bar></span></div>
+      </div>
+      <dl class="totals">
+        <div><dt>Produkty</dt><dd data-cart-subtotal></dd></div>
+        <div class="discount" data-cart-discount-row hidden><dt>Promocja 2+1</dt><dd data-cart-discount></dd></div>
+        <div><dt>Dostawa (Paczkomat InPost)</dt><dd data-cart-shipping></dd></div>
+        <div class="grand"><dt>Razem</dt><dd data-cart-total></dd></div>
+      </dl>
+      <a class="btn btn--block btn--lg" href="/zamowienie/">Przejdź do zamówienia</a>
+      <button type="button" class="continue" data-cart-close>Kontynuuj zakupy</button>
+    </footer>
+  </div>
+</dialog>
+
+<p class="visually-hidden" aria-live="polite" data-cart-live></p>
+
+<template id="cart-item-tpl">
+  <li class="item">
+    <a class="thumb" data-href tabindex="-1" aria-hidden="true"><img alt="" width="72" height="90" loading="lazy" data-img /></a>
+    <div class="info">
+      <a class="name" data-href data-name></a>
+      <span class="price t-small t-muted" data-price></span>
+      <div class="row">
+        <div class="qty" role="group">
+          <button type="button" data-dec aria-label="Zmniejsz ilość">−</button>
+          <span data-qty aria-live="polite"></span>
+          <button type="button" data-inc aria-label="Zwiększ ilość">+</button>
+        </div>
+        <button type="button" class="remove" data-remove>Usuń</button>
+      </div>
+      <span class="limit t-small" data-limit hidden>To już wszystkie dostępne sztuki.</span>
+    </div>
+    <span class="line" data-line></span>
+  </li>
+</template>
+
+<script>
+  import { add, CHANGE_EVENT, fmt, plural, read, readConfig, remove, setQty, totals } from '../scripts/cart';
+
+  const dialog = document.getElementById('cart') as HTMLDialogElement;
+  const cfg = readConfig(dialog);
+  const $ = <T extends HTMLElement>(sel: string, root: ParentNode = dialog) => root.querySelector<T>(sel)!;
+  const live = document.querySelector<HTMLElement>('[data-cart-live]')!;
+  const tpl = document.getElementById('cart-item-tpl') as HTMLTemplateElement;
+  let lastTrigger: HTMLElement | null = null;
+
+  export function openCart(trigger?: HTMLElement | null) {
+    lastTrigger = trigger ?? (document.activeElement as HTMLElement);
+    if (!dialog.open) dialog.showModal();
+  }
+
+  function closeCart() {
+    dialog.classList.add('closing');
+    setTimeout(() => { dialog.classList.remove('closing'); dialog.close(); lastTrigger?.focus(); }, 200);
+  }
+
+  function render() {
+    const items = read();
+    const t = totals(items, cfg);
+    const list = $('[data-cart-items]');
+    list.replaceChildren(
+      ...items.map((i) => {
+        const li = tpl.content.firstElementChild!.cloneNode(true) as HTMLElement;
+        li.querySelectorAll<HTMLAnchorElement>('[data-href]').forEach((a) => (a.href = i.url));
+        const img = li.querySelector<HTMLImageElement>('[data-img]')!;
+        if (i.img) img.src = i.img; else img.remove();
+        li.querySelector('[data-name]')!.textContent = i.name;
+        li.querySelector('[data-price]')!.textContent = `${fmt(i.price)} / szt.`;
+        li.querySelector('[data-qty]')!.textContent = String(i.qty);
+        li.querySelector('[data-line]')!.textContent = fmt(i.price * i.qty);
+        li.querySelector('.qty')!.setAttribute('aria-label', `Ilość: ${i.name}`);
+        const inc = li.querySelector<HTMLButtonElement>('[data-inc]')!;
+        const dec = li.querySelector<HTMLButtonElement>('[data-dec]')!;
+        inc.disabled = i.qty >= i.max;
+        li.querySelector<HTMLElement>('[data-limit]')!.hidden = i.qty < i.max;
+        inc.onclick = () => setQty(i.id, i.qty + 1);
+        dec.onclick = () => (i.qty <= 1 ? remove(i.id) : setQty(i.id, i.qty - 1));
+        li.querySelector<HTMLButtonElement>('[data-remove]')!.onclick = () => { remove(i.id); live.textContent = `Usunięto ${i.name} z koszyka.`; };
+        return li;
+      }),
+    );
+
+    $('[data-cart-empty]').hidden = items.length > 0;
+    $('[data-cart-summary]').hidden = items.length === 0;
+    $('[data-cart-subtotal]').textContent = fmt(t.subtotal);
+    $('[data-cart-discount-row]').hidden = t.discount === 0;
+    $('[data-cart-discount]').textContent = `−${fmt(t.discount)}`;
+    $('[data-cart-shipping]').textContent = t.shipping === 0 ? 'gratis' : fmt(t.shipping);
+    $('[data-cart-total]').textContent = fmt(t.total);
+
+    const freeBox = $('[data-cart-free]');
+    freeBox.hidden = cfg.freeFrom === undefined;
+    if (cfg.freeFrom !== undefined) {
+      $('[data-cart-free-text]').textContent = t.missingForFree
+        ? `Brakuje ${fmt(t.missingForFree)} do darmowej dostawy`
+        : 'Masz darmową dostawę';
+      const pct = Math.min(100, ((t.subtotal - t.discount) / cfg.freeFrom) * 100);
+      $<HTMLElement>('[data-cart-free-bar]').style.width = `${pct}%`;
+    }
+
+    document.querySelectorAll<HTMLElement>('[data-cart-count]').forEach((el) => {
+      el.textContent = String(t.count);
+      el.hidden = t.count === 0;
+    });
+    document.querySelectorAll<HTMLElement>('[data-cart-open]').forEach((el) =>
+      el.setAttribute('aria-label', `Koszyk, ${t.count} ${plural(t.count, ['produkt', 'produkty', 'produktów'])}`),
+    );
+  }
+
+  // Zamknięcie: przycisk, klik w tło, Esc (natywnie w <dialog>)
+  dialog.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (target === dialog || target.closest('[data-cart-close]')) closeCart();
+  });
+  dialog.addEventListener('cancel', (e) => { e.preventDefault(); closeCart(); });
+
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const opener = target.closest<HTMLElement>('[data-cart-open]');
+    if (opener) { e.preventDefault(); openCart(opener); return; }
+
+    const btn = target.closest<HTMLButtonElement>('[data-add-to-cart]');
+    if (!btn || btn.disabled) return;
+    const d = btn.dataset;
+    const label = btn.textContent;
+    btn.dataset.state = 'loading';
+    const ok = add({ id: d.id!, name: d.name!, price: Number(d.price), max: Number(d.max), img: d.img, url: d.url ?? location.pathname });
+    btn.dataset.state = ok ? 'success' : '';
+    btn.textContent = ok ? 'Dodano do koszyka ✓' : 'Masz już wszystkie dostępne sztuki';
+    live.textContent = ok ? `Dodano ${d.name} do koszyka.` : `Nie można dodać więcej: ${d.name}.`;
+    setTimeout(() => { btn.dataset.state = ''; btn.textContent = label; }, 1800);
+    if (ok) setTimeout(() => openCart(btn), 350);
+  });
+
+  document.addEventListener(CHANGE_EVENT, render);
+  window.addEventListener('storage', (e) => e.key === 'byn-cart-v1' && render()); // inne karty
+  render();
+</script>
+
+<style>
+  .drawer {
+    margin: 0 0 0 auto; padding: 0; border: 0; width: min(28rem, 100%); max-width: 100%; height: 100dvh; max-height: 100dvh;
+    background: var(--c-surface); color: var(--c-text); box-shadow: var(--e-2);
+  }
+  .drawer[open] { animation: slide-in var(--t-slow) var(--ease); }
+  .drawer.closing { animation: slide-out 200ms var(--ease) forwards; }
+  .drawer::backdrop { background: var(--c-overlay); animation: fade var(--t-slow) var(--ease); }
+  @keyframes slide-in { from { transform: translateX(100%); } }
+  @keyframes slide-out { to { transform: translateX(100%); } }
+  @keyframes fade { from { opacity: 0; } }
+
+  .panel { display: flex; flex-direction: column; height: 100%; }
+  .top { display: flex; justify-content: space-between; align-items: center; padding: var(--sp-4) var(--sp-5); border-bottom: 1px solid var(--c-border); }
+  .title { font-size: var(--fs-xl); margin: 0; }
+  .close { width: var(--tap); height: var(--tap); display: grid; place-items: center; background: none; border: 0; cursor: pointer; border-radius: var(--r-pill); margin-right: calc(-1 * var(--sp-3)); }
+  .close:hover { background: var(--c-surface-alt); }
+  .promo-bar { margin: 0; max-width: none; padding: var(--sp-2) var(--sp-5); background: var(--c-blush); font-size: var(--fs-sm); text-align: center; }
+
+  .body { flex: 1; overflow-y: auto; padding: var(--sp-2) var(--sp-5); }
+  .items { list-style: none; margin: 0; padding: 0; }
+  .empty { padding-block: var(--sp-7); text-align: center; display: grid; justify-items: center; gap: var(--sp-2); }
+
+  :global(.item) { display: grid; grid-template-columns: 72px 1fr auto; gap: var(--sp-4); padding-block: var(--sp-4); border-bottom: 1px solid var(--c-border); }
+  :global(.item .thumb) { display: block; border-radius: var(--r-sm); overflow: hidden; background: var(--c-surface-alt); aspect-ratio: 4 / 5; }
+  :global(.item .thumb img) { width: 100%; height: 100%; object-fit: cover; }
+  :global(.item .info) { display: grid; gap: var(--sp-1); align-content: start; }
+  :global(.item .name) { font-family: var(--f-serif); font-size: var(--fs-base); text-decoration: none; line-height: var(--lh-snug); }
+  :global(.item .row) { display: flex; align-items: center; gap: var(--sp-4); margin-top: var(--sp-2); }
+  :global(.item .qty) { display: inline-flex; align-items: center; border: 1px solid var(--c-border); border-radius: var(--r-pill); }
+  :global(.item .qty button) { width: 36px; height: 36px; background: none; border: 0; cursor: pointer; border-radius: var(--r-pill); font-size: 1.1rem; }
+  :global(.item .qty button:hover:not(:disabled)) { background: var(--c-surface-alt); }
+  :global(.item .qty button:disabled) { opacity: 0.35; cursor: not-allowed; }
+  :global(.item .qty span) { min-width: 1.75rem; text-align: center; font-variant-numeric: tabular-nums; }
+  :global(.item .remove) { background: none; border: 0; padding: var(--sp-2) 0; cursor: pointer; font-size: var(--fs-sm); color: var(--c-text-muted); text-decoration: underline; text-underline-offset: 0.2em; }
+  :global(.item .remove:hover) { color: var(--c-error); }
+  :global(.item .limit) { color: var(--c-text-muted); }
+  :global(.item .line) { font-variant-numeric: tabular-nums; }
+
+  .summary { padding: var(--sp-5); border-top: 1px solid var(--c-border); display: grid; gap: var(--sp-3); background: var(--c-surface); }
+  .free p { margin-bottom: var(--sp-2); }
+  .bar { height: 4px; background: var(--c-border); border-radius: var(--r-pill); overflow: hidden; }
+  .bar span { display: block; height: 100%; background: var(--c-accent); transition: width var(--t-slow) var(--ease); }
+  .totals { margin: 0; display: grid; gap: var(--sp-1); font-size: var(--fs-sm); }
+  .totals div { display: flex; justify-content: space-between; gap: var(--sp-4); }
+  .totals dt { color: var(--c-text-muted); }
+  .totals dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .discount dd { color: var(--c-success); }
+  .grand { padding-top: var(--sp-2); margin-top: var(--sp-1); border-top: 1px solid var(--c-border); font-size: var(--fs-base); }
+  .grand dt { color: var(--c-text); }
+  .grand dd { font-weight: 500; }
+  .continue { background: none; border: 0; min-height: var(--tap); cursor: pointer; font-size: var(--fs-sm); text-decoration: underline; text-underline-offset: 0.2em; }
+</style>

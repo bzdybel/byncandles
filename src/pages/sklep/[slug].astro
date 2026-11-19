@@ -44,6 +44,7 @@ const nuty = [
 ].filter((r): r is [string, string] => Boolean(r[1]));
 
 // JPEG 1200 px — ten sam plik dla Open Graph i Google (szeroka kompatybilność).
+const miniatura = await getImage({ src: p.zdjecia[0].zdjecie, width: 144, format: 'webp', quality: 70 });
 const zdjeciaLd = await Promise.all(
   p.zdjecia.map(async (z) => new URL((await getImage({ src: z.zdjecie, width: 1200, format: 'jpeg', quality: 80 })).src, SITE_URL).href),
 );
@@ -133,6 +134,8 @@ const crumbs = [
           data-name={p.nazwa}
           data-price={toGrosze(cena)}
           data-max={p.stan}
+          data-img={miniatura.src}
+          data-url={urlProduktu(produkt)}
           disabled={!kupno}
         >
           {kupno ? 'Dodaj do koszyka' : STATUS_LABEL[p.status]}

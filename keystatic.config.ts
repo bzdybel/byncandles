@@ -162,6 +162,11 @@ export default config({
         wysylkaPaczkomat: fields.number({ label: 'Koszt wysyłki — Paczkomat InPost (zł)', step: 0.01, defaultValue: 0 }),
         wysylkaKurier: fields.number({ label: 'Koszt wysyłki — Kurier InPost (zł, puste = wyłączony)', step: 0.01 }),
         darmowaWysylkaOd: fields.number({ label: 'Darmowa wysyłka od (zł, puste = brak)', step: 0.01 }),
+        promocja2plus1: fields.checkbox({
+          label: 'Promocja 2+1',
+          description: 'Przy 3 sztukach w koszyku najtańsza gratis (co trzecia sztuka).',
+          defaultValue: false,
+        }),
         producent: fields.object(
           {
             nazwa: fields.text({ label: 'Nazwa producenta / firmy' }),

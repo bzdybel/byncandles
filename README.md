@@ -49,6 +49,16 @@ wrangler.jsonc         # konfiguracja Cloudflare Workers
 Zapis tworzy pliki w `src/content/` i `src/assets/produkty/` — commit + PR publikuje zmiany.
 Logowanie przez GitHub dla Natalii (edycja bez lokalnego środowiska) — kolejny etap.
 
+## Koszyk i zamówienia
+
+- Koszyk: `src/scripts/cart.ts` (localStorage, kwoty w groszach) + panel `src/components/CartDrawer.astro` (`<dialog>`).
+- Promocja 2+1 i koszty dostawy: **Ustawienia sklepu** w panelu Keystatic.
+- Zamówienie: `/zamowienie/`. Zmienne buildu (Cloudflare → Settings → Build → Variables):
+  - `PUBLIC_INPOST_GEOWIDGET_TOKEN` — token Geowidgetu z Managera Paczek InPost (mapa paczkomatów).
+    Bez niego klient wpisuje kod paczkomatu ręcznie.
+  - `PUBLIC_CHECKOUT_ENDPOINT` — API zamówień i płatności Przelewy24 (kolejny etap).
+    Bez niego formularz tworzy podsumowanie do wysłania w wiadomości na Instagramie.
+
 ## SEO — zasady
 
 - Kanoniczne URL-e zakończone `/` (`trailingSlash: 'always'`).
