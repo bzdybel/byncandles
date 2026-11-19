@@ -6,7 +6,7 @@ Instagram: [@by_n.candles](https://www.instagram.com/by_n.candles/)
 ## Stack
 
 - [Astro](https://astro.build) — statyczny HTML, minimum JS (priorytet: SEO i szybkość)
-- Hosting: Cloudflare Workers — statyczne assets (darmowe, adres tymczasowy `*.workers.dev`)
+- Hosting: Cloudflare Workers — statyczne assets (darmowe, adres tymczasowy `byncandles.devbz.workers.dev`)
 - Keystatic (CMS na plikach w repo)
 - Planowane: Cloudflare D1 (zamówienia), InPost Geowidget + ShipX, Przelewy24
 

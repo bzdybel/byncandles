@@ -3,7 +3,7 @@
  * (lub ustaw zmienną buildu SITE_URL w Cloudflare Workers).
  */
 export const SITE_URL: string =
-  (typeof process !== 'undefined' && process.env.SITE_URL) || 'https://byncandles.pages.dev';
+  (typeof process !== 'undefined' && process.env.SITE_URL) || 'https://byncandles.devbz.workers.dev';
 
 export const SITE = {
   name: 'by N. candles',
