@@ -29,10 +29,7 @@ const jsonLd = {
       <p class="t-lead">{about.lead}</p>
       {about.body.map((t) => <p>{t}</p>)}
       <!-- TODO: historia marki od Natalii — jak to się zaczęło, skąd nazwa, co ją inspiruje -->
-      <figure class="studio">
-        <div class="frame"><Img {...IMG.procesOdlewanie} widths={[320, 480]} sizes="9rem" /></div>
-        <figcaption class="t-small t-muted">{about.studioCaption}</figcaption>
-      </figure>
+      <div class="frame studio"><Img {...IMG.procesOdlewanie} widths={[320, 480]} sizes="9rem" /></div>
       <div class="actions">
         <a class="btn btn--lg" href="/sklep/">{common.seeCandles}</a>
         <a class="btn btn--ghost btn--lg" href={SITE.instagram} rel="me noopener" target="_blank">{about.instagram}</a>
@@ -44,6 +41,5 @@ const jsonLd = {
 <style>
   @media (min-width: 56rem) { .sticky { position: sticky; top: var(--sp-5); } }
   .t-lead { margin-bottom: var(--sp-5); }
-  .studio { display: grid; grid-template-columns: 9rem 1fr; gap: var(--sp-4); align-items: end; margin: var(--sp-6) 0 var(--sp-7); }
-  .studio .frame { aspect-ratio: 3 / 4; }
+  .studio { width: 9rem; aspect-ratio: 3 / 4; margin: var(--sp-6) 0 var(--sp-7); }
 </style>

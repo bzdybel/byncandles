@@ -21,9 +21,9 @@ export default defineConfig({
   fonts: [
     {
       provider: fontProviders.fontsource(),
-      name: 'Bodoni Moda',
+      name: 'Cormorant Garamond',
       cssVariable: '--font-display',
-      weights: ['400'],
+      weights: ['400', '500'],
       styles: ['normal', 'italic'],
       subsets: ['latin', 'latin-ext'],
       fallbacks: ['Georgia', 'serif'],
@@ -36,6 +36,16 @@ export default defineConfig({
       styles: ['normal'],
       subsets: ['latin', 'latin-ext'],
       fallbacks: ['system-ui', 'sans-serif'],
+    },
+    {
+      // Pismo odręczne — logo i wyróżnione słowa w nagłówkach
+      provider: fontProviders.fontsource(),
+      name: 'Corinthia',
+      cssVariable: '--font-script',
+      weights: ['400'],
+      styles: ['normal'],
+      subsets: ['latin', 'latin-ext'],
+      fallbacks: ['cursive'],
     },
   ],
   integrations: [

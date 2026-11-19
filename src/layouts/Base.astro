@@ -20,6 +20,11 @@ const config = await shopConfig();
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <Font cssVariable="--font-display" preload={[{ subset: 'latin', style: 'normal' }]} />
     <Font cssVariable="--font-body" preload={[{ subset: 'latin' }]} />
+    <Font cssVariable="--font-script" preload={[{ subset: 'latin' }]} />
+    <script is:inline>
+      // Animacje pojawiania się — tylko z JS i bez „ogranicz ruch” (inaczej treść jest od razu widoczna).
+      if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('js-reveal');
+    </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <Seo {...Astro.props} />
@@ -34,5 +39,13 @@ const config = await shopConfig();
     <Footer />
     <CartDrawer />
     <script type="application/json" id="shop-config" set:html={JSON.stringify(config)} />
+    <script>
+      if (document.documentElement.classList.contains('js-reveal')) {
+        const io = new IntersectionObserver((entries) => {
+          for (const e of entries) if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+        }, { rootMargin: '0px 0px -12% 0px' });
+        document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
+      }
+    </script>
   </body>
 </html>
