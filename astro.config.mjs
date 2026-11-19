@@ -14,6 +14,8 @@ export default defineConfig({
   site: SITE_URL,
   // Cloudflare serwuje /strona/index.html pod /strona/ — trzymamy jeden kanoniczny wariant.
   trailingSlash: 'always',
+  // Strona „O mnie” usunięta — stare linki prowadzą na główną.
+  redirects: { '/o-mnie/': '/' },
   build: { format: 'directory', inlineStylesheets: 'auto' },
   prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
   image: { responsiveStyles: false },

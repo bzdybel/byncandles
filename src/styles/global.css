@@ -200,6 +200,7 @@ a:hover { color: var(--c-accent); }
 
 /* — Ramka zdjęcia — */
 .frame { overflow: hidden; border-radius: var(--r-md); background: var(--c-surface-alt); }
+.frame picture { height: 100%; }
 .frame img { width: 100%; height: 100%; object-fit: cover; }
 .frame--arch { border-radius: var(--r-arch); }
 .frame--portrait { aspect-ratio: 4 / 5; }

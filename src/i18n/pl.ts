@@ -39,7 +39,6 @@ export const common = {
 export const nav = {
   label: 'Główna nawigacja',
   shop: 'Sklep',
-  about: 'O mnie',
   contact: 'Kontakt',
 } as const;
 
@@ -51,7 +50,6 @@ export const footer = {
   allCandles: 'Wszystkie świece',
   delivery: 'Dostawa i zwroty',
   customOrders: 'Zamówienia indywidualne',
-  about: 'O mnie',
   contact: 'Kontakt',
   terms: 'Regulamin',
   privacy: 'Polityka prywatności',
@@ -84,7 +82,6 @@ export const home = {
   heroQuote:
     '„Każda świeca powstaje ręcznie. Od roztapiania wosku, przez mieszanie zapachu, aż po ostatnie detale. Ten cały proces to coś, co pozwala mi zwolnić tempo i skupić się na «tu» i «teraz»”.',
   heroSignature: 'Natalia',
-  heroSecondary: 'Poznaj Natalię',
   featured: 'Wybrane świece',
   featuredMore: 'Cała kolekcja',
   processTitle: 'Jak powstaje świeca',
@@ -118,20 +115,6 @@ export const home = {
   giftSecondary: 'Wybierz ze sklepu',
 } as const;
 
-export const about = {
-  metaTitle: 'O mnie — Natalia, twórczyni świec by N.',
-  metaDescription:
-    'Poznaj Natalię, która ręcznie tworzy świece by N. z wosku sojowego i pszczelego. O pracowni, inspiracjach i powolnym procesie powstawania każdej świecy.',
-  jobTitle: 'Twórczyni świec',
-  title: 'Cześć, jestem',
-  titleEm: 'Natalia',
-  lead: 'Tworzę by N. — ręcznie robione świece z wosku sojowego i pszczelego.',
-  body: [
-    'Każda świeca powstaje ręcznie. Od roztapiania wosku, przez mieszanie zapachu, aż po ostatnie detale. Ten cały proces to coś, co pozwala mi zwolnić tempo i skupić się na „tu” i „teraz”. Bez scrollowania, bez przyśpieszenia, bez przewijania. Wszystko trwa tyle, ile trwać powinno. I to jest w tym najpiękniejsze.',
-    'Lubię formy, które są czymś więcej niż świecą: realistyczne róże, muszle, kudłate krówki Highland, a czasem różową czaszkę inspirowaną motywem vanitas. Trochę sztuki, trochę ironii, trochę candlecore — czyli by N. w pigułce.',
-  ],
-  instagram: 'Instagram',
-} as const;
 
 export const contact = {
   metaTitle: 'Kontakt i zamówienia indywidualne',
@@ -352,4 +335,6 @@ export const images = {
   procesOdlewanie: 'Roztopiony wosk wlewany do formy z knotem przytrzymanym drewnianym patyczkiem',
   prezentPudelka: 'Różowe pudełka prezentowe z okienkiem, w środku świece-róże, przewiązane lnianą wstążką',
   prezentAlpaka: 'Świeca-alpaka zapakowana w przezroczysty celofan ze sznurkiem, trzymana w dłoni',
+  moai: 'Szaro-beżowa świeca w kształcie głowy Moai obok białego kwiatu',
+  czaszka: 'Różowa świeca w kształcie czaszki na żółtej półce z książkami',
 } as const;
