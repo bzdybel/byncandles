@@ -1,0 +1,47 @@
+---
+import { Picture } from 'astro:assets';
+import { cenaAktualna, formatPLN, naStanie, STATUS_LABEL, urlProduktu, type Produkt } from '../lib/shop';
+
+interface Props { produkt: Produkt; eager?: boolean }
+const { produkt, eager = false } = Astro.props;
+const p = produkt.data;
+const [glowne] = p.zdjecia;
+const promo = p.cenaPromocyjna !== undefined;
+---
+<article class="card">
+  <a href={urlProduktu(produkt)} class="link">
+    <div class="media">
+      <Picture
+        src={glowne.zdjecie}
+        alt={glowne.alt}
+        formats={['avif', 'webp']}
+        widths={[320, 480, 640, 960]}
+        sizes="(min-width: 64rem) 22rem, (min-width: 40rem) 45vw, 92vw"
+        loading={eager ? 'eager' : 'lazy'}
+        fetchpriority={eager ? 'high' : 'auto'}
+      />
+      {!naStanie(p) && <span class="badge">{STATUS_LABEL[p.status]}</span>}
+    </div>
+    <h3 class="name">{p.nazwa}</h3>
+  </a>
+  <p class="price">
+    {promo && <s class="old">{formatPLN(p.cena)}</s>}
+    <span class:list={{ promo }}>{formatPLN(cenaAktualna(p))}</span>
+  </p>
+</article>
+
+<style>
+  .card { display: grid; gap: var(--s-2); }
+  .link { text-decoration: none; display: grid; gap: var(--s-2); }
+  .media { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: var(--c-line); }
+  .media :global(img) { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
+  .link:hover .media :global(img) { transform: scale(1.03); }
+  .badge {
+    position: absolute; left: var(--s-2); top: var(--s-2); background: var(--c-surface);
+    font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.3em 0.7em;
+  }
+  .name { font-size: 1.15rem; margin: 0; }
+  .price { margin: 0; color: var(--c-muted); display: flex; gap: var(--s-2); align-items: baseline; }
+  .old { font-size: 0.85em; }
+  .promo { color: var(--c-accent); }
+</style>

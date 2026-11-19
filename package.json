@@ -9,10 +9,24 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "check": "astro check"
   },
   "dependencies": {
+    "@astrojs/react": "^7.1.9",
     "@astrojs/sitemap": "^3.7.6",
-    "astro": "^7.4.13"
+    "@keystatic/astro": "^6.0.0",
+    "@keystatic/core": "^0.6.10",
+    "astro": "^7.4.13",
+    "js-yaml": "^5.5.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@types/js-yaml": "^4.0.9",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^6.0.3"
   }
 }

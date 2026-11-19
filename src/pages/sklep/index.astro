@@ -1,5 +1,10 @@
 ---
 import Base from '../../layouts/Base.astro';
+import ProductGrid from '../../components/ProductGrid.astro';
+import { kategorie, produktyPubliczne, urlKategorii } from '../../lib/shop';
+
+const produkty = await produktyPubliczne();
+const kat = (await kategorie()).filter((k) => produkty.some((p) => p.data.kategoria?.id === k.id));
 ---
 <Base
   title="Sklep — ręcznie robione świece"
@@ -8,7 +13,22 @@ import Base from '../../layouts/Base.astro';
   <section class="container section">
     <p class="eyebrow">Sklep</p>
     <h1>Kolekcja świec</h1>
-    <!-- Produkty zostaną podpięte z CMS (Etap 4–5) -->
-    <p>Sklep wkrótce ruszy. Obserwuj nas na Instagramie, aby nie przegapić premiery.</p>
+
+    {kat.length > 1 && (
+      <nav aria-label="Kategorie" class="cats">
+        <ul>{kat.map((k) => <li><a href={urlKategorii(k)}>{k.data.nazwa}</a></li>)}</ul>
+      </nav>
+    )}
+
+    {produkty.length > 0 ? (
+      <ProductGrid produkty={produkty} eagerFirst={2} />
+    ) : (
+      <p>Sklep wkrótce ruszy. Obserwuj nas na Instagramie, aby nie przegapić premiery.</p>
+    )}
   </section>
 </Base>
+
+<style>
+  .cats ul { list-style: none; padding: 0; margin: 0 0 var(--s-5); display: flex; flex-wrap: wrap; gap: var(--s-3); }
+  .cats a { font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; }
+</style>
