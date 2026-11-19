@@ -11,9 +11,9 @@ const wszystkie = await produktyPubliczne();
 const wyroznione = wszystkie.filter((p) => p.data.wyrozniony);
 const polecane = (wyroznione.length ? wyroznione : wszystkie).slice(0, 4);
 
-const [glowne, ...male] = (['krowki', 'muszle', 'misie', 'buldog', 'wSzkle'] as const).map((key) => ({ img: IMG[key], label: home.gallery[key] }));
+// 4 najlepsze prace — same zdjęcia, bez podpisów (asortyment i opisy są w sklepie).
+const prace = (['rozaWrzosowa', 'krowki', 'muszle', 'buldog'] as const).map((key) => IMG[key]);
 const proces = [IMG.procesKnot, IMG.procesZapach, IMG.procesOdlewanie];
-const materialy = home.materials;
 
 const jsonLd = [
   { '@type': 'Organization', '@id': `${SITE_URL}/#organization`, name: brand.name, url: SITE_URL, sameAs: [SITE.instagram], founder: { '@id': `${SITE_URL}/o-mnie/#natalia` } },
@@ -21,79 +21,78 @@ const jsonLd = [
 ];
 ---
 <Base title={home.metaTitle} description={home.metaDescription} jsonLd={jsonLd}>
-  <section class="container split hero" style="--split: 1.05fr 1fr">
-    <div>
-      <span class="overline">{home.heroOverline}</span>
-      <h1 class="t-display">{home.heroTitle} <em>{home.heroTitleEm}</em></h1>
-      <p class="t-lead">{home.heroLead}</p>
-      <div class="actions">
-        <a class="btn btn--lg" href="/sklep/">{common.seeCollection}</a>
-        <a class="btn btn--ghost btn--lg" href="/o-mnie/">{home.heroSecondary}</a>
+  <!-- Hero: pudrowy pas, tekst + zdjęcie w łuku z gwiazdkami -->
+  <section class="band--blush">
+    <div class="container split hero" style="--split: 1.1fr 1fr">
+      <div class="hero-text">
+        <h1 class="t-display">{home.heroTitle}</h1>
+        <figure class="hero-quote">
+          <blockquote><p>{home.heroQuote}</p></blockquote>
+          <figcaption>{home.heroSignature}</figcaption>
+        </figure>
+        <div class="actions">
+          <a class="btn btn--lg" href="/sklep/">{common.seeCollection}</a>
+          <a class="btn btn--ghost btn--lg" href="/o-mnie/">{home.heroSecondary}</a>
+        </div>
       </div>
-    </div>
-    <div class="frame frame--arch frame--portrait">
-      <Img {...IMG.roze} widths={[420, 640, 860, 1100]} sizes="(min-width: 56rem) 42vw, 92vw" eager />
+      <div class="hero-img">
+        <span class="star star--a" aria-hidden="true">✦</span>
+        <span class="star star--b" aria-hidden="true">✦</span>
+        <div class="frame frame--arch frame--portrait">
+          <Img {...IMG.roze} widths={[420, 640, 860, 1100]} sizes="(min-width: 56rem) 40vw, 92vw" eager />
+        </div>
+      </div>
     </div>
   </section>
 
-  {polecane.length > 0 && (
-    <section class="container section--tight" aria-labelledby="featured">
+  <!-- 1. Wiodąca sekcja: wybrane świece ze sklepu, a dopóki ich brak — 4 najlepsze prace -->
+  {polecane.length > 0 ? (
+    <section class="container section" aria-labelledby="featured">
       <div class="section-head">
         <h2 id="featured">{home.featured}</h2>
         <a class="link-arrow" href="/sklep/"><span>{home.featuredMore}</span></a>
       </div>
       <ProductGrid produkty={polecane} />
     </section>
+  ) : (
+    <section class="container section center-head" aria-labelledby="studio">
+      <span class="overline">{home.galleryOverline}</span>
+      <h2 id="studio">{home.galleryTitle} <em>{home.galleryTitleEm}</em></h2>
+      <ul class="gallery" role="list" data-reveal>
+        {prace.map((img, i) => (
+          <li class="frame" style={`--i: ${i}`} data-reveal-item><Img {...img} widths={[320, 480, 640]} sizes="(min-width: 56rem) 23vw, 46vw" /></li>
+        ))}
+      </ul>
+      <a class="link-arrow" href={SITE.instagram} rel="noopener" target="_blank"><span>{home.galleryMore}</span></a>
+    </section>
   )}
 
-  <section class="band band--surface" aria-labelledby="process">
-    <div class="container section">
-      <div class="process-head">
-        <h2 id="process">{home.processTitle} <em>{home.processTitleEm}</em></h2>
-        <p class="t-muted">{home.processLead}</p>
-      </div>
-      <ol class="steps" role="list">
-        {home.processSteps.map((k, i) => (
-          <li>
-            <div class="frame step-img">
-              <Img {...proces[i]} widths={[320, 480, 640]} sizes="(min-width: 56rem) 28vw, (min-width: 36rem) 45vw, 88vw" />
-            </div>
-            <span class="num" aria-hidden="true">0{i + 1}</span>
-            <h3>{k.title}</h3>
-            <p class="t-muted">{k.text}</p>
-          </li>
-        ))}
-      </ol>
-    </div>
-  </section>
-
-  <section class="container section" aria-labelledby="studio">
-    <div class="section-head">
-      <h2 id="studio">{home.galleryTitle} <em>{home.galleryTitleEm}</em></h2>
-      <a class="link-arrow" href={SITE.instagram} rel="noopener" target="_blank"><span>{home.galleryMore}</span></a>
-    </div>
-    <div class="gallery">
-      <figure class="g-main">
-        <div class="frame"><Img {...glowne.img} widths={[480, 720, 960]} sizes="(min-width: 56rem) 48vw, 92vw" /></div>
-        <figcaption>{glowne.label}</figcaption>
-      </figure>
-      {male.map(({ img, label }) => (
-        <figure>
-          <div class="frame"><Img {...img} widths={[320, 480]} sizes="(min-width: 56rem) 23vw, 46vw" /></div>
-          <figcaption>{label}</figcaption>
-        </figure>
+  <!-- 2. Proces -->
+  <section class="container section center-head" aria-labelledby="process">
+    <h2 id="process">{home.processTitle} <em>{home.processTitleEm}</em></h2>
+    <ol class="steps" role="list" data-reveal>
+      {home.processSteps.map((k, i) => (
+        <li style={`--i: ${i}`} data-reveal-item>
+          <div class="frame step-img">
+            <Img {...proces[i]} widths={[320, 480, 640]} sizes="(min-width: 56rem) 28vw, (min-width: 36rem) 45vw, 88vw" />
+          </div>
+          <span class="num" aria-hidden="true">0{i + 1}</span>
+          <h3>{k.title}</h3>
+          <p class="t-muted">{k.text}</p>
+        </li>
       ))}
-    </div>
+    </ol>
   </section>
 
-  <section class="band band--alt" aria-labelledby="materials">
+  <!-- 3. Materiały -->
+  <section class="band--sand" aria-labelledby="materials">
     <div class="container section split" style="--split: 1fr 1.1fr">
-      <div class="frame frame--portrait">
+      <div class="frame frame--portrait matted">
         <Img {...IMG.pszczeli} widths={[400, 640, 900]} sizes="(min-width: 56rem) 40vw, 92vw" />
       </div>
       <div>
-        <h2 id="materials">{home.materialsTitle}</h2>
-        {materialy.map((m) => (
+        <h2 id="materials">{home.materialsTitle} <em>{home.materialsTitleEm}</em></h2>
+        {home.materials.map((m) => (
           <div class="mat">
             <h3>{m.title}</h3>
             <p class="t-muted">{m.text}</p>
@@ -103,75 +102,65 @@ const jsonLd = [
     </div>
   </section>
 
-  <section class="band band--blush" aria-labelledby="gift">
-    <div class="container section split">
-      <div>
-        <h2 id="gift">{home.giftTitle} <em>{home.giftTitleEm}</em></h2>
-        {home.giftText.map((t) => <p>{t}</p>)}
-        <div class="actions gift-actions">
-          <a class="btn" href="/kontakt/">{home.giftCta}</a>
-          <a class="btn btn--ghost" href="/sklep/">{home.giftSecondary}</a>
-        </div>
-      </div>
-      <div class="gift-imgs">
-        <div class="frame frame--portrait"><Img {...IMG.prezentPudelka} widths={[320, 480, 640]} sizes="(min-width: 56rem) 26vw, 55vw" /></div>
-        <div class="frame frame--portrait offset"><Img {...IMG.prezentAlpaka} widths={[280, 420, 560]} sizes="(min-width: 56rem) 20vw, 42vw" /></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="container section split" style="--split: 0.9fr 1fr" aria-labelledby="about-teaser">
-    <div class="frame frame--arch frame--portrait">
-      <Img {...IMG.kurka} widths={[400, 640, 900]} sizes="(min-width: 56rem) 38vw, 92vw" />
-    </div>
+  <!-- 4. Na prezent i na zamówienie -->
+  <section id="gift" class="container section split" aria-labelledby="gift-title">
     <div>
-      <span class="overline">{home.aboutOverline}</span>
-      <h2 id="about-teaser">{home.aboutTitle} <em>{home.aboutTitleEm}</em></h2>
-      <blockquote><p>{home.aboutQuote}</p></blockquote>
-      <a class="link-arrow" href="/o-mnie/"><span>{common.readMore}</span></a>
+      <h2 id="gift-title">{home.giftTitle} <em>{home.giftTitleEm}</em></h2>
+      {home.giftText.map((t) => <p>{t}</p>)}
+      <div class="actions gift-actions">
+        <a class="btn" href="/kontakt/">{home.giftCta}</a>
+        <a class="btn btn--ghost" href="/sklep/">{home.giftSecondary}</a>
+      </div>
+    </div>
+    <div class="gift-imgs">
+      <div class="frame frame--portrait matted"><Img {...IMG.prezentPudelka} widths={[320, 480, 640]} sizes="(min-width: 56rem) 26vw, 55vw" /></div>
+      <div class="frame frame--portrait matted offset"><Img {...IMG.prezentAlpaka} widths={[280, 420, 560]} sizes="(min-width: 56rem) 20vw, 42vw" /></div>
     </div>
   </section>
 </Base>
 
 <style>
-  .hero { padding-block: var(--sp-5) var(--sp-8); }
-  @media (min-width: 56rem) { .hero { padding-block: var(--sp-6) var(--sp-9); } }
-  .hero .t-lead { margin-bottom: var(--sp-6); }
+  /* Hero */
+  .hero { padding-block: var(--sp-7) var(--sp-8); }
+  @media (min-width: 56rem) { .hero { padding-block: var(--sp-8) var(--sp-9); } }
+  .hero h1 { margin-bottom: var(--sp-5); }
+  .hero-quote { margin: 0 0 var(--sp-6); }
+  .hero-quote blockquote { margin: 0; }
+  .hero-quote p { font-family: var(--f-serif); font-style: italic; font-size: var(--fs-xl); line-height: 1.5; color: var(--c-text-muted); max-width: 46ch; margin: 0; }
+  .hero-quote figcaption { margin-top: var(--sp-2); font-family: var(--f-script); font-size: 2.25rem; line-height: 1; color: var(--c-accent); }
+  .hero-img { position: relative; max-width: 30rem; width: 100%; justify-self: center; }
+  .hero-img .frame { box-shadow: 0 0 0 10px var(--c-bg); }
+  .star { position: absolute; color: var(--c-ink); line-height: 1; z-index: 1; }
+  .star--a { font-size: 1.75rem; right: -0.6rem; top: 18%; }
+  .star--b { font-size: 1.1rem; left: 0.6rem; bottom: 22%; color: var(--c-accent); }
+  @media (min-width: 56rem) { .star--b { left: -1.4rem; } }
 
-  .band--surface { background: var(--c-surface); }
-  .band--alt { background: var(--c-surface-alt); }
-  .band--blush { background: var(--c-blush); }
+  /* Nagłówki wyśrodkowane */
+  .center-head { text-align: center; }
+  .center-head > h2 { margin-inline: auto; max-width: 26ch; margin-bottom: var(--sp-7); }
 
-  .process-head { display: grid; gap: var(--sp-2); margin-bottom: var(--sp-7); }
-  .process-head h2 { margin: 0; }
-  @media (min-width: 56rem) { .process-head { grid-template-columns: 1fr 1fr; align-items: end; } .process-head p { justify-self: end; text-align: right; margin: 0; } }
-  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-7) var(--sp-5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); }
-  .step-img { aspect-ratio: 3 / 4; margin-bottom: var(--sp-4); }
-  .num { display: block; font-family: var(--f-serif); font-style: italic; font-size: var(--fs-xl); color: var(--c-accent); margin-bottom: var(--sp-1); }
-  .steps h3 { margin-bottom: var(--sp-2); }
-
-  .gallery { display: grid; gap: var(--sp-3); grid-template-columns: repeat(2, 1fr); }
-  figure { margin: 0; position: relative; }
+  /* Galeria prac */
+  .gallery { list-style: none; margin: 0 0 var(--sp-6); padding: 0; display: grid; gap: var(--sp-3); grid-template-columns: repeat(2, 1fr); }
   .gallery .frame { aspect-ratio: 4 / 5; }
-  .g-main { grid-column: 1 / -1; }
-  .g-main .frame { aspect-ratio: 4 / 3; }
-  @media (min-width: 56rem) {
-    .gallery { grid-template-columns: 2fr 1fr 1fr; gap: var(--sp-4); }
-    .g-main { grid-column: 1; grid-row: 1 / span 2; }
-    .g-main .frame { aspect-ratio: auto; height: 100%; }
-  }
-  figcaption {
-    position: absolute; left: var(--sp-3); bottom: var(--sp-3); background: color-mix(in srgb, var(--c-surface) 92%, transparent);
-    padding: 0.35em 0.9em; border-radius: var(--r-pill); font-size: var(--fs-xs); letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-text);
-  }
+  @media (min-width: 56rem) { .gallery { grid-template-columns: repeat(4, 1fr); gap: var(--sp-4); } }
+  .gallery :global(img) { transition: transform 1400ms var(--ease) calc(var(--i) * 140ms); }
+  :global(.js-reveal) .gallery:not(.is-in) :global(img) { transform: scale(1.12); }
+  @media (hover: hover) { .gallery.is-in li:hover :global(img) { transform: scale(1.05); transition-duration: var(--t-slower); transition-delay: 0ms; } }
 
-  .mat { padding-top: var(--sp-5); margin-top: var(--sp-5); border-top: 1px solid color-mix(in srgb, var(--c-text) 15%, transparent); }
-  .mat h3 { margin-bottom: var(--sp-2); }
+  /* Proces */
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-7) var(--sp-5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); }
+  .steps p { margin-inline: auto; max-width: 34ch; }
+  .step-img { aspect-ratio: 3 / 4; margin-bottom: var(--sp-4); }
+  .num { display: block; font-family: var(--f-script); font-size: 2rem; line-height: 1; color: var(--c-accent); margin-bottom: var(--sp-1); }
+  .steps h3 { margin-bottom: var(--sp-2); text-transform: uppercase; letter-spacing: var(--tracking-heading); font-size: var(--fs-lg); }
+
+  /* Zdjęcie w białym passe-partout (jak kadry w inspiracjach) */
+  .matted { box-shadow: 0 0 0 10px var(--c-surface), 0 18px 40px -24px rgb(47 42 43 / 0.35); }
+
+  .mat { padding-top: var(--sp-5); margin-top: var(--sp-5); border-top: 1px solid color-mix(in srgb, var(--c-text) 18%, transparent); }
+  .mat h3 { margin-bottom: var(--sp-2); text-transform: uppercase; letter-spacing: var(--tracking-heading); font-size: var(--fs-lg); }
 
   .gift-actions { margin-top: var(--sp-5); }
-  .gift-imgs { display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--sp-4); align-items: start; }
+  .gift-imgs { display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--sp-5); align-items: start; padding: 10px; }
   .offset { margin-top: var(--sp-8); }
-
-  blockquote { margin: 0 0 var(--sp-4); padding-left: var(--sp-5); border-left: 2px solid var(--c-accent); }
-  blockquote p { font-family: var(--f-serif); font-style: italic; font-size: var(--fs-xl); line-height: 1.5; }
 </style>

@@ -16,7 +16,7 @@ export const brand = {
   description:
     'Ręcznie robione świece z wosku sojowego i pszczelego — róże, muszle, krówki i inne małe rzeźby. Tworzy Natalia.',
   tagline: 'wosk sojowy i pszczeli · rękodzieło',
-  logoBy: 'by',
+  logoMark: 'by N.',
   logoSub: 'candles',
   homeLabel: '{name} — strona główna',
 } as const;
@@ -56,6 +56,7 @@ export const footer = {
   terms: 'Regulamin',
   privacy: 'Polityka prywatności',
   instagram: 'Instagram {handle}',
+  instagramStrip: 'Obserwuj {handle}',
   copyright: '© {year} {name} · {tagline}',
 } as const;
 
@@ -79,33 +80,26 @@ export const home = {
   metaTitle: 'Ręcznie robione świece sojowe i z wosku pszczelego',
   metaDescription:
     'by N. candles — ręcznie odlewane świece z wosku sojowego i pszczelego: róże, muszle, krówki Highland i inne małe rzeźby. Idealne na prezent.',
-  heroOverline: 'Wosk sojowy i pszczeli · rękodzieło',
-  heroTitle: 'Świece, które są',
-  heroTitleEm: 'małymi rzeźbami',
-  heroLead:
-    'Ręcznie odlewane świece z naturalnego wosku sojowego i pszczelego. Róże, muszle, krówki i inne drobne formy, które ożywiają wnętrze — nawet wtedy, gdy nie płoną.',
+  heroTitle: 'Ręcznie robione świece z wosku sojowego i pszczelego',
+  heroQuote:
+    '„Każda świeca powstaje ręcznie. Od roztapiania wosku, przez mieszanie zapachu, aż po ostatnie detale. Ten cały proces to coś, co pozwala mi zwolnić tempo i skupić się na «tu» i «teraz»”.',
+  heroSignature: 'Natalia',
   heroSecondary: 'Poznaj Natalię',
   featured: 'Wybrane świece',
   featuredMore: 'Cała kolekcja',
   processTitle: 'Jak powstaje świeca',
   processTitleEm: 'by N.',
-  processLead: 'Bez pośpiechu i bez skrótów. Wszystko trwa tyle, ile trwać powinno.',
   processSteps: [
     { title: 'Knot i forma', text: 'Każdą formę przygotowuję ręcznie — knot musi stać idealnie pośrodku, żeby świeca paliła się równo.' },
     { title: 'Wosk i zapach', text: 'Roztapiam wosk sojowy lub pszczeli i dodaję olejek zapachowy, odmierzany co do kropli.' },
     { title: 'Odlewanie', text: 'Wosk wlewam powoli do formy. Potem świeca musi spokojnie zastygnąć — tego etapu nie da się przyspieszyć.' },
   ],
+  galleryOverline: 'Moje prace',
   galleryTitle: 'Trochę sztuki, trochę ironii,',
   galleryTitleEm: 'trochę candlecore',
   galleryMore: 'Więcej na Instagramie',
-  gallery: {
-    krowki: 'Krówki Highland',
-    muszle: 'Muszle',
-    misie: 'Misie',
-    buldog: 'Buldog francuski',
-    wSzkle: 'Świeca w szkle',
-  },
-  materialsTitle: 'Z czego powstają świece by N.',
+  materialsTitle: 'Z czego powstają świece',
+  materialsTitleEm: 'by N.',
   materials: [
     {
       title: 'Wosk sojowy',
@@ -124,11 +118,6 @@ export const home = {
   ],
   giftCta: 'Zapytaj o zamówienie',
   giftSecondary: 'Wybierz ze sklepu',
-  aboutOverline: 'Poznaj Natalię',
-  aboutTitle: 'Wszystko trwa tyle,',
-  aboutTitleEm: 'ile trwać powinno',
-  aboutQuote:
-    '„Każda świeca powstaje ręcznie. Od roztapiania wosku, przez mieszanie zapachu, aż po ostatnie detale. Ten cały proces to coś, co pozwala mi zwolnić tempo i skupić się na «tu» i «teraz»”.',
 } as const;
 
 export const about = {
@@ -143,7 +132,6 @@ export const about = {
     'Każda świeca powstaje ręcznie. Od roztapiania wosku, przez mieszanie zapachu, aż po ostatnie detale. Ten cały proces to coś, co pozwala mi zwolnić tempo i skupić się na „tu” i „teraz”. Bez scrollowania, bez przyśpieszenia, bez przewijania. Wszystko trwa tyle, ile trwać powinno. I to jest w tym najpiękniejsze.',
     'Lubię formy, które są czymś więcej niż świecą: realistyczne róże, muszle, kudłate krówki Highland, a czasem różową czaszkę inspirowaną motywem vanitas. Trochę sztuki, trochę ironii, trochę candlecore — czyli by N. w pigułce.',
   ],
-  studioCaption: 'Z pracowni: odlewanie wosku do formy.',
   instagram: 'Instagram',
 } as const;
 

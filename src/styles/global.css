@@ -4,26 +4,31 @@
  * Nazewnictwo: --c-* kolor, --fs-* rozmiar fontu, --sp-* odstęp, --r-* zaokrąglenie, --e-* elewacja, --t-* czas ruchu.
  */
 :root {
-  /* — Kolor: semantyka — */
-  --c-bg: #f5f1ec;            /* tło strony (złamana biel) */
-  --c-surface: #fbf9f6;       /* karty, panele, sekcje wyróżnione */
-  --c-surface-alt: #ebe4dc;   /* pasy, stopka (greige) */
-  --c-blush: #ead9e0;         /* pudrowy róż — akcenty, cytaty */
-  --c-border: #e3dad2;        /* linie dekoracyjne */
+  /* — Kolor: semantyka — styl „pudrowy edytorski”: biel, pudrowy róż, piasek, grafit — */
+  --c-bg: #fffcfa;            /* tło strony (ciepła biel) */
+  --c-surface: #ffffff;       /* karty, panele */
+  --c-surface-alt: #f6efeb;   /* tło pod ładującymi się zdjęciami, hover ikon */
+  --c-blush: #f4e6e2;         /* pas pudrowy (hero, prezent) — tekst 11.6:1 */
+  --c-sand: #ebe0d6;          /* kafle, pas piaskowy — tekst 10.9:1 */
+  --c-ink: #3a3536;           /* grafit: górny pasek, pas z cytatem, przyciski, dół stopki */
+  --c-on-ink: #fbf6f3;        /* tekst na grafitowym — 11.2:1 */
+  --c-on-ink-muted: #cfc4c0;  /* drobny tekst na grafitowym — 7.1:1 */
+  --c-border: #e8dcd6;        /* linie dekoracyjne */
   --c-border-strong: #8c8186; /* 3.3:1 — ramki pól formularzy (WCAG 1.4.11) */
-  --c-text: #2b2527;          /* 13.4:1 */
-  --c-text-muted: #6e6268;    /* 5.2:1 */
-  --c-accent: #87506f;        /* 5.5:1 — wrzos: linki, focus, hover */
-  --c-accent-hover: #6f3f5a;  /* 7.4:1 */
+  --c-text: #2f2a2b;          /* 13.8:1 */
+  --c-text-muted: #6b6062;    /* 5.9:1 (4.97:1 na pudrowym) */
+  --c-accent: #8d5864;        /* 5.5:1 — zgaszony róż: pismo odręczne, linki, hover, focus. Na piasku tylko duży tekst */
+  --c-accent-hover: #74454f;
   --c-on-accent: #fff;
   --c-honey: #c9a25a;         /* wosk pszczeli — wyłącznie dekoracja, nigdy tekst */
   --c-success: #4f6b4a;       /* 5.3:1 */
   --c-error: #a3362f;         /* 6.0:1 */
-  --c-overlay: rgb(43 37 39 / 0.4);
+  --c-overlay: rgb(47 42 43 / 0.4);
 
   /* — Typografia — */
-  --f-serif: var(--font-display), 'Bodoni Moda', Georgia, serif;
+  --f-serif: var(--font-display), 'Cormorant Garamond', Georgia, serif;
   --f-sans: var(--font-body), 'Jost', system-ui, sans-serif;
+  --f-script: var(--font-script), 'Corinthia', cursive;  /* pismo odręczne — logo i wyróżnienia w nagłówkach */
 
   /* Skala 1.25 (tercja wielka), bazowo 17 px; nagłówki płynne */
   --fs-2xs: 0.6875rem;                                   /* 11 — licznik w ikonie koszyka */
@@ -32,15 +37,16 @@
   --fs-base: 1.0625rem;                                  /* 17 — treść */
   --fs-lg: 1.1875rem;                                    /* 19 — lead */
   --fs-xl: 1.3125rem;                                    /* 21 — h3, cena */
-  --fs-2xl: clamp(1.75rem, 1.45rem + 1.3vw, 2.5rem);     /* 28→40 — h2 */
-  --fs-3xl: clamp(2.125rem, 1.8rem + 1.4vw, 3rem);       /* 34→48 — h1 strony/produktu */
-  --fs-display: clamp(2.5rem, 1.7rem + 3.4vw, 4.25rem);  /* 40→68 — hero */
+  --fs-2xl: clamp(1.5rem, 1.25rem + 1.1vw, 2.25rem);     /* 24→36 — h2 (wersaliki) */
+  --fs-3xl: clamp(1.875rem, 1.55rem + 1.4vw, 2.75rem);   /* 30→44 — h1 (wersaliki) */
+  --fs-display: clamp(2.125rem, 1.6rem + 2.2vw, 3.5rem); /* 34→56 — hero */
 
   --lh-tight: 1.12;
   --lh-snug: 1.4;
   --lh-body: 1.7;
   --tracking-overline: 0.2em;
-  --tracking-button: 0.14em;
+  --tracking-button: 0.18em;
+  --tracking-heading: 0.07em;  /* nagłówki wersalikami */
 
   /* — Odstępy (siatka 4 px) — */
   --sp-1: 0.25rem;  /* 4 */
@@ -55,10 +61,10 @@
   --sp-10: 8rem;    /* 128 */
 
   /* — Zaokrąglenia — */
-  --r-sm: 8px;      /* pola formularzy */
-  --r-md: 20px;     /* zdjęcia, karty */
+  --r-sm: 2px;      /* pola formularzy, przyciski */
+  --r-md: 2px;      /* zdjęcia, karty — proste rogi */
   --r-pill: 999px;  /* przyciski, znaczniki */
-  --r-arch: 50% 50% var(--r-md) var(--r-md) / 32% 32% var(--r-md) var(--r-md); /* łuk — znak marki, max 1 na ekran */
+  --r-arch: 50% 50% 0 0 / 34% 34% 0 0; /* łuk — znak marki, max 1 na ekran */
 
   /* — Elewacja (strona płaska z założenia) — */
   --e-1: 0 1px 0 var(--c-border);
@@ -97,11 +103,19 @@ img, picture, svg, video { display: block; max-width: 100%; height: auto; }
 button { font: inherit; color: inherit; }
 
 /* — Typografia bazowa — */
-h1, h2, h3 { font-family: var(--f-serif); font-weight: 400; line-height: var(--lh-tight); margin: 0 0 var(--sp-4); letter-spacing: -0.01em; text-wrap: balance; }
+h1, h2, h3 { font-family: var(--f-serif); font-weight: 500; line-height: var(--lh-tight); margin: 0 0 var(--sp-4); text-wrap: balance; }
+h1, h2 { text-transform: uppercase; letter-spacing: var(--tracking-heading); font-weight: 400; }
 h1 { font-size: var(--fs-3xl); }
 h2 { font-size: var(--fs-2xl); }
-h3 { font-size: var(--fs-xl); }
+h3 { font-size: var(--fs-xl); letter-spacing: 0.02em; }
 em { font-family: var(--f-serif); font-style: italic; }
+/* Wyróżnienie w nagłówku = pismo odręczne (jak „All New Collection” w inspiracjach) */
+h1 em, h2 em {
+  font-family: var(--f-script); font-style: normal; text-transform: none; letter-spacing: 0;
+  font-size: 1.45em; line-height: 0.7; color: var(--c-accent); white-space: nowrap;
+}
+/* Ozdobna gwiazdka ✦ */
+.sparkle { display: block; color: var(--c-accent); font-size: var(--fs-lg); line-height: 1; text-align: center; }
 p { margin: 0 0 var(--sp-4); max-width: 62ch; text-wrap: pretty; }
 strong { font-weight: 500; }
 a { color: inherit; text-underline-offset: 0.25em; text-decoration-thickness: 1px; transition: color var(--t-fast) var(--ease); }
@@ -138,16 +152,16 @@ a:hover { color: var(--c-accent); }
 /* — Przycisk — */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
-  min-height: var(--tap); padding: 0 var(--sp-6); border-radius: var(--r-pill);
-  border: 1px solid var(--c-text); background: var(--c-text); color: var(--c-surface);
+  min-height: var(--tap); padding: 0 var(--sp-6); border-radius: var(--r-sm);
+  border: 1px solid var(--c-ink); background: var(--c-ink); color: var(--c-on-ink);
   font: 400 var(--fs-xs) / 1 var(--f-sans); letter-spacing: var(--tracking-button); text-transform: uppercase;
   text-decoration: none; cursor: pointer;
   transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
 }
 .btn:hover { background: var(--c-accent); border-color: var(--c-accent); color: var(--c-on-accent); }
 .btn:active { transform: scale(0.98); }
-.btn--ghost { background: transparent; color: var(--c-text); }
-.btn--ghost:hover { background: var(--c-text); border-color: var(--c-text); color: var(--c-surface); }
+.btn--ghost { background: transparent; border-color: var(--c-ink); color: var(--c-text); }
+.btn--ghost:hover { background: var(--c-accent); border-color: var(--c-accent); color: var(--c-on-accent); }
 .btn--block { width: 100%; }
 .btn--lg { min-height: 52px; }
 .btn:disabled, .btn[aria-disabled='true'] { background: var(--c-border); border-color: var(--c-border); color: var(--c-text-muted); cursor: not-allowed; transform: none; }
@@ -189,6 +203,16 @@ a:hover { color: var(--c-accent); }
 .frame img { width: 100%; height: 100%; object-fit: cover; }
 .frame--arch { border-radius: var(--r-arch); }
 .frame--portrait { aspect-ratio: 4 / 5; }
+
+/* — Pasy tła (świadomie: pudrowy, piaskowy, grafitowy — jak w inspiracjach) — */
+.band--blush { background: var(--c-blush); }
+.band--sand { background: var(--c-sand); }
+.band--ink { background: var(--c-ink); color: var(--c-on-ink); }
+.band--ink a:hover { color: var(--c-on-ink); }
+
+/* — Pojawianie się przy przewijaniu: elementy [data-reveal-item] w kontenerze [data-reveal]; ukrywa je dopiero skrypt w Base — */
+.js-reveal [data-reveal]:not(.is-in) [data-reveal-item] { opacity: 0; transform: translateY(2.5rem); }
+[data-reveal-item] { transition: opacity 900ms var(--ease), transform 900ms var(--ease); transition-delay: calc(var(--i, 0) * 140ms); }
 
 /* — Dostępność — */
 .visually-hidden {

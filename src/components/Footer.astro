@@ -1,42 +1,77 @@
 ---
+/** Stopka w stylu inspiracji: pasek zdjęć z Instagrama, logo na środku między kolumnami linków, grafitowy pasek z prawami autorskimi. */
+import Img from './Img.astro';
 import Logo from './Logo.astro';
 import { brand, common, footer } from '../i18n/pl';
 import { fill } from '../lib/i18n';
+import { IMG } from '../lib/images';
 import { SITE } from '../lib/site';
 
 const groups = [
   { id: 'f-shop', title: footer.shop, links: [['/sklep/', footer.allCandles], ['/dostawa-i-zwroty/', footer.delivery], ['/kontakt/', footer.customOrders]] },
   { id: 'f-info', title: footer.info, links: [['/o-mnie/', footer.about], ['/kontakt/', footer.contact], ['/regulamin/', footer.terms], ['/polityka-prywatnosci/', footer.privacy]] },
 ] as const;
+const insta = [IMG.misie, IMG.kurka, IMG.wSzkle, IMG.procesKnot, IMG.prezentAlpaka, IMG.roze];
 ---
 <footer class="site-footer">
+  <a class="insta" href={SITE.instagram} rel="me noopener" target="_blank">
+    <ul class="strip" role="list" data-reveal>
+      {insta.map((img, i) => (
+        <li class="frame" style={`--i: ${i}`} data-reveal-item><Img src={img.src} alt="" widths={[240, 360]} sizes="(min-width: 40rem) 17vw, 34vw" /></li>
+      ))}
+    </ul>
+    <span class="insta-label">{fill(footer.instagramStrip, { handle: common.instagramHandle })}</span>
+  </a>
+
   <div class="container grid">
+    <nav aria-labelledby={groups[0].id}>
+      <p class="overline" id={groups[0].id}>{groups[0].title}</p>
+      <ul>{groups[0].links.map(([href, label]) => <li><a href={href}>{label}</a></li>)}</ul>
+    </nav>
     <div class="brand">
       <Logo />
+      <span class="sparkle" aria-hidden="true">✦</span>
       <p class="t-muted">{fill(footer.intro, { author: brand.author })}</p>
     </div>
-    {groups.map((g) => (
-      <nav aria-labelledby={g.id}>
-        <p class="overline" id={g.id}>{g.title}</p>
-        <ul>{g.links.map(([href, label]) => <li><a href={href}>{label}</a></li>)}</ul>
-      </nav>
-    ))}
-    <div>
-      <p class="overline">{footer.follow}</p>
-      <ul><li><a href={SITE.instagram} rel="me noopener" target="_blank">{fill(footer.instagram, { handle: common.instagramHandle })}</a></li></ul>
-    </div>
+    <nav aria-labelledby={groups[1].id}>
+      <p class="overline" id={groups[1].id}>{groups[1].title}</p>
+      <ul>{groups[1].links.map(([href, label]) => <li><a href={href}>{label}</a></li>)}</ul>
+    </nav>
   </div>
-  <p class="container copy">{fill(footer.copyright, { year: new Date().getFullYear(), name: brand.name, tagline: brand.tagline })}</p>
+  <div class="bottom">
+    <p class="container">{fill(footer.copyright, { year: new Date().getFullYear(), name: brand.name, tagline: brand.tagline })}</p>
+  </div>
 </footer>
 
 <style>
-  .site-footer { background: var(--c-surface-alt); padding-block: var(--sp-8) var(--sp-5); margin-top: var(--sp-8); font-size: var(--fs-sm); }
-  .grid { display: grid; gap: var(--sp-7) var(--sp-5); grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
-  .brand { display: grid; gap: var(--sp-4); justify-items: start; align-content: start; }
+  .site-footer { margin-top: var(--sp-8); font-size: var(--fs-sm); }
+
+  .insta { position: relative; display: block; text-decoration: none; }
+  .strip { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); }
+  @media (min-width: 40rem) { .strip { grid-template-columns: repeat(6, 1fr); } }
+  .strip .frame { aspect-ratio: 1; border-radius: 0; }
+  .strip :global(img) { transition: transform var(--t-slower) var(--ease), opacity var(--t-base) var(--ease); }
+  .insta:hover .strip :global(img) { opacity: 0.85; }
+  .insta-label {
+    position: absolute; left: 50%; top: 50%; translate: -50% -50%; white-space: nowrap;
+    background: var(--c-bg); color: var(--c-text); padding: var(--sp-3) var(--sp-5);
+    font-size: var(--fs-xs); letter-spacing: var(--tracking-overline); text-transform: uppercase;
+  }
+  .insta:hover .insta-label { color: var(--c-accent); }
+
+  .grid {
+    display: grid; gap: var(--sp-7) var(--sp-5); padding-block: var(--sp-8) var(--sp-7);
+    grid-template-columns: 1fr 1fr; text-align: center;
+  }
+  .brand { grid-column: 1 / -1; grid-row: 1; display: grid; gap: var(--sp-3); justify-items: center; align-content: start; }
+  .brand p { margin: 0; max-width: 30ch; }
+  @media (min-width: 48rem) { .grid { grid-template-columns: 1fr 1.3fr 1fr; } .brand { grid-column: 2; } }
   .overline { margin-bottom: var(--sp-2); }
-  ul { list-style: none; margin: 0; padding: 0; display: grid; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; justify-items: center; }
   ul a { display: inline-flex; align-items: center; min-height: var(--tap); text-decoration: none; }
   ul a:hover { text-decoration: underline; }
   @media (min-width: 48rem) { ul a { min-height: var(--sp-6); } }
-  .copy { margin-top: var(--sp-7); padding-top: var(--sp-4); border-top: 1px solid var(--c-border); font-size: var(--fs-xs); color: var(--c-text-muted); max-width: none; }
+
+  .bottom { background: var(--c-ink); color: var(--c-on-ink-muted); }
+  .bottom p { margin-inline: auto; padding-block: var(--sp-4); font-size: var(--fs-xs); letter-spacing: 0.06em; text-align: center; max-width: none; }
 </style>
