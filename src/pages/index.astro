@@ -1,6 +1,11 @@
 ---
 import Base from '../layouts/Base.astro';
+import ProductGrid from '../components/ProductGrid.astro';
+import { produktyPubliczne } from '../lib/shop';
 import { SITE, SITE_URL } from '../lib/site';
+
+const wszystkie = await produktyPubliczne();
+const polecane = (wszystkie.filter((p) => p.data.wyrozniony).length ? wszystkie.filter((p) => p.data.wyrozniony) : wszystkie).slice(0, 4);
 
 const jsonLd = [
   {
@@ -29,6 +34,14 @@ const jsonLd = [
     <a class="btn" href="/sklep/">Zobacz kolekcję</a>
   </section>
 
+  {polecane.length > 0 && (
+    <section class="container section" aria-labelledby="featured">
+      <h2 id="featured">Wybrane świece</h2>
+      <ProductGrid produkty={polecane} />
+      <p class="more"><a href="/sklep/">Cała kolekcja →</a></p>
+    </section>
+  )}
+
   <section class="container section" aria-labelledby="about-teaser">
     <h2 id="about-teaser">Poznaj Natalię</h2>
     <p>
@@ -41,5 +54,6 @@ const jsonLd = [
 
 <style>
   .hero { padding-block: clamp(4rem, 12vw, 9rem); }
+  .more { margin-top: var(--s-4); }
   .lead { font-size: 1.15rem; color: var(--c-muted); margin-bottom: var(--s-5); }
 </style>
