@@ -1,0 +1,45 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE, SITE_URL } from '../lib/site';
+
+const jsonLd = [
+  {
+    '@type': 'Organization',
+    '@id': `${SITE_URL}/#organization`,
+    name: SITE.name,
+    url: SITE_URL,
+    sameAs: [SITE.instagram],
+    founder: { '@id': `${SITE_URL}/o-mnie/#natalia` },
+  },
+  {
+    '@type': 'WebSite',
+    '@id': `${SITE_URL}/#website`,
+    name: SITE.name,
+    url: SITE_URL,
+    inLanguage: 'pl-PL',
+    publisher: { '@id': `${SITE_URL}/#organization` },
+  },
+];
+---
+<Base title={SITE.name} jsonLd={jsonLd}>
+  <section class="hero container section">
+    <p class="eyebrow">Ręcznie robione świece</p>
+    <h1>Świece, które tworzą nastrój</h1>
+    <p class="lead">{SITE.description}</p>
+    <a class="btn" href="/sklep/">Zobacz kolekcję</a>
+  </section>
+
+  <section class="container section" aria-labelledby="about-teaser">
+    <h2 id="about-teaser">Poznaj Natalię</h2>
+    <p>
+      <!-- TODO: krótki wstęp od Natalii (2–3 zdania) -->
+      Każda świeca by N. powstaje ręcznie — od wyboru wosku i zapachu po ostatnie wykończenie.
+    </p>
+    <a href="/o-mnie/">Przeczytaj moją historię →</a>
+  </section>
+</Base>
+
+<style>
+  .hero { padding-block: clamp(4rem, 12vw, 9rem); }
+  .lead { font-size: 1.15rem; color: var(--c-muted); margin-bottom: var(--s-5); }
+</style>

@@ -1,0 +1,29 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE, SITE_URL } from '../lib/site';
+
+const jsonLd = {
+  '@type': 'AboutPage',
+  url: `${SITE_URL}/o-mnie/`,
+  mainEntity: {
+    '@type': 'Person',
+    '@id': `${SITE_URL}/o-mnie/#natalia`,
+    name: SITE.author,
+    jobTitle: 'Twórczyni świec',
+    worksFor: { '@id': `${SITE_URL}/#organization` },
+    sameAs: [SITE.instagram],
+  },
+};
+---
+<Base
+  title="O mnie — Natalia"
+  description="Poznaj Natalię, twórczynię świec by N. Historia marki, inspiracje i ręczny proces powstawania każdej świecy."
+  jsonLd={jsonLd}
+>
+  <article class="container section">
+    <p class="eyebrow">O mnie</p>
+    <h1>Cześć, jestem Natalia</h1>
+    <!-- TODO: historia marki, proces tworzenia, zdjęcie portretowe i z pracowni -->
+    <p>Treść w przygotowaniu.</p>
+  </article>
+</Base>

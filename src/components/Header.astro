@@ -1,0 +1,25 @@
+---
+import { NAV, SITE } from '../lib/site';
+const path = Astro.url.pathname;
+---
+<header class="site-header">
+  <div class="container inner">
+    <a href="/" class="logo" aria-label={`${SITE.name} — strona główna`}>{SITE.name}</a>
+    <nav aria-label="Główna nawigacja">
+      <ul>
+        {NAV.map((item) => (
+          <li><a href={item.href} aria-current={path.startsWith(item.href) ? 'page' : undefined}>{item.label}</a></li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header { border-bottom: 1px solid var(--c-line); background: var(--c-bg); }
+  .inner { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); min-height: 4rem; flex-wrap: wrap; }
+  .logo { font-family: var(--f-serif); font-size: 1.35rem; text-decoration: none; }
+  ul { display: flex; gap: clamp(var(--s-3), 3vw, var(--s-5)); list-style: none; margin: 0; padding: 0; }
+  nav a { text-decoration: none; font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; }
+  nav a[aria-current='page'] { text-decoration: underline; }
+</style>
