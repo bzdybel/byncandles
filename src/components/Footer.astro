@@ -1,0 +1,33 @@
+---
+import { SITE } from '../lib/site';
+const year = new Date().getFullYear();
+---
+<footer class="site-footer">
+  <div class="container grid">
+    <div>
+      <p class="brand">{SITE.name}</p>
+      <p class="muted">Świece tworzone ręcznie przez {SITE.author}.</p>
+    </div>
+    <nav aria-label="Informacje">
+      <ul>
+        <li><a href="/dostawa-i-zwroty/">Dostawa i zwroty</a></li>
+        <li><a href="/regulamin/">Regulamin</a></li>
+        <li><a href="/polityka-prywatnosci/">Polityka prywatności</a></li>
+        <li><a href="/kontakt/">Kontakt</a></li>
+      </ul>
+    </nav>
+    <div>
+      <a href={SITE.instagram} rel="me noopener" target="_blank">Instagram @by_n.candles</a>
+    </div>
+  </div>
+  <p class="container copy muted">© {year} {SITE.name}</p>
+</footer>
+
+<style>
+  .site-footer { border-top: 1px solid var(--c-line); padding-block: var(--s-5) var(--s-4); margin-top: var(--s-6); font-size: 0.9rem; }
+  .grid { display: grid; gap: var(--s-4); grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+  .brand { font-family: var(--f-serif); font-size: 1.2rem; margin-bottom: var(--s-1); }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-1); }
+  .muted { color: var(--c-muted); }
+  .copy { margin-top: var(--s-4); font-size: 0.8rem; }
+</style>
