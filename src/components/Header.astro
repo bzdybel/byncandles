@@ -1,10 +1,11 @@
 ---
+import Logo from './Logo.astro';
 import { NAV, SITE } from '../lib/site';
 const path = Astro.url.pathname;
 ---
 <header class="site-header">
   <div class="container inner">
-    <a href="/" class="logo" aria-label={`${SITE.name} — strona główna`}>{SITE.name}</a>
+    <a href="/" class="home" aria-label={`${SITE.name} — strona główna`}><Logo /></a>
     <nav aria-label="Główna nawigacja">
       <ul>
         {NAV.map((item) => (
@@ -16,10 +17,10 @@ const path = Astro.url.pathname;
 </header>
 
 <style>
-  .site-header { border-bottom: 1px solid var(--c-line); background: var(--c-bg); }
-  .inner { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); min-height: 4rem; flex-wrap: wrap; }
-  .logo { font-family: var(--f-serif); font-size: 1.35rem; text-decoration: none; }
-  ul { display: flex; gap: clamp(var(--s-3), 3vw, var(--s-5)); list-style: none; margin: 0; padding: 0; }
-  nav a { text-decoration: none; font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; }
-  nav a[aria-current='page'] { text-decoration: underline; }
+  .site-header { background: var(--c-bg); }
+  .inner { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); min-height: 5.5rem; flex-wrap: wrap; padding-block: var(--s-3); }
+  .home { text-decoration: none; }
+  ul { display: flex; gap: clamp(var(--s-3), 3.5vw, var(--s-5)); list-style: none; margin: 0; padding: 0; }
+  nav a { text-decoration: none; font-size: 0.78rem; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase; padding-block: 0.4em; border-bottom: 1px solid transparent; }
+  nav a:hover, nav a[aria-current='page'] { border-bottom-color: currentColor; }
 </style>

@@ -11,7 +11,7 @@ export const SITE = {
   locale: 'pl_PL',
   lang: 'pl',
   description:
-    'Ręcznie robione świece by N. — tworzone z pasją przez Natalię. Odkryj kolekcję i zamów z dostawą InPost.',
+    'Ręcznie robione świece z wosku sojowego i pszczelego — róże, muszle, krówki i inne małe rzeźby. Tworzy Natalia.',
   author: 'Natalia',
   instagram: 'https://www.instagram.com/by_n.candles/',
   email: '', // uzupełnić
