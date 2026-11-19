@@ -1,11 +1,23 @@
 ---
+import { Picture } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import ProductGrid from '../components/ProductGrid.astro';
 import { produktyPubliczne } from '../lib/shop';
+import { IMG } from '../lib/images';
 import { SITE, SITE_URL } from '../lib/site';
 
 const wszystkie = await produktyPubliczne();
-const polecane = (wszystkie.filter((p) => p.data.wyrozniony).length ? wszystkie.filter((p) => p.data.wyrozniony) : wszystkie).slice(0, 4);
+const wyroznione = wszystkie.filter((p) => p.data.wyrozniony);
+const polecane = (wyroznione.length ? wyroznione : wszystkie).slice(0, 4);
+
+const pracownia = [
+  { img: IMG.krowki, label: 'Krówki Highland' },
+  { img: IMG.muszle, label: 'Muszle' },
+  { img: IMG.czaszka, label: 'Różowa czaszka' },
+  { img: IMG.misie, label: 'Misie' },
+  { img: IMG.alpaki, label: 'Alpaki' },
+  { img: IMG.cytryna, label: 'Cytryna' },
+];
 
 const jsonLd = [
   {
@@ -26,34 +38,150 @@ const jsonLd = [
   },
 ];
 ---
-<Base title={SITE.name} jsonLd={jsonLd}>
-  <section class="hero container section">
-    <p class="eyebrow">Ręcznie robione świece</p>
-    <h1>Świece, które tworzą nastrój</h1>
-    <p class="lead">{SITE.description}</p>
-    <a class="btn" href="/sklep/">Zobacz kolekcję</a>
+<Base
+  title="Ręcznie robione świece sojowe i z wosku pszczelego"
+  description="by N. candles — ręcznie odlewane świece z wosku sojowego i pszczelego: róże, muszle, krówki Highland i inne małe rzeźby. Idealne na prezent."
+  jsonLd={jsonLd}
+>
+  <section class="hero container">
+    <div class="hero-text">
+      <p class="eyebrow">Soy &amp; beeswax · handmade</p>
+      <h1>Świece, które są <em>małymi rzeźbami</em></h1>
+      <p class="lead">
+        Ręcznie odlewane świece z naturalnego wosku sojowego i pszczelego. Róże, muszle, krówki
+        i inne drobne formy, które ożywiają wnętrze — nawet wtedy, gdy nie płoną.
+      </p>
+      <div class="cta">
+        <a class="btn" href="/sklep/">Zobacz kolekcję</a>
+        <a class="btn btn--ghost" href="/o-mnie/">Poznaj Natalię</a>
+      </div>
+    </div>
+    <div class="hero-img">
+      <Picture
+        src={IMG.roze.src}
+        alt={IMG.roze.alt}
+        formats={['avif', 'webp']}
+        widths={[420, 640, 860, 1100]}
+        sizes="(min-width: 56rem) 42vw, 92vw"
+        loading="eager"
+        fetchpriority="high"
+      />
+    </div>
+  </section>
+
+  <section class="values" aria-label="Dlaczego by N.">
+    <ul class="container" role="list">
+      <li><strong>Naturalny wosk</strong><span>sojowy i pszczeli z lokalnej pasieki</span></li>
+      <li><strong>Ręcznie, w małych partiach</strong><span>każda świeca jest trochę inna</span></li>
+      <li><strong>Gotowe na prezent</strong><span>starannie zapakowane</span></li>
+      <li><strong>Wysyłka InPost</strong><span>prosto do paczkomatu</span></li>
+    </ul>
   </section>
 
   {polecane.length > 0 && (
     <section class="container section" aria-labelledby="featured">
-      <h2 id="featured">Wybrane świece</h2>
+      <div class="head">
+        <h2 id="featured">Wybrane świece</h2>
+        <a class="link-arrow" href="/sklep/">Cała kolekcja</a>
+      </div>
       <ProductGrid produkty={polecane} />
-      <p class="more"><a href="/sklep/">Cała kolekcja →</a></p>
     </section>
   )}
 
-  <section class="container section" aria-labelledby="about-teaser">
-    <h2 id="about-teaser">Poznaj Natalię</h2>
-    <p>
-      <!-- TODO: krótki wstęp od Natalii (2–3 zdania) -->
-      Każda świeca by N. powstaje ręcznie — od wyboru wosku i zapachu po ostatnie wykończenie.
-    </p>
-    <a href="/o-mnie/">Przeczytaj moją historię →</a>
+  <section class="container section" aria-labelledby="studio">
+    <div class="head">
+      <div>
+        <p class="eyebrow">Z pracowni</p>
+        <h2 id="studio">Trochę sztuki, trochę ironii, <em>trochę candlecore</em></h2>
+      </div>
+      <a class="link-arrow" href={SITE.instagram} rel="noopener" target="_blank">Więcej na Instagramie</a>
+    </div>
+    <ul class="mosaic" role="list">
+      {pracownia.map(({ img, label }) => (
+        <li>
+          <figure>
+            <Picture src={img.src} alt={img.alt} formats={['avif', 'webp']} widths={[320, 480, 720]} sizes="(min-width: 56rem) 30vw, 46vw" />
+            <figcaption>{label}</figcaption>
+          </figure>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="materials" aria-labelledby="materials">
+    <div class="container section">
+      <h2 id="materials" class="center">Z czego powstają świece by&nbsp;N.</h2>
+      <div class="two">
+        <article>
+          <Picture src={IMG.muszle.src} alt={IMG.muszle.alt} formats={['avif', 'webp']} widths={[400, 640, 900]} sizes="(min-width: 56rem) 40vw, 92vw" />
+          <h3>Wosk sojowy</h3>
+          <p>
+            Roślinny, czysto palący się wosk, który świetnie oddaje detale formy — od żłobień muszli po płatki róż.
+            Część świec łączę z dodatkiem wosku pszczelego dla głębszego koloru i dłuższego palenia.
+          </p>
+        </article>
+        <article>
+          <Picture src={IMG.pszczeli.src} alt={IMG.pszczeli.alt} formats={['avif', 'webp']} widths={[400, 640, 900]} sizes="(min-width: 56rem) 40vw, 92vw" />
+          <h3>Wosk pszczeli z lokalnej pasieki</h3>
+          <p>
+            Świece w 100% z naturalnego wosku pszczelego, bez zbędnych dodatków — tylko piękny, miodowy kolor
+            i charakterystyczny, delikatny zapach miodu.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="container section about" aria-labelledby="about-teaser">
+    <div class="about-img">
+      <Picture src={IMG.kurka.src} alt={IMG.kurka.alt} formats={['avif', 'webp']} widths={[400, 640, 900]} sizes="(min-width: 56rem) 38vw, 92vw" />
+    </div>
+    <div>
+      <p class="eyebrow">Poznaj Natalię</p>
+      <h2 id="about-teaser">Wszystko trwa tyle, <em>ile trwać powinno</em></h2>
+      <blockquote>
+        <p>
+          „Każda świeca powstaje ręcznie. Od roztapiania wosku, przez mieszanie zapachu, aż po ostatnie detale.
+          Ten cały proces to coś, co pozwala mi zwolnić tempo i skupić się na »tu« i »teraz«.”
+        </p>
+      </blockquote>
+      <a class="link-arrow" href="/o-mnie/">Przeczytaj więcej</a>
+    </div>
   </section>
 </Base>
 
 <style>
-  .hero { padding-block: clamp(4rem, 12vw, 9rem); }
-  .more { margin-top: var(--s-4); }
+  .hero { display: grid; gap: var(--s-5); align-items: center; padding-block: var(--s-4) var(--s-6); }
+  @media (min-width: 56rem) { .hero { grid-template-columns: 1.05fr 1fr; gap: var(--s-6); padding-block: var(--s-5) var(--s-7); } }
   .lead { font-size: 1.15rem; color: var(--c-muted); margin-bottom: var(--s-5); }
+  .cta { display: flex; flex-wrap: wrap; gap: var(--s-3); }
+  .hero-img :global(img) { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--radius-img) var(--radius-img) 12rem 12rem; }
+
+  .values { background: var(--c-sand); padding-block: var(--s-5); }
+  .values ul { list-style: none; margin-block: 0; padding: 0; display: grid; gap: var(--s-4); grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); }
+  .values li { display: grid; gap: var(--s-1); text-align: center; }
+  .values strong { font-family: var(--f-serif); font-weight: 400; font-size: 1.2rem; }
+  .values span { color: var(--c-muted); font-size: 0.92rem; }
+
+  .head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: var(--s-3); margin-bottom: var(--s-5); }
+  .head h2 { margin: 0; }
+
+  .mosaic { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); grid-template-columns: repeat(2, 1fr); }
+  @media (min-width: 56rem) { .mosaic { grid-template-columns: repeat(3, 1fr); gap: var(--s-4); } }
+  figure { margin: 0; position: relative; }
+  .mosaic :global(img) { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--radius-img); }
+  @media (max-width: 40rem) { figcaption { left: var(--s-2); bottom: var(--s-2); font-size: 0.62rem; letter-spacing: 0.1em; } }
+  figcaption { position: absolute; left: var(--s-3); bottom: var(--s-3); background: color-mix(in srgb, var(--c-surface) 88%, transparent); padding: 0.35em 0.9em; border-radius: var(--radius); font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; }
+
+  .materials { background: var(--c-surface); }
+  .center { text-align: center; margin-bottom: var(--s-5); }
+  .two { display: grid; gap: var(--s-5); }
+  @media (min-width: 48rem) { .two { grid-template-columns: 1fr 1fr; } }
+  .two :global(img) { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-img); margin-bottom: var(--s-4); }
+
+  .about { display: grid; gap: var(--s-5); align-items: center; }
+  @media (min-width: 56rem) { .about { grid-template-columns: 0.9fr 1fr; gap: var(--s-6); } }
+  .about-img :global(img) { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 12rem 12rem var(--radius-img) var(--radius-img); }
+  blockquote { margin: 0 0 var(--s-4); padding-left: var(--s-4); border-left: 2px solid var(--c-blush); }
+  blockquote p { font-family: var(--f-serif); font-style: italic; font-size: 1.25rem; line-height: 1.5; }
 </style>

@@ -1,5 +1,7 @@
 ---
+import { Picture } from 'astro:assets';
 import Base from '../layouts/Base.astro';
+import { IMG } from '../lib/images';
 import { SITE, SITE_URL } from '../lib/site';
 
 const jsonLd = {
@@ -16,14 +18,44 @@ const jsonLd = {
 };
 ---
 <Base
-  title="O mnie — Natalia"
-  description="Poznaj Natalię, twórczynię świec by N. Historia marki, inspiracje i ręczny proces powstawania każdej świecy."
+  title="O mnie — Natalia, twórczyni świec by N."
+  description="Poznaj Natalię, która ręcznie tworzy świece by N. z wosku sojowego i pszczelego. O pracowni, inspiracjach i powolnym procesie powstawania każdej świecy."
   jsonLd={jsonLd}
 >
-  <article class="container section">
-    <p class="eyebrow">O mnie</p>
-    <h1>Cześć, jestem Natalia</h1>
-    <!-- TODO: historia marki, proces tworzenia, zdjęcie portretowe i z pracowni -->
-    <p>Treść w przygotowaniu.</p>
+  <article class="container section about">
+    <div class="img">
+      <!-- TODO: portret Natalii lub zdjęcie z pracowni -->
+      <Picture src={IMG.rozaWrzosowa.src} alt={IMG.rozaWrzosowa.alt} formats={['avif', 'webp']} widths={[420, 640, 900]} sizes="(min-width: 56rem) 40vw, 92vw" loading="eager" fetchpriority="high" />
+    </div>
+    <div class="text">
+      <p class="eyebrow">O mnie</p>
+      <h1>Cześć, jestem <em>Natalia</em></h1>
+      <p class="lead">
+        Tworzę by N. — ręcznie robione świece z wosku sojowego i pszczelego.
+      </p>
+      <p>
+        Każda świeca powstaje ręcznie. Od roztapiania wosku, przez mieszanie zapachu, aż po ostatnie detale.
+        Ten cały proces to coś, co pozwala mi zwolnić tempo i skupić się na „tu” i „teraz”. Bez scrollowania,
+        bez przyśpieszenia, bez przewijania. Wszystko trwa tyle, ile trwać powinno. I to jest w tym najpiękniejsze.
+      </p>
+      <p>
+        Lubię formy, które są czymś więcej niż świecą: realistyczne róże, muszle, kudłate krówki Highland,
+        a czasem różową czaszkę inspirowaną motywem vanitas. Trochę sztuki, trochę ironii, trochę candlecore —
+        czyli by N. w pigułce.
+      </p>
+      <!-- TODO: historia marki od Natalii — jak to się zaczęło, skąd nazwa, co ją inspiruje -->
+      <div class="cta">
+        <a class="btn" href="/sklep/">Zobacz świece</a>
+        <a class="btn btn--ghost" href={SITE.instagram} rel="me noopener" target="_blank">Instagram</a>
+      </div>
+    </div>
   </article>
 </Base>
+
+<style>
+  .about { display: grid; gap: var(--s-5); align-items: start; }
+  @media (min-width: 56rem) { .about { grid-template-columns: 0.9fr 1fr; gap: var(--s-6); } .img { position: sticky; top: var(--s-4); } }
+  .img :global(img) { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 12rem 12rem var(--radius-img) var(--radius-img); }
+  .lead { font-size: 1.2rem; color: var(--c-muted); }
+  .cta { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-5); }
+</style>

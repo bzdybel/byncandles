@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig, fontProviders } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import react from '@astrojs/react';
 import keystatic from '@keystatic/astro';
@@ -17,6 +17,27 @@ export default defineConfig({
   build: { format: 'directory', inlineStylesheets: 'auto' },
   prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
   image: { responsiveStyles: false },
+  // Fonty pobierane przy buildzie i serwowane z naszej domeny (bez zapytań do Google = RODO + szybkość).
+  fonts: [
+    {
+      provider: fontProviders.fontsource(),
+      name: 'Bodoni Moda',
+      cssVariable: '--font-display',
+      weights: ['400'],
+      styles: ['normal', 'italic'],
+      subsets: ['latin', 'latin-ext'],
+      fallbacks: ['Georgia', 'serif'],
+    },
+    {
+      provider: fontProviders.fontsource(),
+      name: 'Jost',
+      cssVariable: '--font-body',
+      weights: ['300', '400'],
+      styles: ['normal'],
+      subsets: ['latin', 'latin-ext'],
+      fallbacks: ['system-ui', 'sans-serif'],
+    },
+  ],
   integrations: [
     sitemap({
       filter: (page) => !NOINDEX_PATHS.includes(new URL(page).pathname) && !new URL(page).pathname.startsWith('/admin/'),

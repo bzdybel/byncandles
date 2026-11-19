@@ -1,33 +1,46 @@
 ---
+import Logo from './Logo.astro';
 import { SITE } from '../lib/site';
 const year = new Date().getFullYear();
 ---
 <footer class="site-footer">
   <div class="container grid">
-    <div>
-      <p class="brand">{SITE.name}</p>
-      <p class="muted">Świece tworzone ręcznie przez {SITE.author}.</p>
+    <div class="brand">
+      <Logo />
+      <p class="muted">Ręcznie robione świece z wosku sojowego i pszczelego. Tworzy {SITE.author}.</p>
     </div>
-    <nav aria-label="Informacje">
+    <nav aria-label="Sklep">
+      <p class="h">Sklep</p>
       <ul>
+        <li><a href="/sklep/">Wszystkie świece</a></li>
         <li><a href="/dostawa-i-zwroty/">Dostawa i zwroty</a></li>
-        <li><a href="/regulamin/">Regulamin</a></li>
-        <li><a href="/polityka-prywatnosci/">Polityka prywatności</a></li>
         <li><a href="/kontakt/">Kontakt</a></li>
       </ul>
     </nav>
+    <nav aria-label="Informacje">
+      <p class="h">Informacje</p>
+      <ul>
+        <li><a href="/o-mnie/">O mnie</a></li>
+        <li><a href="/regulamin/">Regulamin</a></li>
+        <li><a href="/polityka-prywatnosci/">Polityka prywatności</a></li>
+      </ul>
+    </nav>
     <div>
+      <p class="h">Obserwuj</p>
       <a href={SITE.instagram} rel="me noopener" target="_blank">Instagram @by_n.candles</a>
     </div>
   </div>
-  <p class="container copy muted">© {year} {SITE.name}</p>
+  <p class="container copy muted">© {year} {SITE.name} · Soy &amp; beeswax · handmade</p>
 </footer>
 
 <style>
-  .site-footer { border-top: 1px solid var(--c-line); padding-block: var(--s-5) var(--s-4); margin-top: var(--s-6); font-size: 0.9rem; }
-  .grid { display: grid; gap: var(--s-4); grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
-  .brand { font-family: var(--f-serif); font-size: 1.2rem; margin-bottom: var(--s-1); }
+  .site-footer { background: var(--c-sand); padding-block: var(--s-6) var(--s-4); margin-top: var(--s-6); font-size: 0.95rem; }
+  .grid { display: grid; gap: var(--s-5) var(--s-4); grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+  .brand { display: grid; gap: var(--s-3); justify-items: start; }
+  .h { font-size: 0.72rem; letter-spacing: 0.24em; text-transform: uppercase; margin-bottom: var(--s-2); }
   ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-1); }
+  a { text-decoration: none; }
+  a:hover { text-decoration: underline; }
   .muted { color: var(--c-muted); }
-  .copy { margin-top: var(--s-4); font-size: 0.8rem; }
+  .copy { margin-top: var(--s-5); padding-top: var(--s-3); border-top: 1px solid var(--c-line); font-size: 0.8rem; max-width: none; }
 </style>

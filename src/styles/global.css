@@ -1,25 +1,30 @@
 /*
- * Tokeny designu — WERSJA ROBOCZA.
- * Paleta i typografia zostaną dopasowane do zdjęć z Instagrama (Etap 1).
+ * by N. candles — tokeny designu.
+ * Paleta z feedu @by_n.candles: ciepła złamana biel, pudrowy róż/wrzos, szarość gołębia, miód wosku pszczelego.
+ * Kontrast tekstu sprawdzony pod WCAG AA (muted 5.2:1, accent 5.5:1 na tle).
  */
 :root {
-  --c-bg: #f7f3ee;
-  --c-surface: #fffdfa;
-  --c-text: #2b2622;
-  --c-muted: #6f655c;
-  --c-accent: #8a6a4f;
+  --c-bg: #f5f1ec;          /* złamana biel (ściany, ceramika) */
+  --c-surface: #fbf9f6;
+  --c-sand: #ebe4dc;        /* piasek / greige */
+  --c-blush: #ead9e0;       /* pudrowy róż (różowe boxy) */
+  --c-text: #2b2527;
+  --c-muted: #6e6268;
+  --c-accent: #87506f;      /* głęboki wrzos — linki, przyciski */
   --c-accent-contrast: #fff;
-  --c-line: #e4dcd2;
+  --c-honey: #c9a25a;       /* wosk pszczeli — detale dekoracyjne */
+  --c-line: #e3dad2;
 
-  --f-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
-  --f-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --f-serif: var(--font-display), 'Bodoni Moda', Georgia, serif;
+  --f-sans: var(--font-body), 'Jost', system-ui, sans-serif;
 
   --s-1: 0.25rem; --s-2: 0.5rem; --s-3: 1rem; --s-4: 1.5rem;
-  --s-5: 2.5rem;  --s-6: 4rem;   --s-7: 6rem;
+  --s-5: 2.5rem;  --s-6: 4rem;   --s-7: 6.5rem;
 
-  --radius: 2px;
-  --container: 72rem;
-  --gutter: clamp(1rem, 4vw, 2rem);
+  --radius: 999px;          /* przyciski-pigułki jak w relacjach */
+  --radius-img: 1.25rem;
+  --container: 76rem;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
 
   color-scheme: light;
 }
@@ -30,27 +35,35 @@ body {
   margin: 0;
   background: var(--c-bg);
   color: var(--c-text);
-  font: 1rem/1.65 var(--f-sans);
+  font: 300 1.0625rem/1.7 var(--f-sans);
   -webkit-font-smoothing: antialiased;
 }
 img, picture, svg { display: block; max-width: 100%; height: auto; }
-h1, h2, h3 { font-family: var(--f-serif); font-weight: 400; line-height: 1.15; margin: 0 0 var(--s-3); }
-h1 { font-size: clamp(2rem, 5vw, 3.25rem); }
-h2 { font-size: clamp(1.5rem, 3.5vw, 2.25rem); }
-p { margin: 0 0 var(--s-3); max-width: 65ch; }
-a { color: inherit; text-underline-offset: 0.2em; }
+h1, h2, h3 { font-family: var(--f-serif); font-weight: 400; line-height: 1.12; margin: 0 0 var(--s-3); letter-spacing: -0.01em; }
+h1 { font-size: clamp(2.4rem, 6vw, 4.25rem); }
+h2 { font-size: clamp(1.75rem, 4vw, 2.75rem); }
+h3 { font-size: 1.3rem; }
+em { font-family: var(--f-serif); font-style: italic; }
+p { margin: 0 0 var(--s-3); max-width: 62ch; }
+strong { font-weight: 400; }
+a { color: inherit; text-underline-offset: 0.25em; text-decoration-thickness: 1px; }
 a:hover { color: var(--c-accent); }
 :focus-visible { outline: 2px solid var(--c-accent); outline-offset: 3px; }
 
 .container { width: min(100% - 2 * var(--gutter), var(--container)); margin-inline: auto; }
-.section { padding-block: var(--s-6); }
-.eyebrow { font-size: 0.8rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--c-muted); }
+.section { padding-block: clamp(var(--s-6), 9vw, var(--s-7)); }
+.eyebrow { font-size: 0.75rem; font-weight: 400; letter-spacing: 0.24em; text-transform: uppercase; color: var(--c-muted); margin-bottom: var(--s-3); }
 .btn {
-  display: inline-block; padding: 0.85em 1.6em; border-radius: var(--radius);
-  background: var(--c-text); color: var(--c-surface); text-decoration: none;
-  letter-spacing: 0.06em; font-size: 0.9rem; text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  padding: 0.95em 2em; border-radius: var(--radius); border: 1px solid var(--c-text);
+  background: var(--c-text); color: var(--c-surface); text-decoration: none; cursor: pointer;
+  font: 400 0.8rem/1 var(--f-sans); letter-spacing: 0.16em; text-transform: uppercase;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
-.btn:hover { background: var(--c-accent); color: var(--c-accent-contrast); }
+.btn:hover { background: var(--c-accent); border-color: var(--c-accent); color: var(--c-accent-contrast); }
+.btn--ghost { background: transparent; color: var(--c-text); }
+.btn--ghost:hover { background: var(--c-text); border-color: var(--c-text); color: var(--c-surface); }
+.link-arrow { font-size: 0.8rem; letter-spacing: 0.16em; text-transform: uppercase; text-decoration: none; border-bottom: 1px solid currentColor; padding-bottom: 0.2em; }
 .visually-hidden {
   position: absolute !important; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap;
