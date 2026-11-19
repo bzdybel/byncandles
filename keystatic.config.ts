@@ -109,6 +109,10 @@ export default config({
               ],
               defaultValue: 'sojowy',
             }),
+            wymiary: fields.text({
+              label: 'Wymiary',
+              description: 'Wysokość × szerokość × głębokość, np. 9 × 7 × 6 cm — kluczowe przy świecach-rzeźbach.',
+            }),
             knot: fields.text({ label: 'Knot', description: 'Np. bawełniany, drewniany' }),
             gramatura: fields.integer({ label: 'Gramatura (g)', validation: { min: 0 } }),
             czasPalenia: fields.integer({ label: 'Czas palenia (h, orientacyjnie)', validation: { min: 0 } }),

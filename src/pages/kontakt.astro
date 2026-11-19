@@ -1,9 +1,63 @@
 ---
+import { Picture } from 'astro:assets';
 import Base from '../layouts/Base.astro';
+import { PREZENT } from '../lib/images';
+import { ustawienia } from '../lib/shop';
+import { SITE, SITE_URL } from '../lib/site';
+
+const ust = await ustawienia();
+const jsonLd = {
+  '@type': 'ContactPage',
+  url: `${SITE_URL}/kontakt/`,
+  about: { '@id': `${SITE_URL}/#organization` },
+};
 ---
-<Base title="Kontakt" description="Skontaktuj się z by N. candles — pytania o świece, zamówienia indywidualne i współpracę.">
-  <article class="container section">
-    <h1>Kontakt</h1>
-    <p>Treść w przygotowaniu.</p>
-  </article>
+<Base
+  title="Kontakt i zamówienia indywidualne"
+  description="Napisz do by N. candles — pytania o świece, zamówienia indywidualne, zestawy na prezent i współpraca."
+  jsonLd={jsonLd}
+>
+  <section class="container section--tight contact">
+    <div>
+      <h1>Napisz <em>do mnie</em></h1>
+      <p class="t-lead">
+        Masz pytanie o świecę, chcesz zamówić coś specjalnego albo przygotować zestaw na prezent? Odpiszę i pomogę wybrać.
+      </p>
+
+      <ul class="channels" role="list">
+        <li>
+          <span class="overline">Najszybciej</span>
+          <a class="channel" href={SITE.instagram} rel="noopener" target="_blank">Wiadomość na Instagramie<span aria-hidden="true"> →</span></a>
+          <span class="t-small t-muted">@by_n.candles</span>
+        </li>
+        {ust.email && (
+          <li>
+            <span class="overline">E-mail</span>
+            <a class="channel" href={`mailto:${ust.email}`}>{ust.email}</a>
+          </li>
+        )}
+      </ul>
+
+      <h2 class="h3">Zamówienia indywidualne</h2>
+      <p>
+        Wybrany kolor, zapach, forma albo zestaw kilku świec w prezentowym pudełku — napisz, czego szukasz i na kiedy.
+        Dobrze, jeśli podasz też budżet; wtedy od razu zaproponuję konkretne rozwiązanie.
+      </p>
+    </div>
+    <div class="frame img">
+      <Picture src={PREZENT.pudelka.src} alt={PREZENT.pudelka.alt} formats={['avif', 'webp']} widths={[400, 640, 810]} sizes="(min-width: 56rem) 36vw, 92vw" loading="eager" />
+    </div>
+  </section>
 </Base>
+
+<style>
+  .contact { display: grid; gap: var(--sp-7); align-items: start; }
+  @media (min-width: 56rem) { .contact { grid-template-columns: 1.1fr 0.9fr; gap: var(--sp-8); } }
+  .channels { list-style: none; padding: 0; margin: var(--sp-6) 0 var(--sp-7); display: grid; gap: var(--sp-5); }
+  .channels li { display: grid; }
+  .channels .overline { margin-bottom: 0; }
+  .channel { display: inline-flex; align-items: center; min-height: var(--tap); font-family: var(--f-serif); font-size: var(--fs-xl); text-decoration: none; }
+  .channel:hover { text-decoration: underline; }
+  .h3 { font-size: var(--fs-xl); }
+  .img { aspect-ratio: 4 / 5; }
+</style>

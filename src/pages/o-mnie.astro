@@ -1,7 +1,7 @@
 ---
 import { Picture } from 'astro:assets';
 import Base from '../layouts/Base.astro';
-import { IMG } from '../lib/images';
+import { IMG, PROCES } from '../lib/images';
 import { SITE, SITE_URL } from '../lib/site';
 
 const jsonLd = {
@@ -22,17 +22,14 @@ const jsonLd = {
   description="Poznaj Natalię, która ręcznie tworzy świece by N. z wosku sojowego i pszczelego. O pracowni, inspiracjach i powolnym procesie powstawania każdej świecy."
   jsonLd={jsonLd}
 >
-  <article class="container section about">
-    <div class="img">
+  <article class="container section--tight about">
+    <div class="frame frame--arch img">
       <!-- TODO: portret Natalii lub zdjęcie z pracowni -->
       <Picture src={IMG.rozaWrzosowa.src} alt={IMG.rozaWrzosowa.alt} formats={['avif', 'webp']} widths={[420, 640, 900]} sizes="(min-width: 56rem) 40vw, 92vw" loading="eager" fetchpriority="high" />
     </div>
     <div class="text">
-      <p class="eyebrow">O mnie</p>
       <h1>Cześć, jestem <em>Natalia</em></h1>
-      <p class="lead">
-        Tworzę by N. — ręcznie robione świece z wosku sojowego i pszczelego.
-      </p>
+      <p class="t-lead">Tworzę by N. — ręcznie robione świece z wosku sojowego i pszczelego.</p>
       <p>
         Każda świeca powstaje ręcznie. Od roztapiania wosku, przez mieszanie zapachu, aż po ostatnie detale.
         Ten cały proces to coś, co pozwala mi zwolnić tempo i skupić się na „tu” i „teraz”. Bez scrollowania,
@@ -44,18 +41,24 @@ const jsonLd = {
         czyli by N. w pigułce.
       </p>
       <!-- TODO: historia marki od Natalii — jak to się zaczęło, skąd nazwa, co ją inspiruje -->
+      <figure class="studio">
+        <div class="frame"><Picture src={PROCES[2].src} alt={PROCES[2].alt} formats={['avif', 'webp']} widths={[320, 480]} sizes="(min-width: 56rem) 14rem, 40vw" /></div>
+        <figcaption class="t-small t-muted">Z pracowni: odlewanie wosku do formy.</figcaption>
+      </figure>
       <div class="cta">
-        <a class="btn" href="/sklep/">Zobacz świece</a>
-        <a class="btn btn--ghost" href={SITE.instagram} rel="me noopener" target="_blank">Instagram</a>
+        <a class="btn btn--lg" href="/sklep/">Zobacz świece</a>
+        <a class="btn btn--ghost btn--lg" href={SITE.instagram} rel="me noopener" target="_blank">Instagram</a>
       </div>
     </div>
   </article>
 </Base>
 
 <style>
-  .about { display: grid; gap: var(--s-5); align-items: start; }
-  @media (min-width: 56rem) { .about { grid-template-columns: 0.9fr 1fr; gap: var(--s-6); } .img { position: sticky; top: var(--s-4); } }
-  .img :global(img) { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 12rem 12rem var(--radius-img) var(--radius-img); }
-  .lead { font-size: 1.2rem; color: var(--c-muted); }
-  .cta { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-5); }
+  .about { display: grid; gap: var(--sp-7); align-items: start; }
+  @media (min-width: 56rem) { .about { grid-template-columns: 0.9fr 1fr; gap: var(--sp-8); } .img { position: sticky; top: var(--sp-5); } }
+  .img { aspect-ratio: 4 / 5; }
+  .t-lead { margin-bottom: var(--sp-5); }
+  .studio { display: grid; grid-template-columns: 9rem 1fr; gap: var(--sp-4); align-items: end; margin: var(--sp-6) 0 0; }
+  .studio .frame { aspect-ratio: 3 / 4; }
+  .cta { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-7); }
 </style>
