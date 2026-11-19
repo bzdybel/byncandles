@@ -1,5 +1,5 @@
 ---
-/** Stopka w stylu inspiracji: pasek zdjęć z Instagrama, logo na środku między kolumnami linków, grafitowy pasek z prawami autorskimi. */
+/** Stopka w stylu inspiracji: 3 duże zdjęcia z Instagrama, logo na środku między kolumnami linków, grafitowy pasek z prawami autorskimi. */
 import Img from './Img.astro';
 import Logo from './Logo.astro';
 import { brand, common, footer } from '../i18n/pl';
@@ -9,19 +9,24 @@ import { SITE } from '../lib/site';
 
 const groups = [
   { id: 'f-shop', title: footer.shop, links: [['/sklep/', footer.allCandles], ['/dostawa-i-zwroty/', footer.delivery], ['/kontakt/', footer.customOrders]] },
-  { id: 'f-info', title: footer.info, links: [['/o-mnie/', footer.about], ['/kontakt/', footer.contact], ['/regulamin/', footer.terms], ['/polityka-prywatnosci/', footer.privacy]] },
+  { id: 'f-info', title: footer.info, links: [['/kontakt/', footer.contact], ['/regulamin/', footer.terms], ['/polityka-prywatnosci/', footer.privacy]] },
 ] as const;
-const insta = [IMG.misie, IMG.kurka, IMG.wSzkle, IMG.procesKnot, IMG.prezentAlpaka, IMG.roze];
+// Inne zdjęcia niż na stronie głównej — nic się nie powtarza.
+const insta = [IMG.misie, IMG.kurka, IMG.czaszka];
 ---
 <footer class="site-footer">
-  <a class="insta" href={SITE.instagram} rel="me noopener" target="_blank">
+  <section class="container insta" aria-labelledby="f-insta">
+    <a class="insta-label overline" id="f-insta" href={SITE.instagram} rel="me noopener" target="_blank">{fill(footer.instagramStrip, { handle: common.instagramHandle })}</a>
     <ul class="strip" role="list" data-reveal>
       {insta.map((img, i) => (
-        <li class="frame" style={`--i: ${i}`} data-reveal-item><Img src={img.src} alt="" widths={[240, 360]} sizes="(min-width: 40rem) 17vw, 34vw" /></li>
+        <li style={`--i: ${i}`} data-reveal-item>
+          <a class="frame" href={SITE.instagram} rel="me noopener" target="_blank" tabindex="-1" aria-hidden="true">
+            <Img src={img.src} alt="" widths={[480, 720, 960]} sizes="(min-width: 40rem) 31vw, 80vw" />
+          </a>
+        </li>
       ))}
     </ul>
-    <span class="insta-label">{fill(footer.instagramStrip, { handle: common.instagramHandle })}</span>
-  </a>
+  </section>
 
   <div class="container grid">
     <nav aria-labelledby={groups[0].id}>
@@ -46,18 +51,19 @@ const insta = [IMG.misie, IMG.kurka, IMG.wSzkle, IMG.procesKnot, IMG.prezentAlpa
 <style>
   .site-footer { margin-top: var(--sp-8); font-size: var(--fs-sm); }
 
-  .insta { position: relative; display: block; text-decoration: none; }
-  .strip { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); }
-  @media (min-width: 40rem) { .strip { grid-template-columns: repeat(6, 1fr); } }
-  .strip .frame { aspect-ratio: 1; border-radius: 0; }
-  .strip :global(img) { transition: transform var(--t-slower) var(--ease), opacity var(--t-base) var(--ease); }
-  .insta:hover .strip :global(img) { opacity: 0.85; }
-  .insta-label {
-    position: absolute; left: 50%; top: 50%; translate: -50% -50%; white-space: nowrap;
-    background: var(--c-bg); color: var(--c-text); padding: var(--sp-3) var(--sp-5);
-    font-size: var(--fs-xs); letter-spacing: var(--tracking-overline); text-transform: uppercase;
+  /* Instagram: 3 duże kadry 3:4 (proporcje zdjęć — bez przycinania); na telefonie przewijane w poziomie */
+  .insta { text-align: center; }
+  .insta-label { display: inline-block; text-decoration: none; margin-bottom: var(--sp-5); }
+  .insta-label:hover { color: var(--c-accent); }
+  .strip {
+    list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); justify-items: stretch;
+    grid-auto-flow: column; grid-auto-columns: 80%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
   }
-  .insta:hover .insta-label { color: var(--c-accent); }
+  .strip li { scroll-snap-align: center; }
+  @media (min-width: 40rem) { .strip { grid-auto-flow: row; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); overflow: visible; } }
+  .strip .frame { display: block; aspect-ratio: 3 / 4; }
+  .strip :global(img) { transition: transform var(--t-slower) var(--ease); }
+  @media (hover: hover) { .strip .frame:hover :global(img) { transform: scale(1.04); } }
 
   .grid {
     display: grid; gap: var(--sp-7) var(--sp-5); padding-block: var(--sp-8) var(--sp-7);

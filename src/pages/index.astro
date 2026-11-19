@@ -11,12 +11,12 @@ const wszystkie = await produktyPubliczne();
 const wyroznione = wszystkie.filter((p) => p.data.wyrozniony);
 const polecane = (wyroznione.length ? wyroznione : wszystkie).slice(0, 4);
 
-// 4 najlepsze prace — same zdjęcia, bez podpisów (asortyment i opisy są w sklepie).
-const prace = (['rozaWrzosowa', 'krowki', 'muszle', 'buldog'] as const).map((key) => IMG[key]);
+// Zdjęcia na stronie nie powinny się powtarzać (także ze stopką). 4 najlepsze prace — same zdjęcia, bez podpisów (asortyment i opisy są w sklepie).
+const prace = (['moai', 'krowki', 'muszle', 'buldog'] as const).map((key) => IMG[key]);
 const proces = [IMG.procesKnot, IMG.procesZapach, IMG.procesOdlewanie];
 
 const jsonLd = [
-  { '@type': 'Organization', '@id': `${SITE_URL}/#organization`, name: brand.name, url: SITE_URL, sameAs: [SITE.instagram], founder: { '@id': `${SITE_URL}/o-mnie/#natalia` } },
+  { '@type': 'Organization', '@id': `${SITE_URL}/#organization`, name: brand.name, url: SITE_URL, sameAs: [SITE.instagram], founder: { '@type': 'Person', name: brand.author } },
   { '@type': 'WebSite', '@id': `${SITE_URL}/#website`, name: brand.name, url: SITE_URL, inLanguage: 'pl-PL', publisher: { '@id': `${SITE_URL}/#organization` } },
 ];
 ---
@@ -32,7 +32,7 @@ const jsonLd = [
         </figure>
         <div class="actions">
           <a class="btn btn--lg" href="/sklep/">{common.seeCollection}</a>
-          <a class="btn btn--ghost btn--lg" href="/o-mnie/">{home.heroSecondary}</a>
+          <a class="btn btn--ghost btn--lg" href="/kontakt/">{common.customOrder}</a>
         </div>
       </div>
       <div class="hero-img">
@@ -45,7 +45,7 @@ const jsonLd = [
     </div>
   </section>
 
-  <!-- 1. Wiodąca sekcja: wybrane świece ze sklepu, a dopóki ich brak — 4 najlepsze prace -->
+  <!-- 1. Wiodąca sekcja: wybrane świece ze sklepu, a dopóki ich brak — mozaika prac (1 duże zdjęcie + 3 mniejsze + kafel z tytułem) -->
   {polecane.length > 0 ? (
     <section class="container section" aria-labelledby="featured">
       <div class="section-head">
@@ -55,14 +55,18 @@ const jsonLd = [
       <ProductGrid produkty={polecane} />
     </section>
   ) : (
-    <section class="container section center-head" aria-labelledby="studio">
-      <p id="studio" class="overline">{home.galleryOverline}</p>
+    <section class="container section" aria-labelledby="studio">
       <ul class="gallery" role="list" data-reveal>
         {prace.map((img, i) => (
-          <li class="frame" style={`--i: ${i}`} data-reveal-item><Img {...img} widths={[320, 480, 640]} sizes="(min-width: 56rem) 23vw, 46vw" /></li>
+          <li class:list={['frame', { 'is-lead': i === 0 }]} style={`--i: ${i}`} data-reveal-item>
+            <Img {...img} widths={i === 0 ? [640, 960, 1280] : [360, 560, 760]} sizes={i === 0 ? '(min-width: 56rem) 48vw, 92vw' : '(min-width: 56rem) 23vw, 46vw'} />
+          </li>
         ))}
+        <li class="gallery-title">
+          <h2 id="studio">{home.galleryOverline}</h2>
+          <a class="link-arrow" href={SITE.instagram} rel="noopener" target="_blank"><span>{home.galleryMore}</span></a>
+        </li>
       </ul>
-      <a class="link-arrow" href={SITE.instagram} rel="noopener" target="_blank"><span>{home.galleryMore}</span></a>
     </section>
   )}
 
@@ -139,9 +143,18 @@ const jsonLd = [
   .center-head > h2 { margin-inline: auto; max-width: 26ch; margin-bottom: var(--sp-7); }
 
   /* Galeria prac */
-  .gallery { list-style: none; margin: 0 0 var(--sp-6); padding: 0; display: grid; gap: var(--sp-3); grid-template-columns: repeat(2, 1fr); }
-  .gallery .frame { aspect-ratio: 4 / 5; }
-  @media (min-width: 56rem) { .gallery { grid-template-columns: repeat(4, 1fr); gap: var(--sp-4); } }
+  .gallery { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); grid-template-columns: repeat(2, 1fr); }
+  .gallery .frame { aspect-ratio: 3 / 4; }
+  .gallery .is-lead { grid-column: 1 / -1; }
+  .gallery-title {
+    display: grid; place-content: center; justify-items: center; gap: var(--sp-3); text-align: center;
+    padding: var(--sp-5); background: var(--c-blush); border-radius: var(--r-md);
+  }
+  .gallery-title h2 { margin: 0; }
+  @media (min-width: 56rem) {
+    .gallery { grid-template-columns: 2fr 1fr 1fr; gap: var(--sp-4); }
+    .gallery .is-lead { grid-column: 1; grid-row: 1 / span 2; aspect-ratio: auto; }
+  }
   .gallery :global(img) { transition: transform 1400ms var(--ease) calc(var(--i) * 140ms); }
   :global(.js-reveal) .gallery:not(.is-in) :global(img) { transform: scale(1.12); }
   @media (hover: hover) { .gallery.is-in li:hover :global(img) { transform: scale(1.05); transition-duration: var(--t-slower); transition-delay: 0ms; } }

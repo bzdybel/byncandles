@@ -15,12 +15,14 @@ import procesZapach from '../assets/site/proces-olejek-zapachowy.jpg';
 import procesOdlewanie from '../assets/site/proces-odlewanie-wosku.jpg';
 import prezentPudelka from '../assets/site/prezent-rozowe-pudelka-swiece.jpg';
 import prezentAlpaka from '../assets/site/prezent-alpaka-zapakowana.jpg';
+import moai from '../assets/site/swieca-moai.jpg';
+import czaszka from '../assets/site/swieca-rozowa-czaszka.jpg';
 
 export interface SiteImage { src: ImageMetadata; alt: string }
 
 const sources = {
   roze, muszle, rozaWrzosowa, krowki, pszczeli, misie, kurka, buldog, wSzkle,
-  procesKnot, procesZapach, procesOdlewanie, prezentPudelka, prezentAlpaka,
+  procesKnot, procesZapach, procesOdlewanie, prezentPudelka, prezentAlpaka, moai, czaszka,
 } satisfies Record<keyof typeof alt, ImageMetadata>;
 
 export const IMG = Object.fromEntries(
