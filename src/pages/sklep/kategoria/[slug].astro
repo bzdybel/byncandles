@@ -16,10 +16,15 @@ const { k, produkty } = Astro.props;
 const description = k.data.opis?.split('\n')[0].slice(0, 160) ?? `${k.data.nazwa} — ręcznie robione świece by N.`;
 ---
 <Base title={k.data.nazwa} description={description}>
-  <section class="container section">
+  <section class="container section--tight">
     <Breadcrumbs items={[{ label: 'Sklep', href: '/sklep/' }, { label: k.data.nazwa, href: urlKategorii(k) }]} />
     <h1>{k.data.nazwa}</h1>
-    {k.data.opis?.split(/\n{2,}/).map((para) => <p>{para}</p>)}
+    {k.data.opis?.split(/\n{2,}/).map((para) => <p class="t-lead">{para}</p>)}
+    <div class="spacer"></div>
     <ProductGrid produkty={produkty} eagerFirst={2} />
   </section>
 </Base>
+
+<style>
+  .spacer { height: var(--sp-6); }
+</style>

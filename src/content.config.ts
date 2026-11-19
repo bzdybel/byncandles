@@ -29,6 +29,7 @@ const produkty = defineCollection({
         szczegoly: opt(
           z.object({
             wosk: opt(z.enum(['sojowy', 'rzepakowy', 'kokosowy', 'mieszanka', 'inny'])),
+            wymiary: optText,
             knot: optText,
             gramatura: opt(z.number().int()),
             czasPalenia: opt(z.number().int()),

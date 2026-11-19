@@ -3,7 +3,15 @@ import Base from '../layouts/Base.astro';
 ---
 <Base title="Nie znaleziono strony" noindex>
   <section class="container section">
-    <h1>Ups, tej strony nie ma</h1>
-    <p>Mogła zostać przeniesiona. Zajrzyj do <a href="/sklep/">sklepu</a> lub wróć na <a href="/">stronę główną</a>.</p>
+    <span class="overline">Błąd 404</span>
+    <h1>Ups, tej strony <em>nie ma</em></h1>
+    <p class="t-lead">Mogła zostać przeniesiona albo adres zawiera literówkę.</p>
+    <div class="cta">
+      <a class="btn btn--lg" href="/sklep/">Przejdź do sklepu</a>
+      <a class="btn btn--ghost btn--lg" href="/">Strona główna</a>
+    </div>
   </section>
 </Base>
+<style>
+  .cta { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+</style>

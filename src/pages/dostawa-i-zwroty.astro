@@ -1,9 +1,63 @@
 ---
 import Base from '../layouts/Base.astro';
+import { formatPLN, ustawienia } from '../lib/shop';
+
+const ust = await ustawienia();
+const paczkomat = ust.wysylkaPaczkomat ? formatPLN(ust.wysylkaPaczkomat) : 'koszt podany w koszyku';
 ---
-<Base title="Dostawa i zwroty" description="Dostawa do paczkomatów InPost, koszty wysyłki oraz zasady zwrotów w by N. candles.">
-  <article class="container section">
+<Base
+  title="Dostawa i zwroty"
+  description="Wysyłka świec by N. do Paczkomatów InPost, bezpieczne pakowanie i 14 dni na odstąpienie od umowy."
+>
+  <article class="container section--tight prose">
     <h1>Dostawa i zwroty</h1>
-    <p>Treść w przygotowaniu.</p>
+    <p class="t-lead">Świece wysyłam starannie zapakowane, żeby dotarły w idealnym stanie — także te o delikatnych, rzeźbionych kształtach.</p>
+
+    <h2>Dostawa</h2>
+    <dl class="table">
+      <div><dt>Paczkomat InPost</dt><dd>{paczkomat}</dd></div>
+      {ust.wysylkaKurier !== undefined && <div><dt>Kurier InPost</dt><dd>{formatPLN(ust.wysylkaKurier)}</dd></div>}
+      {ust.darmowaWysylkaOd !== undefined && <div><dt>Darmowa dostawa</dt><dd>od {formatPLN(ust.darmowaWysylkaOd)}</dd></div>}
+    </dl>
+    <p>Po nadaniu paczki dostaniesz od InPost wiadomość z numerem do śledzenia przesyłki.</p>
+    <!-- TODO: czas realizacji zamówienia (np. „wysyłka w ciągu X dni roboczych”) — do potwierdzenia przez Natalię -->
+
+    <h2>Pakowanie</h2>
+    <p>
+      Każda świeca jest zabezpieczona przed transportem. Na życzenie pakuję ją prezentowo — w różowe pudełko z okienkiem
+      lub w celofan ze sznurkiem. Napisz o tym w uwagach do zamówienia.
+    </p>
+
+    <h2>Zwrot (odstąpienie od umowy)</h2>
+    <p>
+      Kupując jako konsument, możesz odstąpić od umowy bez podawania przyczyny w ciągu <strong>14 dni</strong> od
+      otrzymania paczki. Wystarczy, że w tym czasie poinformujesz mnie o swojej decyzji (np. wiadomością),
+      a następnie odeślesz świecę w stanie nienaruszonym.
+    </p>
+    <p>
+      Zwrócę płatność za produkt i najtańszy oferowany sposób dostawy w ciągu 14 dni od otrzymania informacji
+      o odstąpieniu. Koszt odesłania świecy pokrywa kupujący.
+    </p>
+    <p class="t-small t-muted">
+      Wyjątek stanowią świece wykonane na indywidualne zamówienie według Twojej specyfikacji — w ich przypadku prawo
+      odstąpienia od umowy nie przysługuje.
+    </p>
+    <!-- TODO: adres do zwrotów i dane sprzedawcy — po uzupełnieniu formy działalności -->
+
+    <h2>Reklamacje</h2>
+    <p>
+      Jeśli świeca dotrze uszkodzona lub ma wadę, napisz do mnie — najlepiej ze zdjęciem. Każdą sprawę rozpatrzę
+      w ciągu 14 dni. Szczegóły znajdziesz w <a href="/regulamin/">regulaminie</a>.
+    </p>
+    <p><a class="link-arrow" href="/kontakt/"><span>Masz pytanie? Napisz</span></a></p>
   </article>
 </Base>
+
+<style>
+  .prose { max-width: 46rem; }
+  .prose h2 { font-size: var(--fs-xl); margin-top: var(--sp-7); }
+  .table { margin: 0 0 var(--sp-5); border-top: 1px solid var(--c-border); }
+  .table div { display: flex; justify-content: space-between; gap: var(--sp-4); padding-block: var(--sp-3); border-bottom: 1px solid var(--c-border); }
+  dt { color: var(--c-text-muted); }
+  dd { margin: 0; font-variant-numeric: tabular-nums; }
+</style>

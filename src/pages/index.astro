@@ -3,20 +3,26 @@ import { Picture } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import ProductGrid from '../components/ProductGrid.astro';
 import { produktyPubliczne } from '../lib/shop';
-import { IMG } from '../lib/images';
+import { IMG, PREZENT, PROCES } from '../lib/images';
 import { SITE, SITE_URL } from '../lib/site';
 
 const wszystkie = await produktyPubliczne();
 const wyroznione = wszystkie.filter((p) => p.data.wyrozniony);
 const polecane = (wyroznione.length ? wyroznione : wszystkie).slice(0, 4);
 
-const pracownia = [
+// Galeria redakcyjna: jedno duże zdjęcie + cztery mniejsze, w spójnej, jasnej tonacji.
+const [glowne, ...male] = [
   { img: IMG.krowki, label: 'Krówki Highland' },
   { img: IMG.muszle, label: 'Muszle' },
-  { img: IMG.czaszka, label: 'Różowa czaszka' },
   { img: IMG.misie, label: 'Misie' },
-  { img: IMG.alpaki, label: 'Alpaki' },
-  { img: IMG.cytryna, label: 'Cytryna' },
+  { img: IMG.buldog, label: 'Buldog francuski' },
+  { img: IMG.wSzkle, label: 'Świeca w szkle' },
+];
+
+const kroki = [
+  { tytul: 'Knot i forma', tekst: 'Każdą formę przygotowuję ręcznie — knot musi stać idealnie pośrodku, żeby świeca paliła się równo.' },
+  { tytul: 'Wosk i zapach', tekst: 'Roztapiam wosk sojowy lub pszczeli i dodaję olejek zapachowy, odmierzany co do kropli.' },
+  { tytul: 'Odlewanie', tekst: 'Wosk wlewam powoli do formy. Potem świeca musi spokojnie zastygnąć — tego etapu nie da się przyspieszyć.' },
 ];
 
 const jsonLd = [
@@ -43,20 +49,21 @@ const jsonLd = [
   description="by N. candles — ręcznie odlewane świece z wosku sojowego i pszczelego: róże, muszle, krówki Highland i inne małe rzeźby. Idealne na prezent."
   jsonLd={jsonLd}
 >
+  <!-- Hero -->
   <section class="hero container">
     <div class="hero-text">
-      <p class="eyebrow">Soy &amp; beeswax · handmade</p>
-      <h1>Świece, które są <em>małymi rzeźbami</em></h1>
-      <p class="lead">
+      <span class="overline">Wosk sojowy i pszczeli · rękodzieło</span>
+      <h1 class="t-display">Świece, które są <em>małymi rzeźbami</em></h1>
+      <p class="t-lead">
         Ręcznie odlewane świece z naturalnego wosku sojowego i pszczelego. Róże, muszle, krówki
         i inne drobne formy, które ożywiają wnętrze — nawet wtedy, gdy nie płoną.
       </p>
       <div class="cta">
-        <a class="btn" href="/sklep/">Zobacz kolekcję</a>
-        <a class="btn btn--ghost" href="/o-mnie/">Poznaj Natalię</a>
+        <a class="btn btn--lg" href="/sklep/">Zobacz kolekcję</a>
+        <a class="btn btn--ghost btn--lg" href="/o-mnie/">Poznaj Natalię</a>
       </div>
     </div>
-    <div class="hero-img">
+    <div class="frame frame--arch hero-img">
       <Picture
         src={IMG.roze.src}
         alt={IMG.roze.alt}
@@ -69,119 +76,186 @@ const jsonLd = [
     </div>
   </section>
 
-  <section class="values" aria-label="Dlaczego by N.">
-    <ul class="container" role="list">
-      <li><strong>Naturalny wosk</strong><span>sojowy i pszczeli z lokalnej pasieki</span></li>
-      <li><strong>Ręcznie, w małych partiach</strong><span>każda świeca jest trochę inna</span></li>
-      <li><strong>Gotowe na prezent</strong><span>starannie zapakowane</span></li>
-      <li><strong>Wysyłka InPost</strong><span>prosto do paczkomatu</span></li>
-    </ul>
-  </section>
-
+  <!-- Produkty -->
   {polecane.length > 0 && (
-    <section class="container section" aria-labelledby="featured">
+    <section class="container section--tight" aria-labelledby="featured">
       <div class="head">
         <h2 id="featured">Wybrane świece</h2>
-        <a class="link-arrow" href="/sklep/">Cała kolekcja</a>
+        <a class="link-arrow" href="/sklep/"><span>Cała kolekcja</span></a>
       </div>
       <ProductGrid produkty={polecane} />
     </section>
   )}
 
-  <section class="container section" aria-labelledby="studio">
-    <div class="head">
-      <div>
-        <p class="eyebrow">Z pracowni</p>
-        <h2 id="studio">Trochę sztuki, trochę ironii, <em>trochę candlecore</em></h2>
+  <!-- Proces -->
+  <section class="process" aria-labelledby="process">
+    <div class="container section">
+      <div class="process-head">
+        <h2 id="process">Jak powstaje świeca <em>by&nbsp;N.</em></h2>
+        <p class="t-muted">Bez pośpiechu i bez skrótów. Wszystko trwa tyle, ile trwać powinno.</p>
       </div>
-      <a class="link-arrow" href={SITE.instagram} rel="noopener" target="_blank">Więcej na Instagramie</a>
+      <ol class="steps" role="list">
+        {kroki.map((k, i) => (
+          <li class="step">
+            <div class="frame step-img">
+              <Picture src={PROCES[i].src} alt={PROCES[i].alt} formats={['avif', 'webp']} widths={[320, 480, 640]} sizes="(min-width: 56rem) 28vw, (min-width: 36rem) 45vw, 88vw" />
+            </div>
+            <span class="num" aria-hidden="true">0{i + 1}</span>
+            <h3>{k.tytul}</h3>
+            <p class="t-muted">{k.tekst}</p>
+          </li>
+        ))}
+      </ol>
     </div>
-    <ul class="mosaic" role="list">
-      {pracownia.map(({ img, label }) => (
-        <li>
-          <figure>
-            <Picture src={img.src} alt={img.alt} formats={['avif', 'webp']} widths={[320, 480, 720]} sizes="(min-width: 56rem) 30vw, 46vw" />
-            <figcaption>{label}</figcaption>
-          </figure>
-        </li>
-      ))}
-    </ul>
   </section>
 
+  <!-- Galeria -->
+  <section class="container section" aria-labelledby="studio">
+    <div class="head">
+      <h2 id="studio">Trochę sztuki, trochę ironii, <em>trochę candlecore</em></h2>
+      <a class="link-arrow" href={SITE.instagram} rel="noopener" target="_blank"><span>Więcej na Instagramie</span></a>
+    </div>
+    <div class="gallery">
+      <figure class="g-main">
+        <div class="frame"><Picture src={glowne.img.src} alt={glowne.img.alt} formats={['avif', 'webp']} widths={[480, 720, 960]} sizes="(min-width: 56rem) 48vw, 92vw" /></div>
+        <figcaption>{glowne.label}</figcaption>
+      </figure>
+      {male.map(({ img, label }) => (
+        <figure>
+          <div class="frame"><Picture src={img.src} alt={img.alt} formats={['avif', 'webp']} widths={[320, 480]} sizes="(min-width: 56rem) 23vw, 46vw" /></div>
+          <figcaption>{label}</figcaption>
+        </figure>
+      ))}
+    </div>
+  </section>
+
+  <!-- Materiały -->
   <section class="materials" aria-labelledby="materials">
-    <div class="container section">
-      <h2 id="materials" class="center">Z czego powstają świece by&nbsp;N.</h2>
-      <div class="two">
-        <article>
-          <Picture src={IMG.muszle.src} alt={IMG.muszle.alt} formats={['avif', 'webp']} widths={[400, 640, 900]} sizes="(min-width: 56rem) 40vw, 92vw" />
+    <div class="container section materials-grid">
+      <div class="frame mat-img">
+        <Picture src={IMG.pszczeli.src} alt={IMG.pszczeli.alt} formats={['avif', 'webp']} widths={[400, 640, 900]} sizes="(min-width: 56rem) 40vw, 92vw" />
+      </div>
+      <div>
+        <h2 id="materials">Z czego powstają świece by&nbsp;N.</h2>
+        <div class="mat">
           <h3>Wosk sojowy</h3>
-          <p>
+          <p class="t-muted">
             Roślinny, czysto palący się wosk, który świetnie oddaje detale formy — od żłobień muszli po płatki róż.
-            Część świec łączę z dodatkiem wosku pszczelego dla głębszego koloru i dłuższego palenia.
+            Część świec łączę z dodatkiem wosku pszczelego dla głębszego koloru.
           </p>
-        </article>
-        <article>
-          <Picture src={IMG.pszczeli.src} alt={IMG.pszczeli.alt} formats={['avif', 'webp']} widths={[400, 640, 900]} sizes="(min-width: 56rem) 40vw, 92vw" />
+        </div>
+        <div class="mat">
           <h3>Wosk pszczeli z lokalnej pasieki</h3>
-          <p>
+          <p class="t-muted">
             Świece w 100% z naturalnego wosku pszczelego, bez zbędnych dodatków — tylko piękny, miodowy kolor
             i charakterystyczny, delikatny zapach miodu.
           </p>
-        </article>
+        </div>
       </div>
     </div>
   </section>
 
+  <!-- Prezent i zamówienia -->
+  <section class="gift" aria-labelledby="gift">
+    <div class="container section gift-grid">
+      <div class="gift-text">
+        <h2 id="gift">Na prezent i <em>na zamówienie</em></h2>
+        <p>
+          Świece pakuję w różowe pudełka z okienkiem albo w celofan przewiązany sznurkiem — gotowe do wręczenia.
+        </p>
+        <p>
+          Szukasz czegoś wyjątkowego? Przygotowuję też zamówienia indywidualne: wybrany kolor, zapach albo zestaw
+          na prezent dla bliskiej osoby.
+        </p>
+        <div class="cta">
+          <a class="btn" href="/kontakt/">Zapytaj o zamówienie</a>
+          <a class="btn btn--ghost" href="/sklep/">Wybierz ze sklepu</a>
+        </div>
+      </div>
+      <div class="gift-imgs">
+        <div class="frame g1"><Picture src={PREZENT.pudelka.src} alt={PREZENT.pudelka.alt} formats={['avif', 'webp']} widths={[320, 480, 640]} sizes="(min-width: 56rem) 26vw, 55vw" /></div>
+        <div class="frame g2"><Picture src={PREZENT.alpaka.src} alt={PREZENT.alpaka.alt} formats={['avif', 'webp']} widths={[280, 420, 560]} sizes="(min-width: 56rem) 20vw, 42vw" /></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- O Natalii -->
   <section class="container section about" aria-labelledby="about-teaser">
-    <div class="about-img">
+    <div class="frame frame--arch about-img">
       <Picture src={IMG.kurka.src} alt={IMG.kurka.alt} formats={['avif', 'webp']} widths={[400, 640, 900]} sizes="(min-width: 56rem) 38vw, 92vw" />
     </div>
     <div>
-      <p class="eyebrow">Poznaj Natalię</p>
+      <span class="overline">Poznaj Natalię</span>
       <h2 id="about-teaser">Wszystko trwa tyle, <em>ile trwać powinno</em></h2>
       <blockquote>
         <p>
           „Każda świeca powstaje ręcznie. Od roztapiania wosku, przez mieszanie zapachu, aż po ostatnie detale.
-          Ten cały proces to coś, co pozwala mi zwolnić tempo i skupić się na »tu« i »teraz«.”
+          Ten cały proces to coś, co pozwala mi zwolnić tempo i skupić się na «tu» i «teraz»”.
         </p>
       </blockquote>
-      <a class="link-arrow" href="/o-mnie/">Przeczytaj więcej</a>
+      <a class="link-arrow" href="/o-mnie/"><span>Przeczytaj więcej</span></a>
     </div>
   </section>
 </Base>
 
 <style>
-  .hero { display: grid; gap: var(--s-5); align-items: center; padding-block: var(--s-4) var(--s-6); }
-  @media (min-width: 56rem) { .hero { grid-template-columns: 1.05fr 1fr; gap: var(--s-6); padding-block: var(--s-5) var(--s-7); } }
-  .lead { font-size: 1.15rem; color: var(--c-muted); margin-bottom: var(--s-5); }
-  .cta { display: flex; flex-wrap: wrap; gap: var(--s-3); }
-  .hero-img :global(img) { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--radius-img) var(--radius-img) 12rem 12rem; }
+  /* Hero */
+  .hero { display: grid; gap: var(--sp-7); align-items: center; padding-block: var(--sp-5) var(--sp-8); }
+  @media (min-width: 56rem) { .hero { grid-template-columns: 1.05fr 1fr; gap: var(--sp-8); padding-block: var(--sp-6) var(--sp-9); } }
+  .hero .t-lead { margin-bottom: var(--sp-6); }
+  .cta { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+  .hero-img { aspect-ratio: 4 / 5; }
 
-  .values { background: var(--c-sand); padding-block: var(--s-5); }
-  .values ul { list-style: none; margin-block: 0; padding: 0; display: grid; gap: var(--s-4); grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); }
-  .values li { display: grid; gap: var(--s-1); text-align: center; }
-  .values strong { font-family: var(--f-serif); font-weight: 400; font-size: 1.2rem; }
-  .values span { color: var(--c-muted); font-size: 0.92rem; }
+  .head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: var(--sp-2) var(--sp-5); margin-bottom: var(--sp-6); }
+  .head h2 { margin: 0; max-width: 22ch; }
 
-  .head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: var(--s-3); margin-bottom: var(--s-5); }
-  .head h2 { margin: 0; }
+  /* Proces */
+  .process { background: var(--c-surface); }
+  .process-head { display: grid; gap: var(--sp-2); margin-bottom: var(--sp-7); }
+  @media (min-width: 56rem) { .process-head { grid-template-columns: 1fr 1fr; align-items: end; } .process-head p { justify-self: end; text-align: right; margin: 0; } }
+  .process-head h2 { margin: 0; }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-7) var(--sp-5); grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); }
+  .step-img { aspect-ratio: 3 / 4; margin-bottom: var(--sp-4); }
+  .num { display: block; font-family: var(--f-serif); font-style: italic; font-size: var(--fs-xl); color: var(--c-accent); margin-bottom: var(--sp-1); }
+  .step h3 { margin-bottom: var(--sp-2); }
 
-  .mosaic { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); grid-template-columns: repeat(2, 1fr); }
-  @media (min-width: 56rem) { .mosaic { grid-template-columns: repeat(3, 1fr); gap: var(--s-4); } }
-  figure { margin: 0; position: relative; }
-  .mosaic :global(img) { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--radius-img); }
-  @media (max-width: 40rem) { figcaption { left: var(--s-2); bottom: var(--s-2); font-size: 0.62rem; letter-spacing: 0.1em; } }
-  figcaption { position: absolute; left: var(--s-3); bottom: var(--s-3); background: color-mix(in srgb, var(--c-surface) 88%, transparent); padding: 0.35em 0.9em; border-radius: var(--radius); font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; }
+  /* Galeria */
+  .gallery { display: grid; gap: var(--sp-3); grid-template-columns: repeat(2, 1fr); }
+  .gallery figure { margin: 0; position: relative; }
+  .gallery .frame { aspect-ratio: 4 / 5; }
+  .g-main { grid-column: 1 / -1; }
+  .g-main .frame { aspect-ratio: 4 / 3; }
+  @media (min-width: 56rem) {
+    .gallery { grid-template-columns: 2fr 1fr 1fr; grid-template-rows: auto auto; gap: var(--sp-4); }
+    .g-main { grid-column: 1; grid-row: 1 / span 2; }
+    .g-main .frame { aspect-ratio: auto; height: 100%; }
+  }
+  figcaption {
+    position: absolute; left: var(--sp-3); bottom: var(--sp-3); background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    padding: 0.35em 0.9em; border-radius: var(--r-pill); font-size: var(--fs-xs); letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-text);
+  }
 
-  .materials { background: var(--c-surface); }
-  .center { text-align: center; margin-bottom: var(--s-5); }
-  .two { display: grid; gap: var(--s-5); }
-  @media (min-width: 48rem) { .two { grid-template-columns: 1fr 1fr; } }
-  .two :global(img) { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-img); margin-bottom: var(--s-4); }
+  /* Materiały */
+  .materials { background: var(--c-surface-alt); }
+  .materials-grid { display: grid; gap: var(--sp-7); align-items: center; }
+  @media (min-width: 56rem) { .materials-grid { grid-template-columns: 1fr 1.1fr; gap: var(--sp-9); } }
+  .mat-img { aspect-ratio: 4 / 5; }
+  .mat { padding-top: var(--sp-5); margin-top: var(--sp-5); border-top: 1px solid color-mix(in srgb, var(--c-text) 15%, transparent); }
+  .mat h3 { margin-bottom: var(--sp-2); }
 
-  .about { display: grid; gap: var(--s-5); align-items: center; }
-  @media (min-width: 56rem) { .about { grid-template-columns: 0.9fr 1fr; gap: var(--s-6); } }
-  .about-img :global(img) { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 12rem 12rem var(--radius-img) var(--radius-img); }
-  blockquote { margin: 0 0 var(--s-4); padding-left: var(--s-4); border-left: 2px solid var(--c-blush); }
-  blockquote p { font-family: var(--f-serif); font-style: italic; font-size: 1.25rem; line-height: 1.5; }
+  /* Prezent */
+  .gift { background: var(--c-blush); }
+  .gift-grid { display: grid; gap: var(--sp-7); align-items: center; }
+  @media (min-width: 56rem) { .gift-grid { grid-template-columns: 1fr 1fr; gap: var(--sp-8); } }
+  .gift-text .cta { margin-top: var(--sp-5); }
+  .gift-imgs { display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--sp-4); align-items: start; }
+  .g1 { aspect-ratio: 4 / 5; }
+  .g2 { aspect-ratio: 4 / 5; margin-top: var(--sp-8); }
+
+  /* O Natalii */
+  .about { display: grid; gap: var(--sp-7); align-items: center; }
+  @media (min-width: 56rem) { .about { grid-template-columns: 0.9fr 1fr; gap: var(--sp-8); } }
+  .about-img { aspect-ratio: 4 / 5; }
+  blockquote { margin: 0 0 var(--sp-4); padding-left: var(--sp-5); border-left: 2px solid var(--c-accent); }
+  blockquote p { font-family: var(--f-serif); font-style: italic; font-size: var(--fs-xl); line-height: 1.5; }
 </style>

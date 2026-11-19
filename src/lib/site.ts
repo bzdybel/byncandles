@@ -28,7 +28,6 @@ export const NAV = [
  * Usuń stronę z listy, gdy dostanie docelową treść.
  */
 export const NOINDEX_PATHS: readonly string[] = [
-  '/kontakt/',
   '/dostawa-i-zwroty/',
   '/regulamin/',
   '/polityka-prywatnosci/',

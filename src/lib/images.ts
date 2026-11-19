@@ -26,3 +26,20 @@ export const IMG = {
   buldog: { src: buldog, alt: 'Biała świeca w kształcie buldoga francuskiego' },
   wSzkle: { src: wSzkle, alt: 'Świeca sojowa w szklanym naczyniu z pokrywką, udekorowana plastrem pomarańczy i laską cynamonu' },
 } as const;
+
+import procesKnot from '../assets/site/proces-knot-swiecy.jpg';
+import procesZapach from '../assets/site/proces-olejek-zapachowy.jpg';
+import procesOdlewanie from '../assets/site/proces-odlewanie-wosku.jpg';
+import prezentPudelka from '../assets/site/prezent-rozowe-pudelka-swiece.jpg';
+import prezentAlpaka from '../assets/site/prezent-alpaka-zapakowana.jpg';
+
+export const PROCES = [
+  { src: procesKnot, alt: 'Dłonie mocujące knot na dnie ryflowanej formy' },
+  { src: procesZapach, alt: 'Olejek zapachowy odmierzany kroplami do miarki' },
+  { src: procesOdlewanie, alt: 'Roztopiony wosk wlewany do formy z knotem przytrzymanym drewnianym patyczkiem' },
+] as const;
+
+export const PREZENT = {
+  pudelka: { src: prezentPudelka, alt: 'Różowe pudełka prezentowe z okienkiem, w środku świece-róże, przewiązane lnianą wstążką' },
+  alpaka: { src: prezentAlpaka, alt: 'Świeca-alpaka zapakowana w przezroczysty celofan ze sznurkiem, trzymana w dłoni' },
+} as const;
