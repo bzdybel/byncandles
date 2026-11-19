@@ -32,7 +32,7 @@ export default defineConfig({
       provider: fontProviders.fontsource(),
       name: 'Jost',
       cssVariable: '--font-body',
-      weights: ['300', '400', '500'],
+      weights: ['300 500'], // font zmienny: 1 plik na podzbiór znaków zamiast 3
       styles: ['normal'],
       subsets: ['latin', 'latin-ext'],
       fallbacks: ['system-ui', 'sans-serif'],

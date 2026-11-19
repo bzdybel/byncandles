@@ -1,0 +1,23 @@
+---
+/** Cena z obsługą promocji — jedna implementacja dla karty i strony produktu. */
+import { common } from '../i18n/pl';
+import { formatZl } from '../lib/money';
+import { cenaAktualna, maPromocje, type ProduktData } from '../lib/shop';
+
+interface Props { produkt: ProduktData; size?: 'md' | 'lg' }
+const { produkt: p, size = 'md' } = Astro.props;
+const promo = maPromocje(p);
+---
+<p class:list={['price', size]}>
+  {promo && <s><span class="visually-hidden">{common.priceRegular}</span>{formatZl(p.cena)}</s>}
+  <span class:list={{ promo }}>{promo && <span class="visually-hidden">{common.pricePromo}</span>}{formatZl(cenaAktualna(p))}</span>
+</p>
+
+<style>
+  .price { margin: 0; display: flex; gap: var(--sp-2); align-items: baseline; font-variant-numeric: tabular-nums; }
+  .md { color: var(--c-text-muted); }
+  .lg { font-size: var(--fs-xl); gap: var(--sp-3); margin-bottom: var(--sp-2); }
+  s { font-size: var(--fs-sm); color: var(--c-text-muted); }
+  .lg s { font-size: var(--fs-base); }
+  .md .promo { color: var(--c-accent); }
+</style>

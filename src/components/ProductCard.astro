@@ -1,51 +1,37 @@
 ---
-import { Picture } from 'astro:assets';
-import { cenaAktualna, formatPLN, naStanie, STATUS_LABEL, urlProduktu, type Produkt } from '../lib/shop';
+import Img from './Img.astro';
+import Price from './Price.astro';
+import { status } from '../i18n/pl';
+import { maPromocje, naStanie, urlProduktu, type Produkt } from '../lib/shop';
 
 interface Props { produkt: Produkt; eager?: boolean; headingLevel?: 2 | 3 }
 const { produkt, eager = false, headingLevel = 3 } = Astro.props;
-const H = `h${headingLevel}` as 'h2' | 'h3';
 const p = produkt.data;
 const [glowne] = p.zdjecia;
-const promo = p.cenaPromocyjna !== undefined;
+const H = `h${headingLevel}` as const;
+const badge = !naStanie(p) ? status[p.status] : maPromocje(p) ? status.promo : undefined;
 ---
 <article class="card">
   <a href={urlProduktu(produkt)} class="link">
     <div class="frame media">
-      <Picture
-        src={glowne.zdjecie}
-        alt={glowne.alt.trim() === p.nazwa.trim() ? '' : glowne.alt}
-        formats={['avif', 'webp']}
-        widths={[320, 480, 640, 960]}
-        sizes="(min-width: 64rem) 22rem, (min-width: 40rem) 45vw, 92vw"
-        loading={eager ? 'eager' : 'lazy'}
-        fetchpriority={eager ? 'high' : 'auto'}
-      />
-      {!naStanie(p) && <span class="badge">{STATUS_LABEL[p.status]}</span>}
-      {promo && naStanie(p) && <span class="badge badge--promo">Promocja</span>}
+      <Img src={glowne.zdjecie} alt={glowne.alt.trim() === p.nazwa.trim() ? '' : glowne.alt} widths={[320, 480, 640, 960]} sizes="(min-width: 64rem) 22rem, (min-width: 40rem) 45vw, 46vw" eager={eager} />
+      {badge && <span class:list={['badge', { 'badge--promo': naStanie(p) }]}>{badge}</span>}
     </div>
     <H class="name">{p.nazwa}</H>
   </a>
-  <p class="price">
-    {promo && <s><span class="visually-hidden">Cena regularna </span>{formatPLN(p.cena)}</s>}
-    <span class:list={{ promo }}>{promo && <span class="visually-hidden">Cena promocyjna </span>}{formatPLN(cenaAktualna(p))}</span>
-  </p>
+  <Price produkt={p} />
 </article>
 
 <style>
   .card { display: grid; gap: var(--sp-2); }
   .link { text-decoration: none; display: grid; gap: var(--sp-3); }
   .media { position: relative; aspect-ratio: 4 / 5; }
-  .media :global(img) { transition: transform 0.6s var(--ease); }
+  .media :global(img) { transition: transform var(--t-slower) var(--ease); }
   .link:hover .media :global(img) { transform: scale(1.03); }
-  .link:active .media :global(img) { transform: scale(1.01); }
   .badge {
     position: absolute; left: var(--sp-3); top: var(--sp-3); background: var(--c-surface); color: var(--c-text);
     font-size: var(--fs-xs); letter-spacing: 0.12em; text-transform: uppercase; padding: 0.4em 0.9em; border-radius: var(--r-pill);
   }
   .badge--promo { background: var(--c-accent); color: var(--c-on-accent); }
   .name { font-size: var(--fs-lg); margin: 0; }
-  .price { margin: 0; color: var(--c-text-muted); display: flex; gap: var(--sp-2); align-items: baseline; font-variant-numeric: tabular-nums; }
-  .price s { font-size: var(--fs-sm); }
-  .promo { color: var(--c-accent); }
 </style>

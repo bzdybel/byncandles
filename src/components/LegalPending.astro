@@ -1,0 +1,14 @@
+---
+/** Szablon strony prawnej do czasu publikacji dokumentu (regulamin, polityka prywatności). */
+import Base from '../layouts/Base.astro';
+import { legal } from '../i18n/pl';
+interface Props { title: string; description: string }
+const { title, description } = Astro.props;
+---
+<Base title={title} description={description}>
+  <article class="container section--tight">
+    <h1>{title}</h1>
+    <p class="t-lead">{legal.pending}</p>
+    <p>{legal.questionsBefore}<a href="/kontakt/">{legal.questionsLink}</a>.</p>
+  </article>
+</Base>

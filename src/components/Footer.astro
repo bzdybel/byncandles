@@ -1,37 +1,32 @@
 ---
 import Logo from './Logo.astro';
+import { brand, common, footer } from '../i18n/pl';
+import { fill } from '../lib/i18n';
 import { SITE } from '../lib/site';
-const year = new Date().getFullYear();
+
+const groups = [
+  { id: 'f-shop', title: footer.shop, links: [['/sklep/', footer.allCandles], ['/dostawa-i-zwroty/', footer.delivery], ['/kontakt/', footer.customOrders]] },
+  { id: 'f-info', title: footer.info, links: [['/o-mnie/', footer.about], ['/kontakt/', footer.contact], ['/regulamin/', footer.terms], ['/polityka-prywatnosci/', footer.privacy]] },
+] as const;
 ---
 <footer class="site-footer">
   <div class="container grid">
     <div class="brand">
       <Logo />
-      <p class="t-muted">Ręcznie robione świece z wosku sojowego i pszczelego. Tworzy {SITE.author}.</p>
+      <p class="t-muted">{fill(footer.intro, { author: brand.author })}</p>
     </div>
-    <nav aria-labelledby="f-shop">
-      <p class="overline" id="f-shop">Sklep</p>
-      <ul>
-        <li><a href="/sklep/">Wszystkie świece</a></li>
-        <li><a href="/dostawa-i-zwroty/">Dostawa i zwroty</a></li>
-        <li><a href="/kontakt/">Zamówienia indywidualne</a></li>
-      </ul>
-    </nav>
-    <nav aria-labelledby="f-info">
-      <p class="overline" id="f-info">Informacje</p>
-      <ul>
-        <li><a href="/o-mnie/">O mnie</a></li>
-        <li><a href="/kontakt/">Kontakt</a></li>
-        <li><a href="/regulamin/">Regulamin</a></li>
-        <li><a href="/polityka-prywatnosci/">Polityka prywatności</a></li>
-      </ul>
-    </nav>
+    {groups.map((g) => (
+      <nav aria-labelledby={g.id}>
+        <p class="overline" id={g.id}>{g.title}</p>
+        <ul>{g.links.map(([href, label]) => <li><a href={href}>{label}</a></li>)}</ul>
+      </nav>
+    ))}
     <div>
-      <p class="overline">Obserwuj</p>
-      <ul><li><a href={SITE.instagram} rel="me noopener" target="_blank">Instagram @by_n.candles</a></li></ul>
+      <p class="overline">{footer.follow}</p>
+      <ul><li><a href={SITE.instagram} rel="me noopener" target="_blank">{fill(footer.instagram, { handle: common.instagramHandle })}</a></li></ul>
     </div>
   </div>
-  <p class="container copy">© {year} {SITE.name} · wosk sojowy i pszczeli · rękodzieło</p>
+  <p class="container copy">{fill(footer.copyright, { year: new Date().getFullYear(), name: brand.name, tagline: brand.tagline })}</p>
 </footer>
 
 <style>
@@ -42,6 +37,6 @@ const year = new Date().getFullYear();
   ul { list-style: none; margin: 0; padding: 0; display: grid; }
   ul a { display: inline-flex; align-items: center; min-height: var(--tap); text-decoration: none; }
   ul a:hover { text-decoration: underline; }
-  @media (min-width: 48rem) { ul a { min-height: 2rem; } }
+  @media (min-width: 48rem) { ul a { min-height: var(--sp-6); } }
   .copy { margin-top: var(--sp-7); padding-top: var(--sp-4); border-top: 1px solid var(--c-border); font-size: var(--fs-xs); color: var(--c-text-muted); max-width: none; }
 </style>

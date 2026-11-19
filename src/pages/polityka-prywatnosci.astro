@@ -1,10 +1,5 @@
 ---
-import Base from '../layouts/Base.astro';
+import LegalPending from '../components/LegalPending.astro';
+import { legal } from '../i18n/pl';
 ---
-<Base title="Polityka prywatności" description="Polityka prywatności i informacje o przetwarzaniu danych osobowych w by N. candles.">
-  <article class="container section--tight">
-    <h1>Polityka prywatności</h1>
-    <p class="t-lead">Dokument w przygotowaniu — zostanie opublikowany przed uruchomieniem sprzedaży.</p>
-    <p>W razie pytań <a href="/kontakt/">napisz do mnie</a>.</p>
-  </article>
-</Base>
+<LegalPending title={legal.privacy} description={legal.privacyDescription} />

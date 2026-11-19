@@ -19,23 +19,57 @@ npm install
 npm run dev      # http://localhost:4321
 npm run build    # wynik w dist/
 npm run preview
+npm test         # testy logiki (ceny, koszyk, walidacja, teksty)
+npm run check    # typy
 ```
 
-## Struktura
+## Architektura
 
 ```
 src/
-  lib/site.ts          # dane marki, nawigacja, SITE_URL, lista noindex
-  layouts/Base.astro   # szkielet HTML strony
-  components/Seo.astro # meta, canonical, Open Graph, JSON-LD
-  pages/               # trasy (URL = ścieżka pliku)
-  lib/shop.ts          # pobieranie produktów, ceny (grosze), statusy
-  content.config.ts    # schematy kolekcji (zgodne z keystatic.config.ts)
-  content/             # dane produktów, kategorii, ustawień (YAML)
-  styles/global.css    # tokeny designu (robocze — do dopasowania pod Instagram)
-public/_headers        # nagłówki Cloudflare (cache, bezpieczeństwo)
-wrangler.jsonc         # konfiguracja Cloudflare Workers
+  i18n/pl.ts            # WSZYSTKIE teksty interfejsu, opisy zdjęć i meta — jedyne źródło
+  styles/global.css     # tokeny (kolory, typografia, odstępy, ruch) + wspólne wzorce — jedyne źródło stylów globalnych
+  lib/                  # czyste moduły TS (bez DOM), testowane w tests/
+    money.ts            #   grosze ↔ zł, formatowanie kwot (jedyne miejsce konwersji)
+    pricing.ts          #   reguły koszyka: sumy, 2+1, darmowa dostawa
+    checkout.ts         #   walidacja zamówienia + podsumowanie (teksty wstrzykiwane)
+    i18n.ts             #   fill() — zmienne w tekstach, plural() — polska odmiana
+    shop.ts             #   zapytania do katalogu (Keystatic), konfiguracja sklepu
+    schema.ts           #   JSON-LD dla Google
+    media.ts, images.ts #   formaty/rozmiary obrazów, zdjęcia strony
+    site.ts             #   URL, nawigacja, noindex (konfiguracja, nie teksty)
+  scripts/              # kod przeglądarki
+    cart-store.ts       #   stan koszyka (localStorage) + uzgadnianie z /katalog.json
+    cart-ui.ts          #   wspólne renderowanie (sumy, licznik, aria-live)
+  components/           # UI: Img, Price, CartTotals, CartDrawer, ProductCard, Accordion…
+  pages/                # trasy; katalog.json.ts — statyczny katalog cen i stanów
+tests/                  # npm test (node --test, bez zależności)
 ```
+
+### Zasady
+- **Teksty** tylko w `src/i18n/pl.ts`, pogrupowane w eksporty nazwane (`home`, `cart`, `checkout`…).
+  Skrypty przeglądarki importują wyłącznie `cart`; teksty innych stron osadzamy jako JSON z serwera,
+  żeby nie trafiały do wspólnej paczki JS. Wyjątek: komunikaty panelu Keystatic i błędy buildu (dla Natalii/dewelopera).
+- **Style**: wartości (kolor, rozmiar, odstęp, czas) wyłącznie przez tokeny z `global.css`.
+  Wzorce używane w 2+ miejscach (`.actions`, `.split`, `.section-head`, `.icon-btn`, `.link-btn`, `.frame`)
+  są globalne; style jednego komponentu zostają w nim (scoped).
+- **Kwoty** zawsze w groszach (`Grosze`); złote tylko na wejściu z panelu (`toGrosze`).
+- **Importy TS→TS** z rozszerzeniem `.ts` (wymóg `node --test`).
+
+### Wielu klientów jednocześnie
+- Strona jest statyczna i serwowana z CDN Cloudflare — liczba klientów nie obciąża serwera (pliki statyczne są darmowe i bez limitu).
+- Koszyk każdego klienta żyje w jego przeglądarce; synchronizuje się między kartami (`storage`).
+- Ceny i stany w koszyku są uzgadniane z `/katalog.json` (najwyżej raz na minutę, walidacja ETag → zwykle 304)
+  oraz zawsze przed złożeniem zamówienia: produkt wyprzedany znika, zmieniona cena się aktualizuje, ilość jest przycinana.
+- **Wymóg dla API zamówień (kolejny etap):** serwer przelicza ceny sam (klient wysyła tylko `id` + `qty`)
+  i rezerwuje stan atomowo, np. w D1: `UPDATE produkty SET stan = stan - ? WHERE id = ? AND stan >= ?` —
+  inaczej dwie osoby mogą kupić ostatnią sztukę.
+
+### Wydajność (decyzje)
+- Jost jako font zmienny (2 pliki zamiast 6); fonty 6 zapytań, ~90 KB, preload tylko łacińskich.
+- CSS w jednym pliku buforowanym (`inlineStylesheets: 'auto'`): wstawienie do HTML dawało −80 ms FCP na głównej,
+  bez zmiany LCP, kosztem +3 KB na każdy HTML — nie warto.
+- JS na stronę ~4,3 KB gzip (prefetch, koszyk); strona zamówienia +1,9 KB.
 
 ## Panel treści (Keystatic)
 
@@ -51,7 +85,7 @@ Logowanie przez GitHub dla Natalii (edycja bez lokalnego środowiska) — kolejn
 
 ## Koszyk i zamówienia
 
-- Koszyk: `src/scripts/cart.ts` (localStorage, kwoty w groszach) + panel `src/components/CartDrawer.astro` (`<dialog>`).
+- Koszyk: `src/scripts/cart-store.ts` + `src/lib/pricing.ts` + panel `src/components/CartDrawer.astro` (`<dialog>`) — szczegóły w sekcji Architektura.
 - Promocja 2+1 i koszty dostawy: **Ustawienia sklepu** w panelu Keystatic.
 - Zamówienie: `/zamowienie/`. Zmienne buildu (Cloudflare → Settings → Build → Variables):
   - `PUBLIC_INPOST_GEOWIDGET_TOKEN` — token Geowidgetu z Managera Paczek InPost (mapa paczkomatów).

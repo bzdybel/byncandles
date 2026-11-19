@@ -1,7 +1,8 @@
 ---
-import { Picture } from 'astro:assets';
+import Img from '../components/Img.astro';
 import Base from '../layouts/Base.astro';
-import { IMG, PROCES } from '../lib/images';
+import { about, brand, common } from '../i18n/pl';
+import { IMG } from '../lib/images';
 import { SITE, SITE_URL } from '../lib/site';
 
 const jsonLd = {
@@ -10,55 +11,39 @@ const jsonLd = {
   mainEntity: {
     '@type': 'Person',
     '@id': `${SITE_URL}/o-mnie/#natalia`,
-    name: SITE.author,
-    jobTitle: 'Twórczyni świec',
+    name: brand.author,
+    jobTitle: about.jobTitle,
     worksFor: { '@id': `${SITE_URL}/#organization` },
     sameAs: [SITE.instagram],
   },
 };
 ---
-<Base
-  title="O mnie — Natalia, twórczyni świec by N."
-  description="Poznaj Natalię, która ręcznie tworzy świece by N. z wosku sojowego i pszczelego. O pracowni, inspiracjach i powolnym procesie powstawania każdej świecy."
-  jsonLd={jsonLd}
->
-  <article class="container section--tight about">
-    <div class="frame frame--arch img">
+<Base title={about.metaTitle} description={about.metaDescription} jsonLd={jsonLd}>
+  <article class="container section--tight split split--top" style="--split: 0.9fr 1fr">
+    <div class="frame frame--arch frame--portrait sticky">
       <!-- TODO: portret Natalii lub zdjęcie z pracowni -->
-      <Picture src={IMG.rozaWrzosowa.src} alt={IMG.rozaWrzosowa.alt} formats={['avif', 'webp']} widths={[420, 640, 900]} sizes="(min-width: 56rem) 40vw, 92vw" loading="eager" fetchpriority="high" />
+      <Img {...IMG.rozaWrzosowa} widths={[420, 640, 900]} sizes="(min-width: 56rem) 40vw, 92vw" eager />
     </div>
-    <div class="text">
-      <h1>Cześć, jestem <em>Natalia</em></h1>
-      <p class="t-lead">Tworzę by N. — ręcznie robione świece z wosku sojowego i pszczelego.</p>
-      <p>
-        Każda świeca powstaje ręcznie. Od roztapiania wosku, przez mieszanie zapachu, aż po ostatnie detale.
-        Ten cały proces to coś, co pozwala mi zwolnić tempo i skupić się na „tu” i „teraz”. Bez scrollowania,
-        bez przyśpieszenia, bez przewijania. Wszystko trwa tyle, ile trwać powinno. I to jest w tym najpiękniejsze.
-      </p>
-      <p>
-        Lubię formy, które są czymś więcej niż świecą: realistyczne róże, muszle, kudłate krówki Highland,
-        a czasem różową czaszkę inspirowaną motywem vanitas. Trochę sztuki, trochę ironii, trochę candlecore —
-        czyli by N. w pigułce.
-      </p>
+    <div>
+      <h1>{about.title} <em>{about.titleEm}</em></h1>
+      <p class="t-lead">{about.lead}</p>
+      {about.body.map((t) => <p>{t}</p>)}
       <!-- TODO: historia marki od Natalii — jak to się zaczęło, skąd nazwa, co ją inspiruje -->
       <figure class="studio">
-        <div class="frame"><Picture src={PROCES[2].src} alt={PROCES[2].alt} formats={['avif', 'webp']} widths={[320, 480]} sizes="(min-width: 56rem) 14rem, 40vw" /></div>
-        <figcaption class="t-small t-muted">Z pracowni: odlewanie wosku do formy.</figcaption>
+        <div class="frame"><Img {...IMG.procesOdlewanie} widths={[320, 480]} sizes="9rem" /></div>
+        <figcaption class="t-small t-muted">{about.studioCaption}</figcaption>
       </figure>
-      <div class="cta">
-        <a class="btn btn--lg" href="/sklep/">Zobacz świece</a>
-        <a class="btn btn--ghost btn--lg" href={SITE.instagram} rel="me noopener" target="_blank">Instagram</a>
+      <div class="actions">
+        <a class="btn btn--lg" href="/sklep/">{common.seeCandles}</a>
+        <a class="btn btn--ghost btn--lg" href={SITE.instagram} rel="me noopener" target="_blank">{about.instagram}</a>
       </div>
     </div>
   </article>
 </Base>
 
 <style>
-  .about { display: grid; gap: var(--sp-7); align-items: start; }
-  @media (min-width: 56rem) { .about { grid-template-columns: 0.9fr 1fr; gap: var(--sp-8); } .img { position: sticky; top: var(--sp-5); } }
-  .img { aspect-ratio: 4 / 5; }
+  @media (min-width: 56rem) { .sticky { position: sticky; top: var(--sp-5); } }
   .t-lead { margin-bottom: var(--sp-5); }
-  .studio { display: grid; grid-template-columns: 9rem 1fr; gap: var(--sp-4); align-items: end; margin: var(--sp-6) 0 0; }
+  .studio { display: grid; grid-template-columns: 9rem 1fr; gap: var(--sp-4); align-items: end; margin: var(--sp-6) 0 var(--sp-7); }
   .studio .frame { aspect-ratio: 3 / 4; }
-  .cta { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-7); }
 </style>

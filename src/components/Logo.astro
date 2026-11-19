@@ -1,19 +1,15 @@
 ---
 /** Tymczasowy znak słowny na bazie logo by N. — do podmiany na oryginalny plik SVG logo. */
-interface Props { size?: 'sm' | 'lg' }
-const { size = 'sm' } = Astro.props;
+import { brand } from '../i18n/pl';
 ---
-<span class:list={['logo', size]} aria-hidden="true">
-  <span class="by">by</span><span class="n">N</span><span class="dot">.</span>
-  <span class="sub">candles</span>
+<span class="logo" aria-hidden="true">
+  <span class="by">{brand.logoBy}</span><span class="n">N</span><span class="dot">.</span>
+  <span class="sub">{brand.logoSub}</span>
 </span>
 
 <style>
-  .logo { display: inline-grid; grid-template-columns: auto auto auto; align-items: baseline; line-height: 1; font-family: var(--f-serif); color: var(--c-text); }
+  .logo { display: inline-grid; grid-template-columns: auto auto auto; align-items: baseline; line-height: 1; font-family: var(--f-serif); font-size: 2.1rem; color: var(--c-text); }
   .by { font-style: italic; font-size: 0.55em; margin-right: 0.12em; }
-  .n { font-size: 1em; }
-  .dot { font-size: 1em; color: var(--c-accent); }
-  .sub { grid-column: 1 / -1; font-family: var(--f-sans); font-weight: 400; font-size: 0.24em; letter-spacing: 0.5em; text-transform: uppercase; text-align: center; margin-top: 0.35em; padding-left: 0.5em; }
-  .sm { font-size: 2.1rem; }
-  .lg { font-size: 4.5rem; }
+  .dot { color: var(--c-accent); }
+  .sub { grid-column: 1 / -1; font-family: var(--f-sans); font-size: 0.24em; letter-spacing: 0.5em; text-transform: uppercase; text-align: center; margin-top: 0.35em; padding-left: 0.5em; }
 </style>
