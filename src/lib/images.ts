@@ -13,7 +13,7 @@ import wSzkle from '../assets/site/swieca-w-szkle-pomarancza-cynamon.jpg';
 import procesKnot from '../assets/site/proces-knot-swiecy.jpg';
 import procesZapach from '../assets/site/proces-olejek-zapachowy.jpg';
 import procesOdlewanie from '../assets/site/proces-odlewanie-wosku.jpg';
-import prezentPudelka from '../assets/site/prezent-rozowe-pudelka-swiece.jpg';
+import prezentZielona from '../assets/site/swieca-zielone-szklo-pomarancza-cynamon.jpg';
 import prezentAlpaka from '../assets/site/prezent-alpaka-zapakowana.jpg';
 import moai from '../assets/site/swieca-moai.jpg';
 import czaszka from '../assets/site/swieca-rozowa-czaszka.jpg';
@@ -28,7 +28,7 @@ export interface SiteImage { src: ImageMetadata; alt: string }
 
 const sources = {
   roze, muszle, rozaWrzosowa, krowki, pszczeli, misie, kurka, buldog, wSzkle,
-  procesKnot, procesZapach, procesOdlewanie, prezentPudelka, prezentAlpaka, moai, czaszka,
+  procesKnot, procesZapach, procesOdlewanie, prezentZielona, prezentAlpaka, moai, czaszka,
   krowaMech, dawid, alpaki, lawenda, buddy, cytryna,
 } satisfies Record<keyof typeof alt, ImageMetadata>;
 
