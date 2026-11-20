@@ -121,8 +121,8 @@ const jsonLd = [
         <a class="btn btn--ghost" href="/sklep/">{home.giftSecondary}</a>
       </div>
     </div>
-    <div class="frame gift-img" style="--i: 1" data-reveal-item data-parallax>
-      <Img {...IMG.prezentPudelka} widths={[480, 640, 810]} sizes="(min-width: 56rem) 52vw, 92vw" />
+    <div class="frame gift-img" style="--i: 1" data-reveal-item>
+      <Img {...IMG.prezentZielona} widths={[480, 640, 810]} sizes="(min-width: 56rem) 46vw, 92vw" />
     </div>
   </section>
 </Base>
@@ -179,7 +179,8 @@ const jsonLd = [
   .mat h3 { margin-bottom: var(--sp-2); text-transform: uppercase; letter-spacing: var(--tracking-heading); font-size: var(--fs-lg); }
 
   .gift-actions { margin-top: var(--sp-5); }
-  /* Jedno zdjęcie pudełek prezentowych w poziomie (4:3, kadr ze środka pionowego oryginału); kolumna zdjęcia szersza od tekstu */
-  .gift-img { aspect-ratio: 4 / 3; width: 100%; }
-  @media (min-width: 56rem) { #gift { --split: 1fr 1.25fr; } }
+  /* Zdjęcie świecy w zielonym szkle: bez paralaksy, przycięty tylko dół (998×978 → 998×840), żeby świeca była pośrodku w pionie */
+  .gift-img { aspect-ratio: 998 / 840; width: 100%; }
+  .gift-img :global(img) { object-position: 50% 0; }
+  @media (min-width: 56rem) { #gift { --split: 1fr 1fr; } }
 </style>

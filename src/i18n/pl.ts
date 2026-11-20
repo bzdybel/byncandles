@@ -336,7 +336,7 @@ export const images = {
   procesKnot: 'Dłonie mocujące knot na dnie ryflowanej formy',
   procesZapach: 'Olejek zapachowy odmierzany kroplami do miarki',
   procesOdlewanie: 'Roztopiony wosk wlewany do formy z knotem przytrzymanym drewnianym patyczkiem',
-  prezentPudelka: 'Różowe pudełka prezentowe z okienkiem, w środku świece-róże, przewiązane lnianą wstążką',
+  prezentZielona: 'Sojowa świeca w zielonym, żłobionym szklanym pojemniku z uchyloną pokrywką, udekorowana suszoną pomarańczą, cynamonem i goździkami',
   prezentAlpaka: 'Świeca-alpaka zapakowana w przezroczysty celofan ze sznurkiem, trzymana w dłoni',
   moai: 'Szaro-beżowa świeca w kształcie głowy Moai obok białego kwiatu',
   czaszka: 'Różowa świeca w kształcie czaszki na żółtej półce z książkami',
