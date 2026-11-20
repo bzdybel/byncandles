@@ -1,0 +1,17 @@
+nazwa: "Buldog z wosku pszczelego"
+status: dostepny
+kategoria: wosk-pszczeli
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Medytujący buldog francuski w 100% z naturalnego wosku pszczelego z lokalnej pasieki. Miodowy kolor i delikatny zapach miodu."
+opis: |-
+  Buldog francuski w pozie medytacji - z poczuciem humoru, ale w pełni zen. Świeca powstała w 100% z naturalnego wosku pszczelego, pozyskiwanego prosto z lokalnej pasieki.
+
+  Bez zbędnych dodatków - tylko naturalny wosk, piękny kolor i charakterystyczny, delikatny, miodowy zapach.
+zdjecia:
+  - zdjecie: ../../assets/produkty/buldog-wosk-pszczeli.webp
+    alt: "Miodowa świeca z wosku pszczelego w kształcie buldoga francuskiego siedzącego po turecku jak w medytacji"
+  - zdjecie: ../../assets/produkty/budda-buldog-wosk-pszczeli.webp
+    alt: "Miodowa świeca z wosku pszczelego w kształcie buldoga francuskiego w pozie medytacji, obok świecy-Buddy, na tle wachlarza"
+szczegoly:
+  wosk: pszczeli

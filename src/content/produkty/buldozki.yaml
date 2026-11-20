@@ -1,0 +1,13 @@
+nazwa: "Buldożki"
+status: dostepny
+kategoria: wosk-sojowy
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Biała świeca w kształcie dwóch buldożków francuskich, jeden na drugim. Małe łapki, wielkie serduszka i miłość na dwa pyszczki."
+opis: |-
+  Małe łapki, wielkie serduszka i miłość na dwa pyszczki. Dwa buldożki francuskie ułożone jeden na drugim - prezent dla każdego, kto kocha psy.
+
+  Ręcznie odlewana świeca w kolorze kremowej bieli.
+zdjecia:
+  - zdjecie: ../../assets/produkty/buldozki.webp
+    alt: "Kremowobiała świeca w kształcie dwóch buldogów francuskich, jeden opiera łapy na głowie drugiego"

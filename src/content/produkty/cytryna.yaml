@@ -1,0 +1,13 @@
+nazwa: "Cytryna"
+status: dostepny
+kategoria: wosk-sojowy
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Świeca w kształcie dojrzałej cytryny - odrobina włoskiego lata i śródziemnomorskiego klimatu. Dolce Vita zaczyna się od małych detali."
+opis: |-
+  Dolce Vita zaczyna się od małych detali. Odrobina włoskiego lata zamknięta w ręcznie wykonanej świecy.
+
+  Niech ten mały detal wniesie do Twojego wnętrza słońce, ciepło i śródziemnomorski klimat.
+zdjecia:
+  - zdjecie: ../../assets/produkty/cytryna.webp
+    alt: "Żółta świeca w kształcie cytryny na ceramicznej tacy w niebiesko-żółte wzory, obok miski z cytrynami"

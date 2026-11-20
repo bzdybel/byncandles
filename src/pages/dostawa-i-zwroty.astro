@@ -20,7 +20,7 @@ const rows = [
     <h2>{d.shippingTitle}</h2>
     <dl class="table">{rows.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
     <p>{d.tracking}</p>
-    <!-- TODO: czas realizacji zamówienia — do potwierdzenia przez Natalię -->
+    <!-- TODO: czas realizacji zamówienia - do potwierdzenia przez Natalię -->
 
     <h2>{d.packingTitle}</h2>
     <p>{d.packingText}</p>
@@ -28,7 +28,7 @@ const rows = [
     <h2>{d.returnTitle}</h2>
     {d.returnText.map((t) => <p>{t}</p>)}
     <p class="t-small t-muted">{d.returnException}</p>
-    <!-- TODO: adres do zwrotów i dane sprzedawcy — po uzupełnieniu formy działalności -->
+    <!-- TODO: adres do zwrotów i dane sprzedawcy - po uzupełnieniu formy działalności -->
 
     <h2>{d.complaintTitle}</h2>
     <p>{d.complaintBefore}<a href="/regulamin/">{d.complaintLink}</a>.</p>

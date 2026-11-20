@@ -1,46 +1,46 @@
 /*
- * by N. candles — design system (tokeny).
+ * by N. candles - design system (tokeny).
  * Paleta z feedu @by_n.candles. Kontrast tekstu sprawdzony pod WCAG AA (wartości przy tokenach, na tle --c-bg).
  * Nazewnictwo: --c-* kolor, --fs-* rozmiar fontu, --sp-* odstęp, --r-* zaokrąglenie, --e-* elewacja, --t-* czas ruchu.
  */
 :root {
-  /* — Kolor: semantyka — styl „ciepłe beże”: kremowe tło, latte, piasek, espresso, akcent cynamonowy — */
+  /* - Kolor: semantyka - styl „ciepłe beże”: kremowe tło, latte, piasek, espresso, akcent cynamonowy - */
   --c-bg: #f5eee5;            /* tło strony (jasny beż) */
   --c-surface: #fbf8f3;       /* karty, panele (krem) */
   --c-surface-alt: #ece3d7;   /* tło pod ładującymi się zdjęciami, hover ikon */
-  --c-latte: #eadfd0;         /* pas latte (hero, kafle) — tekst 11.3:1 */
-  --c-sand: #e1d2bf;          /* pas piaskowy (materiały) — tekst 10.0:1 */
+  --c-latte: #eadfd0;         /* pas latte (hero, kafle) - tekst 11.3:1 */
+  --c-sand: #e1d2bf;          /* pas piaskowy (materiały) - tekst 10.0:1 */
   --c-ink: #3d322b;           /* espresso: górny pasek, przyciski, dół stopki */
-  --c-on-ink: #f8f1e8;        /* tekst na espresso — 11.1:1 */
-  --c-on-ink-muted: #d6c8b8;  /* drobny tekst na espresso — 7.6:1 */
+  --c-on-ink: #f8f1e8;        /* tekst na espresso - 11.1:1 */
+  --c-on-ink-muted: #d6c8b8;  /* drobny tekst na espresso - 7.6:1 */
   --c-border: #dfd2c2;        /* linie dekoracyjne */
-  --c-border-strong: #8f7e6d; /* 3.4:1 — ramki pól formularzy (WCAG 1.4.11) */
+  --c-border-strong: #8f7e6d; /* 3.4:1 - ramki pól formularzy (WCAG 1.4.11) */
   --c-text: #2f2620;          /* 12.9:1 */
   --c-text-muted: #665849;    /* 6.0:1 (4.6:1 na piasku) */
-  --c-accent: #8a4f35;        /* 5.6:1 — cynamon: pismo odręczne, linki, hover, focus. Na piasku tylko duży tekst */
+  --c-accent: #8a4f35;        /* 5.6:1 - cynamon: pismo odręczne, linki, hover, focus. Na piasku tylko duży tekst */
   --c-accent-hover: #713f29;  /* 7.5:1 */
   --c-on-accent: #fff;
-  --c-honey: #c9a25a;         /* wosk pszczeli — wyłącznie dekoracja, nigdy tekst */
+  --c-honey: #c9a25a;         /* wosk pszczeli - wyłącznie dekoracja, nigdy tekst */
   --c-success: #4f6b4a;       /* 5.3:1 */
   --c-error: #a3362f;         /* 6.0:1 */
   --c-overlay: rgb(47 38 32 / 0.4);
 
-  /* — Typografia — */
+  /* - Typografia - */
   --f-serif: var(--font-display), 'Cormorant Garamond', Georgia, serif;
   --f-sans: var(--font-body), 'Jost', system-ui, sans-serif;
-  --f-script: var(--font-script), 'Corinthia', cursive;  /* pismo odręczne — wyróżnienia w nagłówkach */
+  --f-script: var(--font-script), 'Corinthia', cursive;  /* pismo odręczne - wyróżnienia w nagłówkach */
   --f-logo: var(--font-logo), 'Bodoni Moda', Georgia, serif; /* znak słowny (kursywa) */
 
   /* Skala 1.25 (tercja wielka), bazowo 17 px; nagłówki płynne */
-  --fs-2xs: 0.6875rem;                                   /* 11 — licznik w ikonie koszyka */
-  --fs-xs: 0.75rem;                                      /* 12 — overline, znaczniki */
-  --fs-sm: 0.875rem;                                     /* 14 — drobny tekst */
-  --fs-base: 1.0625rem;                                  /* 17 — treść */
-  --fs-lg: 1.1875rem;                                    /* 19 — lead */
-  --fs-xl: 1.3125rem;                                    /* 21 — h3, cena */
-  --fs-2xl: clamp(1.5rem, 1.25rem + 1.1vw, 2.25rem);     /* 24→36 — h2 (wersaliki) */
-  --fs-3xl: clamp(1.875rem, 1.55rem + 1.4vw, 2.75rem);   /* 30→44 — h1 (wersaliki) */
-  --fs-display: clamp(2.125rem, 1.6rem + 2.2vw, 3.5rem); /* 34→56 — hero */
+  --fs-2xs: 0.6875rem;                                   /* 11 - licznik w ikonie koszyka */
+  --fs-xs: 0.75rem;                                      /* 12 - overline, znaczniki */
+  --fs-sm: 0.875rem;                                     /* 14 - drobny tekst */
+  --fs-base: 1.0625rem;                                  /* 17 - treść */
+  --fs-lg: 1.1875rem;                                    /* 19 - lead */
+  --fs-xl: 1.3125rem;                                    /* 21 - h3, cena */
+  --fs-2xl: clamp(1.5rem, 1.25rem + 1.1vw, 2.25rem);     /* 24→36 - h2 (wersaliki) */
+  --fs-3xl: clamp(1.875rem, 1.55rem + 1.4vw, 2.75rem);   /* 30→44 - h1 (wersaliki) */
+  --fs-display: clamp(2.125rem, 1.6rem + 2.2vw, 3.5rem); /* 34→56 - hero */
 
   --lh-tight: 1.12;
   --lh-snug: 1.4;
@@ -49,7 +49,7 @@
   --tracking-button: 0.18em;
   --tracking-heading: 0.07em;  /* nagłówki wersalikami */
 
-  /* — Odstępy (siatka 4 px) — */
+  /* - Odstępy (siatka 4 px) - */
   --sp-1: 0.25rem;  /* 4 */
   --sp-2: 0.5rem;   /* 8 */
   --sp-3: 0.75rem;  /* 12 */
@@ -61,36 +61,36 @@
   --sp-9: 6rem;     /* 96 */
   --sp-10: 8rem;    /* 128 */
 
-  /* — Zaokrąglenia — */
+  /* - Zaokrąglenia - */
   --r-sm: 2px;      /* pola formularzy, przyciski */
   --r-md: 20px;     /* zdjęcia, karty */
   --r-pill: 999px;  /* przyciski, znaczniki */
-  --r-arch: 50% 50% var(--r-md) var(--r-md) / 32% 32% var(--r-md) var(--r-md); /* łuk — znak marki, max 1 na ekran */
+  --r-arch: 50% 50% var(--r-md) var(--r-md) / 32% 32% var(--r-md) var(--r-md); /* łuk - znak marki, max 1 na ekran */
 
-  /* — Elewacja (strona płaska z założenia) — */
+  /* - Elewacja (strona płaska z założenia) - */
   --e-1: 0 1px 0 var(--c-border);
   --e-2: 0 24px 60px -20px rgb(43 37 39 / 0.28);
 
-  /* — Ruch — */
+  /* - Ruch - */
   --t-fast: 150ms;
   --t-base: 250ms;
   --t-slow: 400ms;
   --t-slower: 600ms;          /* powiększenie zdjęcia na hover */
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* długie, miękkie wyhamowanie — odsłanianie zdjęć */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* długie, miękkie wyhamowanie - odsłanianie zdjęć */
 
-  /* — Układ — */
+  /* - Układ - */
   --container: 76rem;
   --gutter: clamp(1rem, 4vw, 2.5rem);
   --tap: 44px;               /* minimalny cel dotykowy */
   --thumb-w: 72px;           /* miniatura produktu w koszyku */
-  /* Punkty przerwania (CSS nie pozwala na zmienne w @media — używaj tych wartości):
+  /* Punkty przerwania (CSS nie pozwala na zmienne w @media - używaj tych wartości):
      30rem telefon · 40rem duży telefon · 48rem tablet · 56rem laptop (układy 2-kolumnowe) */
 
   color-scheme: light;
 }
 
-/* — Reset — */
+/* - Reset - */
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -104,7 +104,7 @@ body {
 img, picture, svg, video { display: block; max-width: 100%; height: auto; }
 button { font: inherit; color: inherit; }
 
-/* — Typografia bazowa — */
+/* - Typografia bazowa - */
 h1, h2, h3 { font-family: var(--f-serif); font-weight: 500; line-height: var(--lh-tight); margin: 0 0 var(--sp-4); text-wrap: balance; }
 h1, h2 { text-transform: uppercase; letter-spacing: var(--tracking-heading); font-weight: 400; }
 h1 { font-size: var(--fs-3xl); }
@@ -122,7 +122,7 @@ a { color: inherit; text-underline-offset: 0.25em; text-decoration-thickness: 1p
 a:hover { color: var(--c-accent); }
 :focus-visible { outline: 2px solid var(--c-accent); outline-offset: 3px; }
 
-/* — Klasy typograficzne — */
+/* - Klasy typograficzne - */
 .t-display { font-size: var(--fs-display); }
 .t-lead { font-size: var(--fs-lg); font-weight: 300; color: var(--c-text-muted); line-height: 1.6; }
 .t-small { font-size: var(--fs-sm); }
@@ -132,7 +132,7 @@ a:hover { color: var(--c-accent); }
   text-transform: uppercase; color: var(--c-text-muted); margin-bottom: var(--sp-4);
 }
 
-/* — Układ — */
+/* - Układ - */
 .container { width: min(100% - 2 * var(--gutter), var(--container)); margin-inline: auto; }
 .section { padding-block: clamp(var(--sp-8), 9vw, var(--sp-10)); }
 .section--tight { padding-block: clamp(var(--sp-7), 6vw, var(--sp-9)); }
@@ -149,7 +149,7 @@ a:hover { color: var(--c-accent); }
 .section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: var(--sp-2) var(--sp-5); margin-bottom: var(--sp-6); }
 .section-head h2 { margin: 0; max-width: 22ch; }
 
-/* — Przycisk — */
+/* - Przycisk - */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
   min-height: var(--tap); padding: 0 var(--sp-6); border-radius: var(--r-sm);
@@ -198,20 +198,20 @@ a:hover { color: var(--c-accent); }
 .stepper button:disabled { opacity: 0.35; cursor: not-allowed; }
 .stepper span { min-width: 1.75rem; text-align: center; font-variant-numeric: tabular-nums; }
 
-/* — Ramka zdjęcia — */
+/* - Ramka zdjęcia - */
 .frame { overflow: hidden; border-radius: var(--r-md); background: var(--c-surface-alt); }
 .frame picture { height: 100%; }
 .frame img { width: 100%; height: 100%; object-fit: cover; }
 .frame--arch { border-radius: var(--r-arch); }
 .frame--portrait { aspect-ratio: 4 / 5; }
 
-/* — Pasy tła: latte, piaskowy, espresso — */
+/* - Pasy tła: latte, piaskowy, espresso - */
 .band--latte { background: var(--c-latte); }
 .band--sand { background: var(--c-sand); }
 .band--ink { background: var(--c-ink); color: var(--c-on-ink); }
 .band--ink a:hover { color: var(--c-on-ink); }
 
-/* — Ruch przy przewijaniu —
+/* - Ruch przy przewijaniu -
    Kontener [data-reveal] dostaje .is-in, gdy wjedzie w ekran (skrypt w Base); dzieci [data-reveal-item] animują się kaskadą (--i).
    Efekt: „wypłynięcie” z dołu z wyciszeniem (jak w karuzeli w stopce).
    Wszystko ukrywa dopiero klasa .js-reveal (JS + brak „ogranicz ruch”), więc bez JS treść jest od razu widoczna. */
@@ -221,19 +221,19 @@ a:hover { color: var(--c-accent); }
 .js-reveal [data-reveal] h2 em { display: inline-block; clip-path: inset(-60% -15% -70% -5%); transition: clip-path 1400ms var(--ease-out) 450ms; }
 .js-reveal [data-reveal]:not(.is-in) h2 em { clip-path: inset(-60% 100% -70% -5%); }
 
-/* Paralaksa: zdjęcie z [data-parallax] lekko przesuwa się w ramce przy przewijaniu (CSS scroll-driven; bez wsparcia — stoi w miejscu) */
+/* Paralaksa: zdjęcie z [data-parallax] lekko przesuwa się w ramce przy przewijaniu (CSS scroll-driven; bez wsparcia - stoi w miejscu) */
 @supports (animation-timeline: view()) {
   .js-reveal [data-parallax] img { scale: 1.12; animation: drift linear both; animation-timeline: view(); }
 }
 @keyframes drift { from { translate: 0 -5%; } to { translate: 0 5%; } }
 
-/* Intro strony głównej (.js-intro, raz na sesję) — wspólne klatki */
+/* Intro strony głównej (.js-intro, raz na sesję) - wspólne klatki */
 @keyframes rise { from { opacity: 0; transform: translateY(1.75rem); } to { opacity: 1; transform: none; } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes write { from { clip-path: inset(-30% 100% -30% 0); } to { clip-path: inset(-30% 0 -30% 0); } }
 .js-intro .site-header .logo { animation: fade 1200ms var(--ease) both; }
 
-/* — Dostępność — */
+/* - Dostępność - */
 .visually-hidden {
   position: absolute !important; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap;

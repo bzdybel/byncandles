@@ -1,0 +1,15 @@
+nazwa: "Różowa czaszka"
+status: dostepny
+kategoria: wosk-sojowy
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Różowa świeca w kształcie czaszki o zapachu wanilii, inspirowana motywem vanitas. Memento mori, but make it pink."
+opis: |-
+  Memento mori, but make it pink. Różowa czaszka o zapachu wanilii - ręcznie robiona świeca sojowo-pszczela inspirowana motywem vanitas.
+
+  Trochę sztuki, trochę ironii, trochę candlecore - czyli by N. w pigułce.
+zdjecia:
+  - zdjecie: ../../assets/produkty/czaszka-rozowa.webp
+    alt: "Różowa świeca w kształcie czaszki na żółtej półce z książkami, obok różowego wazonu"
+szczegoly:
+  wosk: sojowoPszczeli

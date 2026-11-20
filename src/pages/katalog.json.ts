@@ -1,5 +1,5 @@
 /**
- * Statyczny katalog do uzgadniania koszyków (ceny, stany, nazwy) — generowany przy buildzie, serwowany z CDN.
+ * Statyczny katalog do uzgadniania koszyków (ceny, stany, nazwy) - generowany przy buildzie, serwowany z CDN.
  * Zawiera wyłącznie produkty, które można teraz kupić.
  */
 import type { APIRoute } from 'astro';

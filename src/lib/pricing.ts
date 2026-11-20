@@ -1,5 +1,5 @@
 /**
- * Reguły cenowe koszyka — czyste funkcje, wspólne dla przeglądarki i (w przyszłości) API zamówień.
+ * Reguły cenowe koszyka - czyste funkcje, wspólne dla przeglądarki i (w przyszłości) API zamówień.
  * Źródłem prawdy przy płatności będzie serwer: przeliczy ceny i zarezerwuje stan atomowo,
  * bo wielu klientów może jednocześnie kupować ostatnią sztukę. Tu liczymy podgląd dla klienta.
  */
@@ -25,11 +25,11 @@ export interface Totals {
   total: Grosze;
   /** Ile brakuje do darmowej dostawy; undefined, gdy próg nie istnieje lub jest osiągnięty. */
   missingForFree?: Grosze;
-  /** Postęp do darmowej dostawy 0–1; undefined, gdy brak progu. */
+  /** Postęp do darmowej dostawy 0-1; undefined, gdy brak progu. */
   freeProgress?: number;
 }
 
-/** 2+1: w każdej trójce sztuk najtańsza gratis — rabat liczony od najtańszych sztuk w całym koszyku. */
+/** 2+1: w każdej trójce sztuk najtańsza gratis - rabat liczony od najtańszych sztuk w całym koszyku. */
 export function promoDiscount(lines: readonly CartLine[]): Grosze {
   const units = lines.flatMap((l) => Array<Grosze>(l.qty).fill(l.price)).sort((a, b) => a - b);
   return units.slice(0, Math.floor(units.length / 3)).reduce((sum, p) => sum + p, 0);

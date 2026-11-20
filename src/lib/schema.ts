@@ -1,4 +1,4 @@
-/** Dane strukturalne schema.org (JSON-LD) — budowane w jednym miejscu, strony tylko je osadzają. */
+/** Dane strukturalne schema.org (JSON-LD) - budowane w jednym miejscu, strony tylko je osadzają. */
 import { brand } from '../i18n/pl.ts';
 import { toGrosze } from './money.ts';
 import { cenaAktualna, dostepnoscSchema, urlProduktu, type Kategoria, type Produkt, type Ustawienia } from './shop.ts';

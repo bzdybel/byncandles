@@ -1,0 +1,15 @@
+nazwa: "Miś"
+status: dostepny
+kategoria: wosk-sojowy
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Świeca sojowa w kształcie misia - dekoracja pokoju dziecięcego i upominek dla gości na chrzciny, baby shower czy gender reveal."
+opis: |-
+  Świeca sojowa w kształcie misia pięknie prezentuje się jako dekoracja pokoju dziecięcego, ale również jako wyjątkowy upominek dla gości na chrzcinach, baby shower czy gender reveal.
+
+  Delikatna, minimalistyczna i wykonana z dbałością o każdy szczegół. Dostępna w różu i bieli - kolor wybierasz, wpisując go w uwagach do zamówienia.
+zdjecia:
+  - zdjecie: ../../assets/produkty/misie.webp
+    alt: "Dwie świece w kształcie misiów, różowa i biała, na białej tacy obok wazonu"
+szczegoly:
+  wosk: sojowy

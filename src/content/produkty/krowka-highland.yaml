@@ -1,0 +1,13 @@
+nazwa: "Krówka Highland"
+status: dostepny
+kategoria: wosk-sojowy
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Mała świeca w kształcie kudłatej szkockiej krówki Highland. Ręcznie odlewana, w pudrowym różu, bieli, brązie lub szarości."
+opis: |-
+  Małe szkockie krówki, które aż proszą się o miejsce w Twoim wnętrzu. Ręcznie wykonane świece w kształcie uroczych, kudłatych krów Highland - inspirowanych charakterystycznymi szkockimi krowami o długiej, miękkiej sierści.
+
+  Dostępne kolory: pudrowy róż, biel, brąz i szarość. Kolor wybierasz, wpisując go w uwagach do zamówienia.
+zdjecia:
+  - zdjecie: ../../assets/produkty/krowki-highland.webp
+    alt: "Cztery świece w kształcie kudłatych krówek Highland - różowa, biała, brązowa i szara - na drewnianej tacy"

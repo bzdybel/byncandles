@@ -1,0 +1,15 @@
+nazwa: "Pastelowa kurka"
+status: dostepny
+kategoria: wosk-sojowy
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Pastelowo-różowa świeca sojowa w kształcie kurki. Nie znosi jajek, ale całkiem nieźle prezentuje się na stole."
+opis: |-
+  Pastelowa kurka - nie znosi jajek, ale za to całkiem nieźle prezentuje się na stole. Świetna na wiosenny stół, do pokoju dziecka albo jako drobny upominek.
+
+  Wykonana z wosku sojowego.
+zdjecia:
+  - zdjecie: ../../assets/produkty/kurka.webp
+    alt: "Pastelowo-różowa świeca w kształcie kurki na okrągłym ceramicznym talerzyku, w tle wazon z suszonymi kwiatami"
+szczegoly:
+  wosk: sojowy

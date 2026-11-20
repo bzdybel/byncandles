@@ -23,8 +23,8 @@ const config = await shopConfig();
     <Font cssVariable="--font-script" preload={[{ subset: 'latin' }]} />
     <Font cssVariable="--font-logo" preload={[{ subset: 'latin', style: 'italic' }]} />
     <script is:inline>
-      // Animacje pojawiania się — tylko z JS i bez „ogranicz ruch” (inaczej treść jest od razu widoczna).
-      // Intro strony głównej (.js-intro) — tylko przy pierwszym wejściu w sesji, żeby nie męczyło przy powrotach.
+      // Animacje pojawiania się - tylko z JS i bez „ogranicz ruch” (inaczej treść jest od razu widoczna).
+      // Intro strony głównej (.js-intro) - tylko przy pierwszym wejściu w sesji, żeby nie męczyło przy powrotach.
       if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
         document.documentElement.classList.add('js-reveal');
         try { if (location.pathname === '/' && !sessionStorage.getItem('intro')) { document.documentElement.classList.add('js-intro'); sessionStorage.setItem('intro', '1'); } } catch {}

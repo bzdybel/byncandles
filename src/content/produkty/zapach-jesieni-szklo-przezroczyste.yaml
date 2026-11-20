@@ -1,0 +1,16 @@
+nazwa: "Zapach Jesieni - szkło przezroczyste"
+status: dostepny
+kategoria: wosk-sojowy
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Świeca sojowa w ryflowanym szkle z pokrywką, z suszoną pomarańczą i cynamonem. Korzenne przyprawy, domowe ciasto i nuty pomarańczy."
+opis: |-
+  „Zapach Jesieni” to ciepłe, otulające połączenie korzennych przypraw, aromatu domowego ciasta i delikatnych nut pomarańczy.
+
+  Wykonana własnoręcznie z naturalnego wosku sojowego, udekorowana suszoną pomarańczą, laskami cynamonu i goździkami. Pięknie wygląda w jesienne wieczory i w przytulnych wnętrzach.
+zdjecia:
+  - zdjecie: ../../assets/produkty/zapach-jesieni-szklo.webp
+    alt: "Świeca sojowa w przezroczystym ryflowanym szkle z uchyloną pokrywką, z suszoną pomarańczą, cynamonem i goździkami"
+szczegoly:
+  wosk: sojowy
+  pojemnik: "Ryflowane szkło przezroczyste z pokrywką"
