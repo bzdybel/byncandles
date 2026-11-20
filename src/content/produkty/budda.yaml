@@ -1,0 +1,15 @@
+nazwa: "Budda"
+status: dostepny
+kategoria: wosk-sojowy
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Świeca w kształcie medytującego Buddy, inspirowana duchowością Dalekiej Azji. Z wosku sojowego i pszczelego, w błękicie lub bieli."
+opis: |-
+  Spokój zamknięty w formie. Ręcznie tworzone świece inspirowane duchowością Dalekiej Azji - dla wnętrz, w których liczy się równowaga i harmonia.
+
+  Wykonane z wosku sojowego i pszczelego. Dostępne w kolorze szaroniebieskim i białym - kolor wybierasz, wpisując go w uwagach do zamówienia.
+zdjecia:
+  - zdjecie: ../../assets/produkty/buddy-niebieski-bialy.webp
+    alt: "Dwie świece w kształcie medytującego Buddy, szaroniebieska i biała, obok czarnej figurki słonia"
+szczegoly:
+  wosk: sojowoPszczeli

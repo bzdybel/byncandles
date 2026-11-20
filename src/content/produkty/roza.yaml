@@ -1,0 +1,17 @@
+nazwa: "Róża"
+status: dostepny
+kategoria: wosk-sojowy
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Realistyczna róża z wosku sojowego w pudrowych kolorach - kremowa, różowa, wrzosowa lub szara. Romantyczny akcent we wnętrzu."
+opis: |-
+  Realistyczne róże, w których odwzorowany jest każdy płatek. Czasem wystarczy jeden piękny detal, żeby całe wnętrze nabrało klimatu.
+
+  Wykonane z wosku sojowego. Kolory: kremowy, pudrowy róż, wrzosowy i szary. Cena dotyczy jednej róży - kolor wybierasz, wpisując go w uwagach do zamówienia.
+zdjecia:
+  - zdjecie: ../../assets/produkty/roze-pudrowe.webp
+    alt: "Trzy świece w kształcie róż - kremowa, różowa i szara - na białej tacy, obok wazonu z drobnymi kwiatami"
+  - zdjecie: ../../assets/produkty/roza-wrzosowa.webp
+    alt: "Wrzosowa świeca w kształcie róży na białej podstawce ze złotym brzegiem"
+szczegoly:
+  wosk: sojowy

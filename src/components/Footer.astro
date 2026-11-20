@@ -15,24 +15,26 @@ const groups = [
 const insta = [IMG.krowaMech, IMG.misie, IMG.dawid, IMG.alpaki, IMG.kurka, IMG.lawenda, IMG.prezentAlpaka, IMG.rozaWrzosowa, IMG.buddy, IMG.czaszka, IMG.moai];
 ---
 <footer class="site-footer">
-  <section class="container insta" aria-labelledby="f-insta">
-    <a class="insta-label overline" id="f-insta" href={SITE.instagram} rel="me noopener" target="_blank">{fill(footer.instagramStrip, { handle: common.instagramHandle })}</a>
-    <div class="carousel" data-carousel>
-    <ul class="strip" role="list" aria-label={footer.carouselLabel} data-reveal data-track>
-      {insta.map((img, i) => (
-        <li style={`--i: ${Math.min(i, 3)}`} data-reveal-item>
-          <a class="frame" href={SITE.instagram} rel="me noopener" target="_blank" tabindex="-1" aria-hidden="true">
-            <Img {...img} widths={[480, 720, 960]} sizes="(min-width: 40rem) 31vw, 80vw" />
-          </a>
-        </li>
-      ))}
-    </ul>
-    <button class="nav-btn prev" type="button" aria-label={footer.carouselPrev} data-dir="-1" disabled>
-      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M15 5l-7 7 7 7" /></svg>
-    </button>
-    <button class="nav-btn next" type="button" aria-label={footer.carouselNext} data-dir="1">
-      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 5l7 7-7 7" /></svg>
-    </button>
+  <section class="insta band--sand" aria-labelledby="f-insta">
+    <div class="container">
+      <a class="insta-label overline" id="f-insta" href={SITE.instagram} rel="me noopener" target="_blank">{fill(footer.instagramStrip, { handle: common.instagramHandle })}</a>
+      <div class="carousel" data-carousel>
+      <ul class="strip" role="list" aria-label={footer.carouselLabel} data-reveal data-track>
+        {insta.map((img, i) => (
+          <li style={`--i: ${Math.min(i, 3)}`} data-reveal-item>
+            <a class="frame" href={SITE.instagram} rel="me noopener" target="_blank" tabindex="-1" aria-hidden="true">
+              <Img {...img} widths={[480, 720, 960]} sizes="(min-width: 40rem) 31vw, 80vw" />
+            </a>
+          </li>
+        ))}
+      </ul>
+      <button class="nav-btn prev" type="button" aria-label={footer.carouselPrev} data-dir="-1" disabled>
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M15 5l-7 7 7 7" /></svg>
+      </button>
+      <button class="nav-btn next" type="button" aria-label={footer.carouselNext} data-dir="1">
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 5l7 7-7 7" /></svg>
+      </button>
+      </div>
     </div>
   </section>
 
@@ -58,8 +60,9 @@ const insta = [IMG.krowaMech, IMG.misie, IMG.dawid, IMG.alpaki, IMG.kurka, IMG.l
 <style>
   .site-footer { margin-top: var(--sp-8); font-size: var(--fs-sm); }
 
-  /* Instagram: karuzela kadrów 3:4 — na telefonie ~1 zdjęcie, od 40rem 3 naraz; przewijanie palcem/kółkiem lub strzałkami */
-  .insta { text-align: center; }
+  /* Instagram: karuzela kadrów 3:4 - na telefonie ~1 zdjęcie, od 40rem 3 naraz; przewijanie palcem/kółkiem lub strzałkami */
+  /* Pas w kolorze piasku - wyraźnie oddziela karuzelę Instagrama od treści strony (np. siatki produktów). */
+  .insta { text-align: center; padding-block: var(--sp-7) var(--sp-8); }
   .insta-label { display: inline-block; text-decoration: none; margin-bottom: var(--sp-5); }
   .insta-label:hover { color: var(--c-accent); }
   .carousel { position: relative; }

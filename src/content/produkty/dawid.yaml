@@ -1,0 +1,15 @@
+nazwa: "Dawid"
+status: dostepny
+kategoria: wosk-sojowy
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Popiersie Dawida Michała Anioła zamknięte w świecy z wosku sojowego i pszczelego. Subtelny akcent, który od razu przyciąga uwagę."
+opis: |-
+  Dawid Michała Anioła zamknięty w świecy - subtelny akcent, który od razu przyciąga uwagę. Klasyczna rzeźba w małej skali, dla miłośników sztuki i wnętrz z charakterem.
+
+  Wykonany z wosku sojowego i pszczelego.
+zdjecia:
+  - zdjecie: ../../assets/produkty/dawid.webp
+    alt: "Biała świeca w kształcie popiersia Dawida Michała Anioła na szklanym stoliku, obok białego dyfuzora z patyczkami"
+szczegoly:
+  wosk: sojowoPszczeli

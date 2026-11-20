@@ -1,4 +1,4 @@
-/** Wspólne renderowanie koszyka (panel + strona zamówienia). Tylko DOM — logika cen w pricing.ts. */
+/** Wspólne renderowanie koszyka (panel + strona zamówienia). Tylko DOM - logika cen w pricing.ts. */
 import { cart as t } from '../i18n/pl.ts';
 import { fill, plural } from '../lib/i18n.ts';
 import { formatGrosze } from '../lib/money.ts';
@@ -32,7 +32,7 @@ export function renderCount(count: number): void {
   document.querySelectorAll<HTMLElement>('[data-cart-open]').forEach((el) => el.setAttribute('aria-label', label));
 }
 
-/** Komunikat dla czytników ekranu (jeden region aria-live na stronę — w CartDrawer.astro). */
+/** Komunikat dla czytników ekranu (jeden region aria-live na stronę - w CartDrawer.astro). */
 export function announce(message: string): void {
   const live = document.querySelector<HTMLElement>('[data-cart-live]');
   if (live) live.textContent = message;

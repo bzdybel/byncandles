@@ -3,8 +3,10 @@ import { getCollection, getEntry, type CollectionEntry } from 'astro:content';
 import { toGrosze } from './money.ts';
 import type { ShopConfig } from './pricing.ts';
 
-export type Produkt = CollectionEntry<'produkty'>;
-export type ProduktData = Produkt['data'];
+type ProduktWpis = CollectionEntry<'produkty'>;
+/** Produkt z ustaloną ceną: własną z pliku produktu albo domyślną z ustawień sklepu. */
+export type ProduktData = Omit<ProduktWpis['data'], 'cena'> & { cena: number };
+export type Produkt = Omit<ProduktWpis, 'data'> & { data: ProduktData };
 export type Kategoria = CollectionEntry<'kategorie'>;
 export type Ustawienia = CollectionEntry<'ustawienia'>['data'];
 
@@ -18,9 +20,26 @@ export const urlKategorii = (k: Kategoria) => `/sklep/kategoria/${k.id}/`;
 const ORDER = { dostepny: 0, wkrotce: 1, wyprzedany: 2, ukryty: 3 } as const;
 const byName = (a: string, b: string) => a.localeCompare(b, 'pl');
 
-/** Produkty widoczne publicznie: dostępne → wkrótce → wyprzedane, potem alfabetycznie. */
+/** Uzupełnia cenę domyślną i pilnuje, żeby promocja była niższa od ceny - błąd zatrzymuje build. */
+function zCena(wpis: ProduktWpis, cenaDomyslna: number | undefined): Produkt {
+  const cena = wpis.data.cena ?? cenaDomyslna;
+  const plik = `src/content/produkty/${wpis.id}.yaml`;
+  if (cena === undefined) {
+    throw new Error(`${plik}: brak ceny - wpisz „cena” w produkcie albo „cenaDomyslna” w src/content/ustawienia.yaml.`);
+  }
+  if (wpis.data.cenaPromocyjna !== undefined && wpis.data.cenaPromocyjna >= cena) {
+    throw new Error(`${plik}: cena promocyjna (${wpis.data.cenaPromocyjna} zł) musi być niższa od ceny (${cena} zł).`);
+  }
+  return { ...wpis, data: { ...wpis.data, cena } };
+}
+
+/** Produkty widoczne publicznie: dostępne → wkrótce → wyprzedane, potem alfabetycznie. Jedyne wejście do katalogu. */
 export async function produktyPubliczne(): Promise<Produkt[]> {
-  const all = await getCollection('produkty', ({ data }) => data.status !== 'ukryty');
+  const [wpisy, u] = await Promise.all([
+    getCollection('produkty', ({ data }) => data.status !== 'ukryty'),
+    ustawienia(),
+  ]);
+  const all = wpisy.map((w) => zCena(w, u.cenaDomyslna));
   return all.sort((a, b) => ORDER[a.data.status] - ORDER[b.data.status] || byName(a.data.nazwa, b.data.nazwa));
 }
 
@@ -33,11 +52,11 @@ export async function kategorieZProduktami(produkty: Produkt[]): Promise<Kategor
 
 export async function ustawienia(): Promise<Ustawienia> {
   const e = await getEntry('ustawienia', 'sklep');
-  if (!e) throw new Error('Brak src/content/ustawienia.yaml — uzupełnij Ustawienia sklepu w panelu Keystatic.');
+  if (!e) throw new Error('Brak src/content/ustawienia.yaml - uzupełnij Ustawienia sklepu w panelu Keystatic.');
   return e.data;
 }
 
-/** Konfiguracja koszyka w groszach — jedyne miejsce konwersji ustawień sklepu. */
+/** Konfiguracja koszyka w groszach - jedyne miejsce konwersji ustawień sklepu. */
 export async function shopConfig(): Promise<ShopConfig> {
   const u = await ustawienia();
   return {

@@ -13,14 +13,14 @@ const wszystkie = await produktyPubliczne();
 const wyroznione = wszystkie.filter((p) => p.data.wyrozniony);
 const polecane = (wyroznione.length ? wyroznione : wszystkie).slice(0, 4);
 
-// Górny rząd mozaiki (3 zdjęcia) jest widoczny bez przewijania na ekranach od ~1080 px wysokości — bez lazy-load.
-// Zdjęcia na stronie nie powinny się powtarzać (także ze stopką). 4 najlepsze prace — same zdjęcia, bez podpisów (asortyment i opisy są w sklepie).
+// Górny rząd mozaiki (3 zdjęcia) jest widoczny bez przewijania na ekranach od ~1080 px wysokości - bez lazy-load.
+// Zdjęcia na stronie nie powinny się powtarzać (także ze stopką). 4 najlepsze prace - same zdjęcia, bez podpisów (asortyment i opisy są w sklepie).
 const prace = (['wSzkle', 'krowki', 'muszle', 'buldog'] as const).map((key) => IMG[key]);
 const proces = [IMG.procesKnot, IMG.procesZapach, IMG.procesOdlewanie];
-// Sekcja „Jak powstają świece” chwilowo ukryta — zmień na true, żeby ją przywrócić.
+// Sekcja „Jak powstają świece” chwilowo ukryta - zmień na true, żeby ją przywrócić.
 const pokazProces = false;
 
-// Obrazek do udostępniania (Facebook, Messenger, WhatsApp) — zdjęcie z hero
+// Obrazek do udostępniania (Facebook, Messenger, WhatsApp) - zdjęcie z hero
 const ogImage = new URL((await getImage({ src: IMG.roze.src, ...SHARE })).src, SITE_URL).href;
 
 const jsonLd = [
@@ -51,7 +51,7 @@ const jsonLd = [
     </div>
   </section>
 
-  <!-- 1. Wiodąca sekcja: wybrane świece ze sklepu, a dopóki ich brak — mozaika prac (1 duże zdjęcie + 3 mniejsze + kafel z tytułem) -->
+  <!-- 1. Wiodąca sekcja: wybrane świece ze sklepu, a dopóki ich brak - mozaika prac (1 duże zdjęcie + 3 mniejsze + kafel z tytułem) -->
   {polecane.length > 0 ? (
     <section class="container section" aria-labelledby="featured">
       <div class="section-head" data-reveal>

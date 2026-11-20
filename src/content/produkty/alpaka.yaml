@@ -1,0 +1,15 @@
+nazwa: "Alpaka"
+status: dostepny
+kategoria: wosk-sojowy
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Świeca w kształcie alpaki w puszystym „sweterku”. Ręcznie odlewana w kilku kolorach - urocza dekoracja i upominek dla gości."
+opis: |-
+  Alpaki potrafią skraść kilka serc - także w wersji świecowej. Każda ma puszysty, fakturowany „sweterek” i uroczy pyszczek.
+
+  Świetnie sprawdzają się jako podziękowanie dla gości i drobny prezent; mogą być zapakowane w celofan ze sznurkiem i mchem. Kolor wybierasz, wpisując go w uwagach do zamówienia.
+zdjecia:
+  - zdjecie: ../../assets/produkty/alpaki.webp
+    alt: "Trzy świece w kształcie alpak - fioletowo-szara, pomarańczowa i brzoskwiniowa - na tle drewnianego płotu"
+  - zdjecie: ../../assets/produkty/alpaka-zapakowana.webp
+    alt: "Świeca-alpaka zapakowana w przezroczysty celofan ze sznurkiem, trzymana w dłoni"

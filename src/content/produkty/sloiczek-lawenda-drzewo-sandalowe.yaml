@@ -1,0 +1,18 @@
+nazwa: "Lawenda i drzewo sandałowe w ryflowanym słoiczku"
+status: dostepny
+kategoria: wosk-sojowy
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Świeca sojowa w ryflowanym słoiczku, z suszonymi kwiatami lawendy. Intensywny, otulający zapach lawendy i drzewa sandałowego."
+opis: |-
+  Świeczka w eleganckim, ryflowanym słoiczku - minimalistyczna, a jednocześnie wyjątkowa.
+
+  Lawenda i drzewo sandałowe z dodatkiem suszonych kwiatów lawendy to intensywny, otulający zapach, który wypełnia przestrzeń i sprzyja relaksowi. Wykonana z naturalnego wosku sojowego.
+
+  Słoiczek czarny albo biały - kolor wybierasz, wpisując go w uwagach do zamówienia.
+zdjecia:
+  - zdjecie: ../../assets/produkty/sloiczki-lawenda.webp
+    alt: "Dwie świece sojowe w ryflowanych słoiczkach, czarnym i białym, z suszoną lawendą na powierzchni, obok książki i suszonych gałązek"
+szczegoly:
+  wosk: sojowy
+  pojemnik: "Ryflowany słoiczek, czarny lub biały"

@@ -1,0 +1,13 @@
+nazwa: "Różowa krowa Highland"
+status: dostepny
+kategoria: wosk-sojowy
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Duża, różowa świeca w kształcie szkockiej krowy Highland z długą, falowaną grzywką i rogami. Dekoracja z charakterem."
+opis: |-
+  Szkocka krowa w wersji pink - z długą, falowaną grzywką, rogami i kudłatą sierścią odwzorowaną w każdym detalu. Większa od naszych małych krówek, więc sama w sobie jest dekoracją.
+
+  Ręcznie odlewana świeca, która nie stoi tylko na półce - staje się tematem rozmów.
+zdjecia:
+  - zdjecie: ../../assets/produkty/krowa-highland-rozowa-mech.webp
+    alt: "Różowa świeca w kształcie głowy i tułowia krowy Highland z rogami, ustawiona na zielonym mchu"

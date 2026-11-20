@@ -1,5 +1,4 @@
 ---
-import Img from '../../components/Img.astro';
 import type { GetStaticPaths } from 'astro';
 import { getEntry } from 'astro:content';
 import { getImage } from 'astro:assets';
@@ -7,6 +6,7 @@ import Base from '../../layouts/Base.astro';
 import Accordion from '../../components/Accordion.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import Price from '../../components/Price.astro';
+import ProductGallery from '../../components/ProductGallery.astro';
 import { nav, product as t, status, wax } from '../../i18n/pl';
 import { fill } from '../../lib/i18n';
 import { SHARE, THUMB } from '../../lib/media';
@@ -66,13 +66,7 @@ const crumbs = [
   <div class="container section--tight">
     <Breadcrumbs items={crumbs} />
     <div class="split split--top" style="--split: 1.15fr 1fr">
-      <div class:list={['gallery', { multi: p.zdjecia.length > 1 }]} aria-label={t.gallery}>
-        {p.zdjecia.map((img, i) => (
-          <div class="frame frame--portrait">
-            <Img src={img.zdjecie} alt={img.alt} widths={[480, 720, 960, 1280]} sizes="(min-width: 56rem) 55vw, 86vw" eager={i === 0} />
-          </div>
-        ))}
-      </div>
+      <ProductGallery zdjecia={p.zdjecia} />
 
       <div class="info">
         <h1 class="title">{p.nazwa}</h1>
@@ -119,7 +113,7 @@ const crumbs = [
           </Accordion>
           <Accordion title={t.deliveryTitle}>
             <p>
-              {fill(t.delivery, { price: u.wysylkaPaczkomat ? ` — ${formatZl(u.wysylkaPaczkomat)}` : '' })}
+              {fill(t.delivery, { price: u.wysylkaPaczkomat ? ` - ${formatZl(u.wysylkaPaczkomat)}` : '' })}
               {u.darmowaWysylkaOd !== undefined && fill(t.deliveryFree, { price: formatZl(u.darmowaWysylkaOd) })}
               {t.withdrawal}<a href="/dostawa-i-zwroty/">{t.deliveryLink}</a>
             </p>
@@ -131,11 +125,6 @@ const crumbs = [
 </Base>
 
 <style>
-  .gallery { display: grid; gap: var(--sp-4); }
-  @media (max-width: 55.99rem) {
-    .gallery.multi { grid-auto-flow: column; grid-auto-columns: 86%; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: var(--sp-2); }
-    .gallery.multi .frame { scroll-snap-align: start; }
-  }
   @media (min-width: 56rem) { .info { position: sticky; top: var(--sp-5); } }
   .title { margin-bottom: var(--sp-3); }
   .note { font-size: var(--fs-sm); color: var(--c-text-muted); margin-bottom: var(--sp-2); }

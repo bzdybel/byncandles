@@ -1,11 +1,11 @@
 /**
- * by N. candles — WSZYSTKIE teksty interfejsu w jednym pliku (język: polski).
+ * by N. candles - WSZYSTKIE teksty interfejsu w jednym pliku (język: polski).
  *
  * Zasady:
- * - Każda przestrzeń nazw to osobny eksport nazwany — skrypty w przeglądarce importują tylko to,
+ * - Każda przestrzeń nazw to osobny eksport nazwany - skrypty w przeglądarce importują tylko to,
  *   czego potrzebują (np. `cart`), więc reszta tekstów nie trafia do paczki JS.
- * - Zmienne w tekstach: {nazwa} — wypełniane przez `fill()` z `src/lib/i18n.ts`.
- * - Odmiana liczebników: krotka [1, 2–4, 5+] — używana przez `plural()`.
+ * - Zmienne w tekstach: {nazwa} - wypełniane przez `fill()` z `src/lib/i18n.ts`.
+ * - Odmiana liczebników: krotka [1, 2-4, 5+] - używana przez `plural()`.
  * - Fragmenty z wyróżnieniem (kursywa) są rozbite na części: `title` + `titleEm`.
  * - Treści produktów, kategorii i ustawień sklepu pochodzą z panelu Keystatic, nie stąd.
  */
@@ -14,11 +14,11 @@ export const brand = {
   name: 'by N. candles',
   author: 'Natalia',
   description:
-    'Ręcznie robione świece z wosku sojowego i pszczelego — róże, muszle, krówki i inne małe rzeźby. Tworzy Natalia.',
+    'Ręcznie robione świece z wosku sojowego i pszczelego - róże, muszle, krówki i inne małe rzeźby. Tworzy Natalia.',
   tagline: 'wosk sojowy i pszczeli · rękodzieło',
   logoMark: 'by N.',
   logoSub: 'candles',
-  homeLabel: '{name} — strona główna',
+  homeLabel: '{name} - strona główna',
 } as const;
 
 export const common = {
@@ -71,6 +71,8 @@ export const status = {
 
 export const wax = {
   sojowy: 'sojowy',
+  pszczeli: 'pszczeli (100%)',
+  sojowoPszczeli: 'sojowy z dodatkiem pszczelego',
   rzepakowy: 'rzepakowy',
   kokosowy: 'kokosowy',
   mieszanka: 'mieszanka wosków',
@@ -80,7 +82,7 @@ export const wax = {
 export const home = {
   metaTitle: 'Ręcznie robione świece sojowe i z wosku pszczelego',
   metaDescription:
-    'by N. candles — ręcznie odlewane świece z wosku sojowego i pszczelego: róże, muszle, krówki Highland i inne małe rzeźby. Idealne na prezent.',
+    'by N. candles - ręcznie odlewane świece z wosku sojowego i pszczelego: róże, muszle, krówki Highland i inne małe rzeźby. Idealne na prezent.',
   heroTitle: 'Ręcznie robione świece z wosku sojowego i pszczelego',
   heroQuote:
     '„Każda świeca powstaje ręcznie. Od roztapiania wosku, przez mieszanie zapachu, aż po ostatnie detale. Ten cały proces to coś, co pozwala mi zwolnić tempo i skupić się na «tu» i «teraz»”.',
@@ -90,9 +92,9 @@ export const home = {
   processTitle: 'Jak powstaje świeca',
   processTitleEm: 'by N.',
   processSteps: [
-    { title: 'Knot i forma', text: 'Każdą formę przygotowuję ręcznie — knot musi stać idealnie pośrodku, żeby świeca paliła się równo.' },
+    { title: 'Knot i forma', text: 'Każdą formę przygotowuję ręcznie - knot musi stać idealnie pośrodku, żeby świeca paliła się równo.' },
     { title: 'Wosk i zapach', text: 'Roztapiam wosk sojowy lub pszczeli i dodaję olejek zapachowy, odmierzany co do kropli.' },
-    { title: 'Odlewanie', text: 'Wosk wlewam powoli do formy. Potem świeca musi spokojnie zastygnąć — tego etapu nie da się przyspieszyć.' },
+    { title: 'Odlewanie', text: 'Wosk wlewam powoli do formy. Potem świeca musi spokojnie zastygnąć - tego etapu nie da się przyspieszyć.' },
   ],
   galleryOverline: 'Moje prace',
   galleryMore: 'Więcej na Instagramie',
@@ -101,17 +103,17 @@ export const home = {
   materials: [
     {
       title: 'Wosk sojowy',
-      text: 'Roślinny, czysto palący się wosk, który świetnie oddaje detale formy — od żłobień muszli po płatki róż. Część świec łączę z dodatkiem wosku pszczelego dla głębszego koloru.',
+      text: 'Roślinny, czysto palący się wosk, który świetnie oddaje detale formy - od żłobień muszli po płatki róż. Część świec łączę z dodatkiem wosku pszczelego dla głębszego koloru.',
     },
     {
       title: 'Wosk pszczeli z lokalnej pasieki',
-      text: 'Świece w 100% z naturalnego wosku pszczelego, bez zbędnych dodatków — tylko piękny, miodowy kolor i charakterystyczny, delikatny zapach miodu.',
+      text: 'Świece w 100% z naturalnego wosku pszczelego, bez zbędnych dodatków - tylko piękny, miodowy kolor i charakterystyczny, delikatny zapach miodu.',
     },
   ],
   giftTitle: 'Na prezent i',
   giftTitleEm: 'na zamówienie',
   giftText: [
-    'Świece pakuję w różowe pudełka z okienkiem albo w celofan przewiązany sznurkiem — gotowe do wręczenia.',
+    'Świece pakuję w różowe pudełka z okienkiem albo w celofan przewiązany sznurkiem - gotowe do wręczenia.',
     'Szukasz czegoś wyjątkowego? Przygotowuję też zamówienia indywidualne: wybrany kolor, zapach albo zestaw na prezent dla bliskiej osoby.',
   ],
   giftCta: 'Zapytaj o zamówienie',
@@ -121,7 +123,7 @@ export const home = {
 
 export const contact = {
   metaTitle: 'Kontakt i zamówienia indywidualne',
-  metaDescription: 'Napisz do by N. candles — pytania o świece, zamówienia indywidualne, zestawy na prezent i współpraca.',
+  metaDescription: 'Napisz do by N. candles - pytania o świece, zamówienia indywidualne, zestawy na prezent i współpraca.',
   title: 'Napisz',
   titleEm: 'do mnie',
   lead: 'Masz pytanie o świecę, chcesz zamówić coś specjalnego albo przygotować zestaw na prezent? Odpiszę i pomogę wybrać.',
@@ -130,14 +132,14 @@ export const contact = {
   email: 'E-mail',
   customTitle: 'Zamówienia indywidualne',
   customText:
-    'Wybrany kolor, zapach, forma albo zestaw kilku świec w prezentowym pudełku — napisz, czego szukasz i na kiedy. Dobrze, jeśli podasz też budżet; wtedy od razu zaproponuję konkretne rozwiązanie.',
+    'Wybrany kolor, zapach, forma albo zestaw kilku świec w prezentowym pudełku - napisz, czego szukasz i na kiedy. Dobrze, jeśli podasz też budżet; wtedy od razu zaproponuję konkretne rozwiązanie.',
 } as const;
 
 export const delivery = {
   metaTitle: 'Dostawa i zwroty',
   metaDescription: 'Wysyłka świec by N. do Paczkomatów InPost, bezpieczne pakowanie i 14 dni na odstąpienie od umowy.',
   title: 'Dostawa i zwroty',
-  lead: 'Świece wysyłam starannie zapakowane, żeby dotarły w idealnym stanie — także te o delikatnych, rzeźbionych kształtach.',
+  lead: 'Świece wysyłam starannie zapakowane, żeby dotarły w idealnym stanie - także te o delikatnych, rzeźbionych kształtach.',
   shippingTitle: 'Dostawa',
   locker: 'Paczkomat InPost',
   courier: 'Kurier InPost',
@@ -147,16 +149,16 @@ export const delivery = {
   tracking: 'Po nadaniu paczki dostaniesz od InPost wiadomość z numerem do śledzenia przesyłki.',
   packingTitle: 'Pakowanie',
   packingText:
-    'Każda świeca jest zabezpieczona przed transportem. Na życzenie pakuję ją prezentowo — w różowe pudełko z okienkiem lub w celofan ze sznurkiem. Napisz o tym w uwagach do zamówienia.',
+    'Każda świeca jest zabezpieczona przed transportem. Na życzenie pakuję ją prezentowo - w różowe pudełko z okienkiem lub w celofan ze sznurkiem. Napisz o tym w uwagach do zamówienia.',
   returnTitle: 'Zwrot (odstąpienie od umowy)',
   returnText: [
     'Kupując jako konsument, możesz odstąpić od umowy bez podawania przyczyny w ciągu 14 dni od otrzymania paczki. Wystarczy, że w tym czasie poinformujesz mnie o swojej decyzji (np. wiadomością), a następnie odeślesz świecę w stanie nienaruszonym.',
     'Zwrócę płatność za produkt i najtańszy oferowany sposób dostawy w ciągu 14 dni od otrzymania informacji o odstąpieniu. Koszt odesłania świecy pokrywa kupujący.',
   ],
   returnException:
-    'Wyjątek stanowią świece wykonane na indywidualne zamówienie według Twojej specyfikacji — w ich przypadku prawo odstąpienia od umowy nie przysługuje.',
+    'Wyjątek stanowią świece wykonane na indywidualne zamówienie według Twojej specyfikacji - w ich przypadku prawo odstąpienia od umowy nie przysługuje.',
   complaintTitle: 'Reklamacje',
-  complaintBefore: 'Jeśli świeca dotrze uszkodzona lub ma wadę, napisz do mnie — najlepiej ze zdjęciem. Każdą sprawę rozpatrzę w ciągu 14 dni. Szczegóły znajdziesz w ',
+  complaintBefore: 'Jeśli świeca dotrze uszkodzona lub ma wadę, napisz do mnie - najlepiej ze zdjęciem. Każdą sprawę rozpatrzę w ciągu 14 dni. Szczegóły znajdziesz w ',
   complaintLink: 'regulaminie',
   question: 'Masz pytanie? Napisz',
 } as const;
@@ -166,7 +168,7 @@ export const legal = {
   termsDescription: 'Regulamin sklepu internetowego by N. candles.',
   privacy: 'Polityka prywatności',
   privacyDescription: 'Polityka prywatności i informacje o przetwarzaniu danych osobowych w by N. candles.',
-  pending: 'Dokument w przygotowaniu — zostanie opublikowany przed uruchomieniem sprzedaży.',
+  pending: 'Dokument w przygotowaniu - zostanie opublikowany przed uruchomieniem sprzedaży.',
   questionsBefore: 'W razie pytań ',
   questionsLink: 'napisz do mnie',
 } as const;
@@ -181,24 +183,27 @@ export const notFound = {
 } as const;
 
 export const shop = {
-  metaTitle: 'Sklep — ręcznie robione świece sojowe i z wosku pszczelego',
+  metaTitle: 'Sklep - ręcznie robione świece sojowe i z wosku pszczelego',
   metaDescription:
     'Świece-rzeźby by N.: róże, muszle, krówki Highland i inne formy z wosku sojowego i pszczelego. Ręcznie odlewane, gotowe na prezent.',
   title: 'Kolekcja świec',
-  lead: 'Ręcznie odlewane świece z wosku sojowego i pszczelego — każda powstaje w małej partii, więc każdy egzemplarz jest trochę inny.',
+  lead: 'Ręcznie odlewane świece z wosku sojowego i pszczelego - każda powstaje w małej partii, więc każdy egzemplarz jest trochę inny.',
   categories: 'Kategorie',
   all: 'Wszystkie',
-  categoryFallbackDescription: '{name} — ręcznie robione świece by N.',
+  categoryFallbackDescription: '{name} - ręcznie robione świece by N.',
   emptyLead: 'Pierwsze świece trafią do sklepu już wkrótce.',
-  emptyText: 'Do tego czasu możesz zamówić je przez wiadomość na Instagramie — odpiszę i pomogę wybrać.',
+  emptyText: 'Do tego czasu możesz zamówić je przez wiadomość na Instagramie - odpiszę i pomogę wybrać.',
 } as const;
 
 export const product = {
   gallery: 'Zdjęcia produktu',
+  galleryPrev: 'Poprzednie zdjęcie',
+  galleryNext: 'Następne zdjęcie',
+  gallerySlide: 'Zdjęcie {n} z {total}',
   omnibus: 'Najniższa cena z 30 dni przed obniżką: {price}',
   dimensions: 'Wymiary',
   addToCart: 'Dodaj do koszyka',
-  lowStock: 'Zostało {n} szt. — każda świeca to ręcznie odlany egzemplarz.',
+  lowStock: 'Zostało {n} szt. - każda świeca to ręcznie odlany egzemplarz.',
   shippingLocker: 'Paczkomat InPost',
   shippingFreeFrom: 'darmowa dostawa od {price}',
   returnDays: '14 dni na zwrot',
@@ -218,7 +223,7 @@ export const product = {
   careTitle: 'Pielęgnacja i palenie',
   care: [
     'Przed każdym zapaleniem przytnij knot do ok. 5 mm. Pal świecę na stabilnej, niepalnej podstawce, z dala od przeciągów.',
-    'Świece-rzeźby zmieniają kształt podczas palenia — jeśli chcesz zachować formę, traktuj je jako dekorację.',
+    'Świece-rzeźby zmieniają kształt podczas palenia - jeśli chcesz zachować formę, traktuj je jako dekorację.',
   ],
   safetyTitle: 'Bezpieczeństwo i producent',
   safety: 'Nigdy nie pozostawiaj palącej się świecy bez nadzoru. Przechowuj poza zasięgiem dzieci i zwierząt.',
@@ -230,16 +235,16 @@ export const product = {
   deliveryLink: 'Szczegóły dostawy i zwrotów',
 } as const;
 
-/** Teksty używane przez skrypty koszyka w przeglądarce — trzymaj ten eksport mały. */
+/** Teksty używane przez skrypty koszyka w przeglądarce - trzymaj ten eksport mały. */
 export const cart = {
   title: 'Koszyk',
   open: 'Koszyk',
   openWithCount: 'Koszyk, {n} {products}',
   products: ['produkt', 'produkty', 'produktów'],
   close: 'Zamknij koszyk',
-  promoBar: 'Promocja 2+1 — przy trzech świecach najtańsza gratis',
+  promoBar: 'Promocja 2+1 - przy trzech świecach najtańsza gratis',
   emptyLead: 'Twój koszyk jest pusty.',
-  emptyText: 'Zajrzyj do kolekcji — każda świeca to ręcznie odlany egzemplarz.',
+  emptyText: 'Zajrzyj do kolekcji - każda świeca to ręcznie odlany egzemplarz.',
   perUnit: '{price} / szt.',
   qtyGroup: 'Ilość: {name}',
   decrease: 'Zmniejsz ilość',
@@ -267,10 +272,10 @@ export const checkout = {
   metaTitle: 'Zamówienie',
   title: 'Zamówienie',
   stepContact: 'Dane kontaktowe',
-  stepDelivery: 'Dostawa — Paczkomat InPost',
+  stepDelivery: 'Dostawa - Paczkomat InPost',
   stepNotes: 'Uwagi',
   name: 'Imię i nazwisko',
-  nameError: 'Podaj imię i nazwisko — będą na etykiecie paczki.',
+  nameError: 'Podaj imię i nazwisko - będą na etykiecie paczki.',
   email: 'E-mail',
   emailHint: 'Wyślę na niego potwierdzenie zamówienia.',
   emailError: 'Wpisz adres e-mail w formacie nazwa@domena.pl.',
@@ -307,13 +312,13 @@ export const checkout = {
   editCart: 'Edytuj koszyk',
   fallbackTitle: 'Prawie gotowe!',
   fallbackLead:
-    'Płatności online uruchomię już wkrótce. Do tego czasu wyślij mi podsumowanie w wiadomości na Instagramie — potwierdzę zamówienie i podam dane do przelewu.',
+    'Płatności online uruchomię już wkrótce. Do tego czasu wyślij mi podsumowanie w wiadomości na Instagramie - potwierdzę zamówienie i podam dane do przelewu.',
   copy: 'Skopiuj podsumowanie',
-  copied: 'Skopiowano — wklej podsumowanie w wiadomości na Instagramie.',
-  copyFailed: 'Nie udało się skopiować automatycznie — zaznacz tekst powyżej i skopiuj go ręcznie.',
+  copied: 'Skopiowano - wklej podsumowanie w wiadomości na Instagramie.',
+  copyFailed: 'Nie udało się skopiować automatycznie - zaznacz tekst powyżej i skopiuj go ręcznie.',
   text: {
     header: 'Zamówienie by N. candles',
-    line: '• {name} × {qty} — {price}',
+    line: '• {name} × {qty} - {price}',
     discount: 'Promocja 2+1: −{price}',
     shipping: 'Dostawa (Paczkomat {locker}): {price}',
     total: 'Razem: {price}',
@@ -324,12 +329,12 @@ export const checkout = {
 
 /** Teksty alternatywne zdjęć (dostępność + SEO grafiki). */
 export const images = {
-  roze: 'Trzy świece sojowe w kształcie róż — biała, pudrowo-różowa i szara — na białej tacy obok wazonu z kwiatami',
+  roze: 'Trzy świece sojowe w kształcie róż - biała, pudrowo-różowa i szara - na białej tacy obok wazonu z kwiatami',
   muszle: 'Dwie białe świece sojowe w kształcie muszli przegrzebka',
   rozaWrzosowa: 'Wrzosowa świeca w kształcie róży na podstawce z agatu',
   krowki: 'Cztery świece w kształcie kudłatych krówek Highland w kolorach różu, bieli, brązu i szarości',
   pszczeli: 'Świece z naturalnego wosku pszczelego w kształcie Buddy i buldoga francuskiego na tle wachlarza',
-  misie: 'Różowy i biały miś — świece sojowe na białej tacy',
+  misie: 'Różowy i biały miś - świece sojowe na białej tacy',
   kurka: 'Pudrowo-różowa świeca w kształcie kurki na ceramicznym talerzyku',
   buldog: 'Biała świeca w kształcie buldoga francuskiego',
   wSzkle: 'Świeca sojowa w szklanym naczyniu z pokrywką, udekorowana plastrem pomarańczy i laską cynamonu',

@@ -1,0 +1,16 @@
+nazwa: "Zapach Jesieni - zielone szkło"
+status: dostepny
+kategoria: wosk-sojowy
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Świeca sojowa w zielonym ryflowanym szkle z pokrywką, z suszoną pomarańczą, cynamonem i goździkami. Korzenny, ciepły zapach jesieni."
+opis: |-
+  „Zapach Jesieni” w butelkowozielonym, ryflowanym szkle z pokrywką - ciepłe połączenie korzennych przypraw, domowego ciasta i delikatnych nut pomarańczy.
+
+  Wykonana własnoręcznie z naturalnego wosku sojowego, udekorowana suszoną pomarańczą, laskami cynamonu i goździkami. Po wypaleniu szkło z pokrywką posłuży jako pojemnik na drobiazgi.
+zdjecia:
+  - zdjecie: ../../assets/produkty/zapach-jesieni-zielone-szklo.webp
+    alt: "Świeca sojowa w zielonym, ryflowanym szklanym pojemniku z uchyloną pokrywką, z suszoną pomarańczą, cynamonem i goździkami"
+szczegoly:
+  wosk: sojowy
+  pojemnik: "Ryflowane szkło zielone z pokrywką"

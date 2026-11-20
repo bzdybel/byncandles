@@ -39,7 +39,7 @@ function write(items: CartItem[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   } catch {
-    /* tryb prywatny / brak miejsca — koszyk działa do końca życia strony */
+    /* tryb prywatny / brak miejsca - koszyk działa do końca życia strony */
   }
   document.dispatchEvent(new CustomEvent(CHANGE_EVENT));
 }
@@ -100,7 +100,7 @@ export async function sync(force = false): Promise<void> {
       document.dispatchEvent(new CustomEvent(UPDATED_EVENT));
     }
   } catch {
-    /* offline — zostaje koszyk lokalny, serwer i tak zweryfikuje zamówienie */
+    /* offline - zostaje koszyk lokalny, serwer i tak zweryfikuje zamówienie */
   }
 }
 

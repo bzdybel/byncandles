@@ -6,13 +6,13 @@ import type { Field } from '../lib/checkout';
 import { SITE } from '../lib/site';
 import { STORAGE_KEY } from '../scripts/cart-store';
 
-// Token Geowidgetu z Managera Paczek InPost (zmienna buildu). Bez tokenu — pole na kod paczkomatu.
+// Token Geowidgetu z Managera Paczek InPost (zmienna buildu). Bez tokenu - pole na kod paczkomatu.
 const geoToken = import.meta.env.PUBLIC_INPOST_GEOWIDGET_TOKEN ?? '';
-// API zamówień/płatności (kolejny etap). Bez niego — podsumowanie do wysłania na Instagramie.
+// API zamówień/płatności (kolejny etap). Bez niego - podsumowanie do wysłania na Instagramie.
 const endpoint = import.meta.env.PUBLIC_CHECKOUT_ENDPOINT ?? '';
 
 const ERRORS: Record<Field, string> = { name: t.nameError, email: t.emailError, phone: t.phoneError, locker: t.lockerError, terms: t.termsError };
-// Teksty potrzebne skryptowi strony — osadzone tutaj, a nie importowane w JS (mniejsza wspólna paczka).
+// Teksty potrzebne skryptowi strony - osadzone tutaj, a nie importowane w JS (mniejsza wspólna paczka).
 const clientTexts = {
   text: t.text, free: cart.free, submitting: t.submitting, submitPay: t.submitPay, submitError: t.submitError,
   copied: t.copied, copyFailed: t.copyFailed, lockerSelected: t.lockerSelected,
@@ -235,7 +235,7 @@ const fields = [
     }
   });
 
-  // InPost Geowidget — ładowany dopiero po kliknięciu
+  // InPost Geowidget - ładowany dopiero po kliknięciu
   const geo = document.querySelector<HTMLDialogElement>('[data-geo]');
   if (geo) {
     let loaded = false;

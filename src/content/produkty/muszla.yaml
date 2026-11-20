@@ -1,0 +1,17 @@
+nazwa: "Muszla"
+status: dostepny
+kategoria: wosk-sojowy
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Biała świeca w kształcie muszli przegrzebka o głębokim zapachu czekolady. Z wosku sojowego z dodatkiem wosku pszczelego."
+opis: |-
+  Kształt muszli nadaje świecy wyjątkowy wygląd - prosty, ale przyciągający uwagę. Z kolei jej głęboki aromat czekolady wypełnia wnętrze przyjemnym, zmysłowym ciepłem. To zapach, który otula przestrzeń i tworzy atmosferę relaksu oraz komfortu.
+
+  Ręcznie wykonana z naturalnego wosku sojowego z dodatkiem wosku pszczelego, tworzona z dbałością o każdy detal.
+zdjecia:
+  - zdjecie: ../../assets/produkty/muszle.webp
+    alt: "Dwie białe świece w kształcie muszli przegrzebka, mniejsza i większa, na jasnym tle"
+  - zdjecie: ../../assets/produkty/muszle-wazon.webp
+    alt: "Dwie białe świece-muszle na drewnianym blacie obok białego ryflowanego wazonu"
+szczegoly:
+  wosk: sojowoPszczeli

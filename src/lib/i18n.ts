@@ -1,4 +1,4 @@
-/** Pomocnicze funkcje do tekstów z `src/i18n/pl.ts`. Czyste, bez zależności — działają na serwerze i w przeglądarce. */
+/** Pomocnicze funkcje do tekstów z `src/i18n/pl.ts`. Czyste, bez zależności - działają na serwerze i w przeglądarce. */
 
 /** Wstawia zmienne: fill('Zostało {n} szt.', { n: 2 }) → 'Zostało 2 szt.' */
 export function fill(template: string, vars: Record<string, string | number> = {}): string {

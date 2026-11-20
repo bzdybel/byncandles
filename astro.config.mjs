@@ -6,15 +6,15 @@ import keystatic from '@keystatic/astro';
 import { NOINDEX_PATHS, SITE_URL } from './src/lib/site.ts';
 
 // Panel Keystatic (/keystatic) działa na razie tylko lokalnie (`npm run dev`),
-// dzięki czemu produkcja pozostaje w 100% statyczna. Tryb GitHub dla produkcji — osobny etap.
+// dzięki czemu produkcja pozostaje w 100% statyczna. Tryb GitHub dla produkcji - osobny etap.
 const isDev = process.argv.includes('dev');
 
 // https://astro.build/config
 export default defineConfig({
   site: SITE_URL,
-  // Cloudflare serwuje /strona/index.html pod /strona/ — trzymamy jeden kanoniczny wariant.
+  // Cloudflare serwuje /strona/index.html pod /strona/ - trzymamy jeden kanoniczny wariant.
   trailingSlash: 'always',
-  // Strona „O mnie” usunięta — stare linki prowadzą na główną.
+  // Strona „O mnie” usunięta - stare linki prowadzą na główną.
   redirects: { '/o-mnie/': '/' },
   build: { format: 'directory', inlineStylesheets: 'auto' },
   prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
@@ -40,7 +40,7 @@ export default defineConfig({
       fallbacks: ['system-ui', 'sans-serif'],
     },
     {
-      // Znak słowny „by N. candles” — kontrastowa kursywa
+      // Znak słowny „by N. candles” - kontrastowa kursywa
       provider: fontProviders.fontsource(),
       name: 'Bodoni Moda',
       cssVariable: '--font-logo',
@@ -50,7 +50,7 @@ export default defineConfig({
       fallbacks: ['Georgia', 'serif'],
     },
     {
-      // Pismo odręczne — wyróżnione słowa w nagłówkach
+      // Pismo odręczne - wyróżnione słowa w nagłówkach
       provider: fontProviders.fontsource(),
       name: 'Corinthia',
       cssVariable: '--font-script',

@@ -1,5 +1,5 @@
 /**
- * Zamówienie: walidacja danych i podsumowanie tekstowe. Czyste funkcje — te same reguły
+ * Zamówienie: walidacja danych i podsumowanie tekstowe. Czyste funkcje - te same reguły
  * użyje przyszłe API zamówień po stronie serwera (nigdy nie ufamy wyłącznie przeglądarce).
  * Teksty są wstrzykiwane (nie importowane), żeby nie trafiały do wspólnej paczki JS każdej strony.
  */

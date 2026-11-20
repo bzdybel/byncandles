@@ -1,0 +1,17 @@
+nazwa: "Budda z wosku pszczelego"
+status: dostepny
+kategoria: wosk-pszczeli
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Świeca w kształcie medytującego Buddy w 100% z naturalnego wosku pszczelego z lokalnej pasieki. Miodowy kolor i delikatny zapach."
+opis: |-
+  Ta świeca powstała w 100% z naturalnego wosku pszczelego, pozyskiwanego prosto z lokalnej pasieki. Bez zbędnych dodatków - tylko naturalny wosk, piękny kolor i charakterystyczny, delikatny, miodowy zapach.
+
+  Spokój zamknięty w formie - dla wnętrz, w których liczy się równowaga i harmonia.
+zdjecia:
+  - zdjecie: ../../assets/produkty/budda-wosk-pszczeli.webp
+    alt: "Miodowa świeca z wosku pszczelego w kształcie siedzącego Buddy na tle wachlarza z kaligrafią"
+  - zdjecie: ../../assets/produkty/budda-buldog-wosk-pszczeli.webp
+    alt: "Miodowe świece z wosku pszczelego - siedzący Budda i buldog francuski w pozie medytacji - na tle wachlarza z kaligrafią"
+szczegoly:
+  wosk: pszczeli

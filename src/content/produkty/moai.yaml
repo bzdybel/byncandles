@@ -1,0 +1,15 @@
+nazwa: "Moai"
+status: dostepny
+kategoria: wosk-sojowy
+# cena: brak = cena domyślna z src/content/ustawienia.yaml (cenaDomyslna). Wpisz np. „cena: 45”, żeby nadpisać.
+stan: 5
+krotkiOpis: "Geometryczna świeca w kształcie głowy Moai z Wyspy Wielkanocnej, o czekoladowym zapachu. Z wosku sojowego i pszczelego."
+opis: |-
+  Moai - symbol tajemniczej Wyspy Wielkanocnej w nowoczesnej, minimalistycznej odsłonie. Geometryczna forma przyciąga spojrzenia, a czekoladowy zapach subtelnie otula wnętrze, tworząc wyjątkowy klimat.
+
+  Dekoracja, która wygląda jak małe dzieło sztuki. Wykonana z wosku sojowego i pszczelego.
+zdjecia:
+  - zdjecie: ../../assets/produkty/moai.webp
+    alt: "Szaro-beżowa geometryczna świeca w kształcie głowy Moai obok białego kwiatu"
+szczegoly:
+  wosk: sojowoPszczeli

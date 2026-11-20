@@ -1,6 +1,6 @@
 /**
- * Konfiguracja witryny (nie teksty — te są w src/i18n/pl.ts).
- * Domena tymczasowa — po zakupie własnej ustaw zmienną buildu SITE_URL w Cloudflare.
+ * Konfiguracja witryny (nie teksty - te są w src/i18n/pl.ts).
+ * Domena tymczasowa - po zakupie własnej ustaw zmienną buildu SITE_URL w Cloudflare.
  */
 import { nav } from '../i18n/pl.ts';
 
