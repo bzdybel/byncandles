@@ -1,63 +1,64 @@
 /**
  * Zadanie cykliczne (cron w wrangler.jsonc, co 10 min) - siatka bezpieczeństwa na wypadek zgubionych zdarzeń:
  *
- * 1. Zamówienia czekające na płatność dłużej niż limit P24 → pytamy P24 o stan transakcji:
- *    opłacone (zgubione powiadomienie) → opłacamy; nieopłacone po czasie rezerwacji → EXPIRED.
- * 2. Opłacone zamówienia bez przesyłki / e-maila / powiadomienia sklepu → ponawiamy brakujące kroki.
+ * 1. Zamówienia czekające na płatność dłużej niż limit P24 → pytamy P24 o stan transakcji
+ *    (opłacone - zgubione powiadomienie → opłacamy; nieopłacone po czasie rezerwacji → EXPIRED).
+ * 2. Opłacone zamówienia z niewykonanym krokiem realizacji → ponawiamy (lease chroni przed równoległym webhookiem).
  *
  * Każdy przebieg ma własny correlationId; błąd jednego zamówienia nie przerywa pozostałych.
  */
 import { LogKey } from '../constants/logKeys.ts';
-import { MAX_ATTEMPTS, OrderEvent, OrderStatus } from '../constants/orderStatus.ts';
-import { PAYMENT_TIME_LIMIT_MIN } from '../payments/PaymentProvider.ts';
+import { MAX_ATTEMPTS, PAYMENT_TIME_LIMIT_MIN, type Order } from '../domain/order.ts';
 import type { Services } from '../services/init.ts';
-import { RESERVATION_MS } from '../services/StockService.ts';
 import { Stopwatch } from '../utils/ports.ts';
 
-/** Opłacone dawniej niż tyle nie są już ponawiane automatycznie (wtedy: /api/admin/orders/:numer/retry). */
+/** Zapas po limicie płatności, zanim zapytamy P24 (powiadomienie mogło być jeszcze w drodze). */
+const PAYMENT_GRACE_MS = (PAYMENT_TIME_LIMIT_MIN + 5) * 60_000;
+/** Opłacone dawniej nie są już ponawiane automatycznie (wtedy: /api/admin/orders/:numer/retry). */
 const FOLLOW_UP_WINDOW_MS = 3 * 24 * 60 * 60_000;
 
-export async function reconcileOrders(s: Services): Promise<{ checked: number; paid: number; expired: number; followedUp: number }> {
+export interface ReconcileStats {
+  checked: number;
+  paid: number;
+  expired: number;
+  followedUp: number;
+  failed: number;
+}
+
+export async function reconcileOrders(s: Services): Promise<ReconcileStats> {
   const timer = new Stopwatch(s.clock);
-  const stats = { checked: 0, paid: 0, expired: 0, followedUp: 0 };
+  const stats: ReconcileStats = { checked: 0, paid: 0, expired: 0, followedUp: 0, failed: 0 };
+  const now = s.clock.now();
   s.logger.info({ message: 'Reconcile job start', metadata: { [LogKey.JOB]: 'reconcile-orders' } });
 
-  // 1. Płatności bez rozstrzygnięcia
-  const awaiting = await s.storage.listAwaitingPayment(s.clock.now() - (PAYMENT_TIME_LIMIT_MIN + 5) * 60_000);
-  for (const order of awaiting) {
-    stats.checked++;
+  const safely = async (order: Order, label: string, fn: () => Promise<void>) => {
     try {
-      const state = await s.payments.status(order.id);
-      if (state.state !== 'unpaid') {
-        const notification = { sessionId: order.id, reference: state.reference, amount: state.amount, currency: 'PLN' };
-        await s.journal.warn(order, OrderEvent.PAYMENT_RECOVERED, { [LogKey.PAYMENT_REFERENCE]: state.reference, [LogKey.PROVIDER_STATUS]: state.providerStatus });
-        if (await s.paymentStatus.confirmPaid(order, notification, state.state === 'paid_unverified')) stats.paid++;
-      } else if (order.createdAt <= s.clock.now() - RESERVATION_MS) {
-        if (await s.storage.markReleased(order.id, OrderStatus.EXPIRED)) {
-          stats.expired++;
-          await s.journal.info(order, OrderEvent.ORDER_EXPIRED, { [LogKey.PROVIDER_STATUS]: state.providerStatus });
-        }
-      }
+      await fn();
     } catch (error) {
-      s.logger.error({ message: 'Reconcile: payment check failed', metadata: { [LogKey.ORDER_ID]: order.id, [LogKey.ORDER_NUMBER]: order.number }, error });
+      stats.failed++;
+      s.logger.error({ message: `Reconcile: ${label} failed`, metadata: { [LogKey.ORDER_ID]: order.id, [LogKey.ORDER_NUMBER]: order.number }, error });
     }
+  };
+
+  for (const order of await s.storage.listAwaitingPayment(now - PAYMENT_GRACE_MS)) {
+    stats.checked++;
+    await safely(order, 'payment check', async () => {
+      const result = await s.payment.reconcile(order);
+      if (result === 'paid') stats.paid++;
+      if (result === 'expired') stats.expired++;
+    });
   }
 
-  // 2. Opłacone z brakującymi krokami
   const followUp = await s.storage.listPaidNeedingFollowUp({
+    steps: s.fulfillment.enabledSteps(),
     maxAttempts: MAX_ATTEMPTS,
-    paidAfter: s.clock.now() - FOLLOW_UP_WINDOW_MS,
-    shipping: Boolean(s.shipping),
-    customerEmail: Boolean(s.email),
-    shopEmail: Boolean(s.email && s.shopEmail),
+    paidAfter: now - FOLLOW_UP_WINDOW_MS,
+    now,
   });
   for (const order of followUp) {
-    try {
-      await s.paymentStatus.fulfill(order);
-      stats.followedUp++;
-    } catch (error) {
-      s.logger.error({ message: 'Reconcile: follow-up failed', metadata: { [LogKey.ORDER_ID]: order.id, [LogKey.ORDER_NUMBER]: order.number }, error });
-    }
+    await safely(order, 'follow-up', async () => {
+      if (await s.fulfillment.fulfill(order)) stats.followedUp++;
+    });
   }
 
   s.logger.info({ message: 'Reconcile job done', metadata: { [LogKey.JOB]: 'reconcile-orders', ...stats, ...timer.stop() } });

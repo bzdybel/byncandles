@@ -22,6 +22,9 @@
       "migrations_dir": "migrations"
     }
   ],
+  // Limit żądań per IP (worker/index.ts → Route.rateLimit): składanie zamówień i panel admina.
+  // Chroni przed blokowaniem sztuk seryjnymi zamówieniami i zgadywaniem hasła. `period`: 10 albo 60 s.
+  "ratelimits": [{ "name": "RATE_LIMITER", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }],
   // Co 10 min: zgubione powiadomienia P24, wygasłe rezerwacje, ponowienie przesyłek i e-maili (worker/jobs/).
   "triggers": { "crons": ["*/10 * * * *"] },
   // Logi Workera (JSON z correlationId) w Cloudflare → Workers → byncandles → Logs.

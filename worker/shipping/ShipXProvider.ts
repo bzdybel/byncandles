@@ -4,6 +4,7 @@
  * Dokumentacja: https://dokumentacja-inpost.atlassian.net/wiki/spaces/PL/pages/622754/API+ShipX
  */
 import { ProviderError } from '../errors/AppError.ts';
+import { callProvider, defaultFetch } from '../utils/providerHttp.ts';
 import type { ShipmentInput, ShipmentResult, ShippingProvider } from './ShippingProvider.ts';
 
 export interface ShipXConfig {
@@ -15,6 +16,8 @@ export interface ShipXConfig {
   /** parcel_locker | dispatch_order | pop */
   sendingMethod: string;
 }
+
+export const shipxHost = (sandbox: boolean) => (sandbox ? 'https://sandbox-api-shipx-pl.easypack24.net' : 'https://api-shipx-pl.easypack24.net');
 
 /** Czysta funkcja: treść żądania (osobno - do testów i do logów). */
 export function shipmentBody(cfg: Pick<ShipXConfig, 'parcelTemplate' | 'sendingMethod'>, o: ShipmentInput) {
@@ -33,26 +36,24 @@ export class ShipXProvider implements ShippingProvider {
   private readonly cfg: ShipXConfig;
   private readonly fetchFn: typeof fetch;
 
-  constructor(cfg: ShipXConfig, fetchFn: typeof fetch = (...a) => fetch(...a)) {
+  constructor(cfg: ShipXConfig, fetchFn: typeof fetch = defaultFetch) {
     this.cfg = cfg;
     this.fetchFn = fetchFn;
   }
 
   async createShipment(input: ShipmentInput): Promise<ShipmentResult> {
-    const host = this.cfg.sandbox ? 'https://sandbox-api-shipx-pl.easypack24.net' : 'https://api-shipx-pl.easypack24.net';
-    let res: Response;
-    try {
-      res = await this.fetchFn(`${host}/v1/organizations/${this.cfg.organizationId}/shipments`, {
+    const { ok, status, json } = await callProvider<{ id?: number | string; status?: string; message?: string; error?: string }>(
+      this.name,
+      `${shipxHost(this.cfg.sandbox)}/v1/organizations/${this.cfg.organizationId}/shipments`,
+      {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.cfg.token}` },
         body: JSON.stringify(shipmentBody(this.cfg, input)),
-      });
-    } catch (e) {
-      throw new ProviderError(this.name, 'network error', { cause: String(e) });
-    }
-    const json = (await res.json().catch(() => ({}))) as { id?: number | string; status?: string; message?: string; details?: unknown; error?: string };
+      },
+      this.fetchFn,
+    );
     // Pełna odpowiedź w błędzie: ShipX opisuje w `details`, które pole odrzucił (np. zły kod paczkomatu).
-    if (!res.ok || json.id === undefined) throw new ProviderError(this.name, `HTTP ${res.status} ${json.error ?? ''} ${json.message ?? ''}`.trim(), { response: json });
+    if (!ok || json.id === undefined) throw new ProviderError(this.name, `HTTP ${status} ${json.error ?? ''} ${json.message ?? ''}`.trim(), { response: json });
     return { id: String(json.id), status: json.status ?? 'created' };
   }
 }

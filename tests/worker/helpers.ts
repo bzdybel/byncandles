@@ -4,7 +4,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
-import type { Env } from '../../worker/config/env.ts';
+import type { Env, RateLimiter } from '../../worker/config/env.ts';
 import type { D1Database, D1PreparedStatement, D1Result, Fetcher } from '../../worker/storage/d1.ts';
 import type { Catalog } from '../../src/scripts/cart-store.ts';
 import type { ShopConfig } from '../../src/lib/pricing.ts';
@@ -27,9 +27,12 @@ function statement(db: DatabaseSync, sql: string, params: Value[] = []): D1Prepa
   };
 }
 
-export function createD1(): D1Database & { raw: DatabaseSync } {
+export const MIGRATIONS = ['0001_orders.sql', '0002_sales_and_lease.sql'];
+
+/** @param migrations domyślnie wszystkie - test migracji podaje tylko część */
+export function createD1(migrations = MIGRATIONS): D1Database & { raw: DatabaseSync } {
   const db = new DatabaseSync(':memory:');
-  db.exec(readFileSync(new URL('../../migrations/0001_orders.sql', import.meta.url), 'utf8'));
+  for (const m of migrations) db.exec(readFileSync(new URL(`../../migrations/${m}`, import.meta.url), 'utf8'));
   return {
     raw: db,
     prepare: (sql) => statement(db, sql),
@@ -97,4 +100,25 @@ export function captureConsole() {
   const orig = { log: console.log, warn: console.warn, error: console.error };
   for (const k of ['log', 'warn', 'error'] as const) console[k] = (r: unknown) => void logs.push(r as Record<string, unknown>);
   return { logs, restore: () => Object.assign(console, orig) };
+}
+
+/** Limiter jak w Cloudflare: `limit` żądań na klucz. */
+export function rateLimiter(limit: number): RateLimiter {
+  const counts = new Map<string, number>();
+  return {
+    async limit({ key }) {
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+      return { success: counts.get(key)! <= limit };
+    },
+  };
+}
+
+/** Podmiana globalnego fetch wg adresu: [fragment URL, status, treść]. Nieznany adres → 500. */
+export function routeFetch(routes: Array<[string, number, unknown]>, calls: string[] = []): typeof fetch {
+  return (async (input: string | URL | Request) => {
+    const url = String(input instanceof Request ? input.url : input);
+    calls.push(url);
+    const hit = routes.find(([part]) => url.includes(part));
+    return new Response(JSON.stringify(hit?.[2] ?? {}), { status: hit?.[1] ?? 500 });
+  }) as typeof fetch;
 }

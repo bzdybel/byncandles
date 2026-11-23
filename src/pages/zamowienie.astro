@@ -15,7 +15,7 @@ const ERRORS: Record<Field, string> = { name: t.nameError, email: t.emailError, 
 // Teksty potrzebne skryptowi strony - osadzone tutaj, a nie importowane w JS (mniejsza wspólna paczka).
 const clientTexts = {
   text: t.text, free: cart.free, submitting: t.submitting, submitPay: t.submitPay, submitError: t.submitError,
-  errorRef: t.errorRef, stockError: t.stockError,
+  errorRef: t.errorRef, stockError: t.stockError, rateLimited: t.rateLimited, lockerNotFound: t.lockerNotFound,
   copied: t.copied, copyFailed: t.copyFailed, lockerSelected: t.lockerSelected,
 };
 export type ClientTexts = typeof clientTexts;
@@ -163,10 +163,10 @@ const fields = [
     return { name: str('name'), email: str('email'), phone: str('phone'), locker: str('locker'), notes: str('notes'), gift: d.has('gift'), terms: d.has('terms') };
   }
 
-  function showError(field: Field, invalid: boolean) {
+  function showError(field: Field, invalid: boolean, message?: string) {
     const err = q(`#co-${field}-err`);
     q(`#co-${field}`).setAttribute('aria-invalid', String(invalid));
-    err.textContent = invalid ? (err.dataset.msg ?? '') : '';
+    err.textContent = invalid ? (message ?? err.dataset.msg ?? '') : '';
   }
 
   const check = (field: Field) => showError(field, validate(readForm()).includes(field));
@@ -182,22 +182,38 @@ const fields = [
     el.value = normalizeLocker(el.value);
   });
 
+  interface ApiError { error?: string; fields?: string[]; reasons?: Record<string, string> }
+
+  /** Błędy pól zwrócone przez serwer (te same reguły + np. nieistniejący paczkomat). true = pokazano przy polach. */
+  function showServerFields(json: ApiError): boolean {
+    const fields = (json.fields ?? []).filter((f): f is Field => (FIELDS as string[]).includes(f));
+    if (!fields.length) return false;
+    fields.forEach((f) => showError(f, true, json.reasons?.[f] === 'not_found' ? t.lockerNotFound : undefined));
+    q(`#co-${fields[0]}`).focus();
+    return true;
+  }
+
   async function submitToApi(endpoint: string, data: OrderForm, items: ReturnType<typeof read>) {
-    // API przelicza ceny po stronie serwera, rezerwuje stan atomowo i zwraca link do płatności (worker/handlers/CreateOrderHandler.ts).
+    // API przelicza ceny po stronie serwera, rezerwuje stan atomowo i zwraca link do płatności (worker/services/PlaceOrderService.ts).
     const btn = q<HTMLButtonElement>('[data-co-submit]');
-    const reset = () => {
-      btn.dataset.state = '';
-      btn.disabled = false;
-      btn.textContent = t.submitPay;
+    const setLoading = (loading: boolean) => {
+      btn.dataset.state = loading ? 'loading' : '';
+      btn.disabled = loading;
+      btn.textContent = loading ? t.submitting : t.submitPay;
     };
-    btn.dataset.state = 'loading';
-    btn.disabled = true;
-    btn.textContent = t.submitting;
+    // Kod błędu = początek correlationId żądania: po nim znajdę dokładnie to zamówienie w logach.
+    const fail = (message: string, ref: string) => {
+      setLoading(false);
+      alert(ref ? `${message}\n\n${fill(t.errorRef, { ref: ref.slice(0, 8) })}` : message);
+    };
+
+    setLoading(true);
     let previous: string | null = null;
     try { previous = localStorage.getItem(PENDING_ORDER_KEY); } catch { /* tryb prywatny */ }
-    let ref = '';
+
+    let res: Response;
     try {
-      const res = await fetch(endpoint, {
+      res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -208,24 +224,26 @@ const fields = [
           ...(previous && { previous }),
         }),
       });
-      ref = res.headers.get('correlation-id') ?? '';
-      const json = await res.json().catch(() => ({}));
-      if (res.status === 409 && json.error === 'stock') {
-        // Ktoś kupił ostatnie sztuki - uzgodnij koszyk i pokaż, co się zmieniło.
-        await sync(true);
-        render();
-        reset();
-        alert(t.stockError);
-        return;
-      }
-      if (!res.ok || !json.redirect) throw new Error(json.error);
-      try { localStorage.setItem(PENDING_ORDER_KEY, json.orderId); } catch { /* bez ponownej próby - rezerwacja wygaśnie sama */ }
-      location.href = json.redirect;
     } catch {
-      reset();
-      // Kod błędu = correlationId żądania: po nim znajdę dokładnie to zamówienie w logach.
-      alert(ref ? `${t.submitError}\n\n${fill(t.errorRef, { ref: ref.slice(0, 8) })}` : t.submitError);
+      return fail(t.submitError, ''); // offline / sieć
     }
+    const ref = res.headers.get('correlation-id') ?? '';
+    const json = (await res.json().catch(() => ({}))) as ApiError & { orderId?: string; redirect?: string };
+
+    if (res.ok && json.redirect) {
+      try { localStorage.setItem(PENDING_ORDER_KEY, json.orderId ?? ''); } catch { /* rezerwacja wygaśnie sama */ }
+      location.href = json.redirect;
+      return;
+    }
+    if (res.status === 409 && json.error === 'stock') {
+      // Ktoś kupił ostatnie sztuki - uzgodnij koszyk i pokaż, co się zmieniło.
+      await sync(true);
+      render();
+      return fail(t.stockError, '');
+    }
+    if (res.status === 400 && showServerFields(json)) return setLoading(false);
+    if (res.status === 429) return fail(t.rateLimited, '');
+    fail(t.submitError, ref);
   }
 
   form.addEventListener('submit', async (e) => {

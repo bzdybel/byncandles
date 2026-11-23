@@ -1,8 +1,5 @@
 /** Port płatności: Przelewy24 na produkcji/sandboxie, noop lokalnie (MOCK_PAYMENTS=1). */
 
-/** Ile minut klient ma na zapłatę (P24 `timeLimit`). Rezerwacja stanu trwa dłużej - StockService. */
-export const PAYMENT_TIME_LIMIT_MIN = 30;
-
 export interface RegisterPaymentInput {
   sessionId: string;
   amount: number; // grosze

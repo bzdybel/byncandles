@@ -18,9 +18,27 @@ export class AppError extends Error {
   }
 }
 
+/** Błędne pola formularza; `reasons` doprecyzowuje komunikat (np. locker: 'not_found' - paczkomat nie istnieje). */
 export class ValidationError extends AppError {
-  constructor(fields: string[]) {
-    super(`Invalid fields: ${fields.join(', ')}`, { statusCode: 400, code: 'invalid', details: { fields } });
+  readonly fields: string[];
+  readonly reasons: Record<string, string>;
+  constructor(fields: string[], reasons: Record<string, string> = {}) {
+    super(`Invalid fields: ${fields.join(', ')}`, { statusCode: 400, code: 'invalid', details: { fields, reasons } });
+    this.fields = fields;
+    this.reasons = reasons;
+  }
+}
+
+export class RateLimitedError extends AppError {
+  constructor() {
+    super('Too many requests', { statusCode: 429, code: 'rate_limited' });
+  }
+}
+
+/** Wymagamy application/json: wymusza preflight CORS, więc obca strona nie złoży zamówienia w imieniu odwiedzającego. */
+export class UnsupportedMediaTypeError extends AppError {
+  constructor() {
+    super('Expected application/json', { statusCode: 415, code: 'unsupported_media_type' });
   }
 }
 

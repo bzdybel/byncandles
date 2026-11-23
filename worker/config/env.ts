@@ -41,6 +41,13 @@ export interface Env {
 
   /** Hasło do /api/admin/* (Basic auth, użytkownik dowolny). Bez niego panel jest wyłączony. */
   ADMIN_PASSWORD?: string;
+
+  /** Cloudflare Rate Limiting (wrangler.jsonc → ratelimits). Brak wiązania = bez limitu (np. testy). */
+  RATE_LIMITER?: RateLimiter;
+}
+
+export interface RateLimiter {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
 }
 
 export const flag = (v: string | undefined) => v === '1' || v === 'true';

@@ -2,7 +2,7 @@
 import { cart, emails as t } from '../../src/i18n/pl.ts';
 import { fill } from '../../src/lib/i18n.ts';
 import { formatGrosze } from '../../src/lib/money.ts';
-import type { Order, OrderItem } from '../storage/OrderStorage.ts';
+import type { Order, OrderItem } from '../domain/order.ts';
 
 /** Część wspólna: pozycje, rabat, dostawa, suma, prezent, uwagi. */
 function summary(order: Order, items: OrderItem[]): string[] {
@@ -41,13 +41,20 @@ export function customerConfirmation(order: Order, items: OrderItem[], origin: s
 
 export type ShipmentOutcome = { kind: 'created'; id: string } | { kind: 'failed'; error: string } | { kind: 'disabled' };
 
-export function shopNotification(order: Order, items: OrderItem[], opts: { shipment: ShipmentOutcome; paidLate: boolean; adminUrl: string }) {
-  const s = opts.shipment;
+const shipmentLine = (s: ShipmentOutcome) =>
+  s.kind === 'created' ? fill(t.shopShipmentOk, { id: s.id }) : s.kind === 'failed' ? fill(t.shopShipmentFailed, { error: s.error }) : t.shopShipmentDisabled;
+
+export function shopNotification(
+  order: Order,
+  items: OrderItem[],
+  opts: { shipment: ShipmentOutcome; paidLate: boolean; customerEmailSent: boolean; adminUrl: string },
+) {
   return {
     subject: fill(t.shopSubject, { number: order.number, total: formatGrosze(order.total) }),
     text: [
       ...(opts.paidLate ? [t.shopLate, ''] : []),
-      s.kind === 'created' ? fill(t.shopShipmentOk, { id: s.id }) : s.kind === 'failed' ? fill(t.shopShipmentFailed, { error: s.error }) : t.shopShipmentDisabled,
+      ...(opts.customerEmailSent ? [] : [t.shopCustomerEmailFailed, '']),
+      shipmentLine(opts.shipment),
       '',
       ...summary(order, items),
       '',

@@ -43,10 +43,3 @@ export function createLogger(correlationId: string, component: string, sink: Sin
     });
   return { correlationId, info: write('info'), warn: write('warn'), error: write('error') };
 }
-
-/** Logger zbierający wpisy w pamięci - do testów. */
-export function memoryLogger(correlationId = 'test-correlation') {
-  const entries: Array<{ level: Level } & Record<string, unknown>> = [];
-  const logger = createLogger(correlationId, 'test', (level, record) => entries.push({ ...record, level }));
-  return { logger, entries };
-}

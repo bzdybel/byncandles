@@ -104,28 +104,41 @@ Logowanie przez GitHub dla Natalii (edycja bez lokalnego środowiska) - kolejny 
 ## API zamówień (worker/)
 
 Strona zostaje statyczna; Worker obsługuje tylko `/api/*` i `/katalog.json` (`run_worker_first` w `wrangler.jsonc`).
-Wzorce jak w lavirant-vc: porty i adaptery (prawdziwy dostawca / noop), handlery → serwisy → `OrderStorage` (cały SQL),
-`AppError` + centralna obsługa błędów, sprawdzenie konfiguracji (`config/prerequisites.ts`), logi strukturalne z `correlationId`.
+Wzorce jak w lavirant-vc: porty i adaptery (prawdziwy dostawca / noop), cienkie handlery → serwisy aplikacyjne →
+repozytorium (`OrderStorage`, cały SQL), reguły biznesowe w domenie (czyste funkcje), `AppError` + centralna obsługa
+błędów, jedna interpretacja konfiguracji (`config/appConfig.ts` → `prerequisites.ts` i `services/init.ts`), logi z `correlationId`.
 
 ```
 worker/
-  index.ts                    # router, correlationId, log odpowiedzi, błędy, cron
-  handlers/                   # CreateOrder, PaymentWebhook, OrderStatus, Catalog, Admin*, DevPayment
-  services/                   # PaymentStatusService (po opłaceniu), OrderJournal, StockService, OrderFactory, init.ts
-  payments/ shipping/ email/  # port + adapter (Przelewy24 / ShipX / Resend) + noop
+  index.ts                    # router: correlationId, limit żądań, Basic auth, błędy, log; cron
+  domain/                     # order.ts - statusy, rezerwacja, status publiczny, numer; events.ts - typy zdarzeń
+  handlers/                   # HTTP: OrderHandlers, CatalogHandler, AdminOrdersHandler, DevPaymentHandler
+  services/
+    PlaceOrderService.ts      #   złożenie zamówienia: walidacja, paczkomat, zapis + rezerwacja, rejestracja płatności
+    PaymentService.ts         #   powiadomienie P24, potwierdzenie wpłaty, odzyskanie zgubionej (cron)
+    FulfillmentService.ts     #   przesyłka → e-mail klienta → powiadomienie sklepu (lease + wspólny cykl kroku)
+    OrderJournal.ts, StockService.ts, CatalogService.ts, OrderFactory.ts, init.ts (composition root)
+  payments/ shipping/ email/  # port + adapter (Przelewy24 / ShipX + punkty InPost / Resend) + noop
   jobs/ReconcileOrdersJob.ts  # cron co 10 min - siatka bezpieczeństwa
   storage/OrderStorage.ts     # D1
-migrations/                   # schemat D1
+migrations/                   # schemat D1 (kolejne pliki = kolejne zmiany)
 ```
 
-**Przepływ:** walidacja + ceny z katalogu z buildu (klient wysyła tylko `id` + `qty`) → zapis i **atomowa rezerwacja**
-sztuk w jednym batchu D1 → rejestracja transakcji P24 → klient płaci → powiadomienie P24 (podpis SHA-384) →
-weryfikacja → `PAID` → przesyłka ShipX → e-mail do klienta → powiadomienie sklepu.
-Każdy krok po opłaceniu jest osobny i idempotentny; nieudany ponawia cron (do 3 prób), potem decyduje człowiek.
+**Przepływ:** walidacja + ceny z katalogu z buildu (klient wysyła tylko `id` + `qty`) → sprawdzenie, czy paczkomat
+istnieje (publiczne API InPost; awaria API nie blokuje) → zapis i **atomowa rezerwacja** sztuk w jednym batchu D1 →
+rejestracja transakcji P24 → klient płaci → powiadomienie P24 (podpis SHA-384) → weryfikacja → `PAID` + licznik sprzedaży →
+przesyłka ShipX → e-mail do klienta → powiadomienie sklepu.
+Kroki po opłaceniu są niezależne i idempotentne; lease na zamówieniu nie pozwala webhookowi i cronowi wykonać ich
+równolegle (podwójna przesyłka). Nieudany krok ponawia cron (do 3 prób), potem `POST …/retry` z panelu.
 
-**Stan magazynowy:** dostępne = `stan` z panelu − sztuki w zamówieniach opłaconych i czekających na płatność
-(rezerwacja 45 min, P24 daje klientowi 30). `stan` w panelu = ile sztuk łącznie wystawiono - dorobione sztuki się **dodaje**,
-sprzedaż online odejmuje się sama. `/katalog.json` i strona produktu pokazują stan po sprzedaży.
+**Stan magazynowy:** dostępne = `stan` z panelu − sprzedane (licznik `product_sales`) − zarezerwowane (zamówienia czekające
+na płatność, 45 min; P24 daje klientowi 30). Licznik zamiast sumowania historii: D1 nalicza odczytane wiersze,
+a `/katalog.json` odpytuje każdy koszyk i każda strona produktu. `stan` w panelu = ile sztuk łącznie wystawiono -
+dorobione sztuki się **dodaje**, sprzedaż online odejmuje się sama.
+
+**Zabezpieczenia:** limit żądań per IP (`ratelimits` w `wrangler.jsonc`: zamówienia i panel admina), `POST /api/orders`
+tylko z `Content-Type: application/json` (obca strona nie złoży zamówienia w imieniu odwiedzającego), limity czasu
+na wywołaniach dostawców (15 s), podpis i kwota powiadomienia P24 sprawdzane przed weryfikacją.
 
 **Cron (co 10 min):** pyta P24 o zamówienia bez powiadomienia (zgubiony webhook → opłaca), wygasza nieopłacone (`EXPIRED`),
 ponawia brakującą przesyłkę / e-maile.
@@ -148,8 +161,9 @@ Typy zdarzeń: `worker/constants/orderStatus.ts` (`OrderEvent`), klucze metadany
 
 ### Uruchomienie produkcyjne (jednorazowo)
 
-1. `npx wrangler d1 create byncandles` → `database_id` do `wrangler.jsonc`; `npm run db:migrate`
-   (każda nowa migracja: `npm run db:migrate` **przed** wdrożeniem kodu, który jej potrzebuje).
+1. `npx wrangler d1 create byncandles` → `database_id` do `wrangler.jsonc`; `npm run db:migrate`.
+   Każda nowa migracja (np. `0002_sales_and_lease.sql`): `npm run db:migrate` **przed** wdrożeniem kodu, który jej potrzebuje -
+   migracje tylko dodają tabele/kolumny, więc poprzednia wersja Workera działa na nowym schemacie.
 2. Sekrety (`npx wrangler secret put NAZWA`): `P24_MERCHANT_ID`, `P24_API_KEY`, `P24_CRC` (opcjonalnie `P24_POS_ID`),
    `SHIPX_TOKEN`, `SHIPX_ORG_ID`, `RESEND_API_KEY`, `MAIL_FROM`, `SHOP_EMAIL`, `ADMIN_PASSWORD`.
    Brak P24 = API odpowiada 503 (zamówienia nie przechodzą bez płatności); brak ShipX/Resend = ostrzeżenie w logach.
