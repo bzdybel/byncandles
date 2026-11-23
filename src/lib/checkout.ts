@@ -22,7 +22,8 @@ export const normalizeLocker = (v: string) => v.trim().toUpperCase();
 export const orderFormSchema = z.object({
   /** Imię i nazwisko - trafią na etykietę paczki. */
   name: z.string().check(z.trim(), z.regex(/^\S+(\s+\S+)+$/)),
-  email: z.string().check(z.trim(), z.regex(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/)),
+  /** z.email(): bez przecinków, nawiasów i kilku adresów w jednym polu (e-mail trafia do Resend jako odbiorca). */
+  email: z.pipe(z.string().check(z.trim(), z.maxLength(254)), z.email()),
   phone: z.string().check(z.overwrite(normalizePhone), z.regex(/^\d{9}$/)),
   locker: z.string().check(z.overwrite(normalizeLocker), z.regex(/^[A-Z0-9-]{4,12}$/)),
   terms: z.literal(true),
@@ -41,6 +42,15 @@ export interface OrderForm {
   terms: boolean;
 }
 export type ValidOrderForm = z.output<typeof orderFormSchema>;
+
+/** Limity zamówienia (wspólne dla formularza i API): rezerwacja bez płatności zabiera sztuki innym na 45 min. */
+export const MAX_QTY_PER_LINE = 10;
+export const MAX_UNITS_PER_ORDER = 20;
+export const MAX_LINES_PER_ORDER = 20;
+
+/** Czy koszyk mieści się w limitach zamówienia. */
+export const withinOrderLimits = (lines: readonly { qty: number }[]) =>
+  lines.length <= MAX_LINES_PER_ORDER && lines.every((l) => l.qty <= MAX_QTY_PER_LINE) && lines.reduce((s, l) => s + l.qty, 0) <= MAX_UNITS_PER_ORDER;
 
 /** Pola z komunikatem błędu w formularzu - w kolejności wyświetlania. */
 export const FIELDS = ['name', 'email', 'phone', 'locker', 'terms'] as const;

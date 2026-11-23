@@ -29,6 +29,20 @@ export class ValidationError extends AppError {
   }
 }
 
+/** Klient ma już MAX_PENDING_PER_CLIENT nieopłaconych rezerwacji. */
+export class TooManyPendingOrdersError extends AppError {
+  constructor() {
+    super('Too many unpaid orders from this client', { statusCode: 429, code: 'pending_limit' });
+  }
+}
+
+/** Nieudana weryfikacja „nie jestem robotem” (Turnstile). */
+export class CaptchaError extends AppError {
+  constructor(reason: string) {
+    super(`Captcha failed: ${reason}`, { statusCode: 400, code: 'captcha', details: { reason } });
+  }
+}
+
 export class RateLimitedError extends AppError {
   constructor() {
     super('Too many requests', { statusCode: 429, code: 'rate_limited' });

@@ -143,9 +143,23 @@ na płatność, 45 min; P24 daje klientowi 30). Licznik zamiast sumowania histor
 a `/katalog.json` odpytuje każdy koszyk i każda strona produktu. `stan` w panelu = ile sztuk łącznie wystawiono -
 dorobione sztuki się **dodaje**, sprzedaż online odejmuje się sama.
 
-**Zabezpieczenia:** limit żądań per IP (`ratelimits` w `wrangler.jsonc`: zamówienia i panel admina), `POST /api/orders`
-tylko z `Content-Type: application/json` (obca strona nie złoży zamówienia w imieniu odwiedzającego), limity czasu
-na wywołaniach dostawców (15 s), podpis i kwota powiadomienia P24 sprawdzane przed weryfikacją.
+**Zabezpieczenia** (każde ma test ataku w `tests/worker/security.test.ts`, sprawdzone też na `wrangler dev`):
+
+| Atak | Ochrona |
+|---|---|
+| podmiana ceny / ilości w żądaniu | ceny tylko z katalogu z buildu, ilości schematem Zod |
+| jedno żądanie rezerwuje cały sklep | limity: 10 szt. produktu, 20 szt. i 20 produktów na zamówienie (`src/lib/checkout.ts`) |
+| seryjne nieopłacone zamówienia z jednego IP | max 2 nieopłacone rezerwacje na klienta (skrót IP z solą), sprawdzane atomowo w batchu D1 |
+| boty zmieniające IP | Cloudflare Turnstile (`TURNSTILE_SECRET` + `PUBLIC_TURNSTILE_SITE_KEY`); bez niego - ostrzeżenie w logach |
+| zalew żądań | limity per IP: zamówienia i admin 10/min (`RATE_LIMITER`), odczyty 120/min (`READ_LIMITER`) |
+| sfałszowane powiadomienie P24 | podpis SHA-384 + kwota; brak kluczy P24 = dostawca odrzucający wszystko (nigdy noop) |
+| `MOCK_PAYMENTS` na produkcji (opłacenie jednym żądaniem) | adaptery MOCK działają tylko z `SANDBOX=1` |
+| zapychanie bazy śmieciowymi powiadomieniami | do D1 trafiają tylko powiadomienia istniejących zamówień |
+| anulowanie cudzej rezerwacji (`previous`) | wymagany ten sam e-mail |
+| ogromne ciało żądania | limit bajtów sprawdzany przed i w trakcie czytania |
+| e-mail z kilkoma adresami (Resend jako przekaźnik) | `z.email()` |
+| zamówienie z obcej strony (CSRF) | tylko `Content-Type: application/json` (preflight CORS) |
+| zgadywanie hasła admina | limit 10/min, porównanie w stałym czasie, ostrzeżenie przy haśle < 12 znaków |
 
 **Cron (co 10 min):** pyta P24 o zamówienia bez powiadomienia (zgubiony webhook → opłaca), wygasza nieopłacone (`EXPIRED`),
 ponawia brakującą przesyłkę / e-maile.
@@ -172,7 +186,9 @@ Typy zdarzeń: `worker/constants/orderStatus.ts` (`OrderEvent`), klucze metadany
    Każda nowa migracja (np. `0002_sales_and_lease.sql`): `npm run db:migrate` **przed** wdrożeniem kodu, który jej potrzebuje -
    migracje tylko dodają tabele/kolumny, więc poprzednia wersja Workera działa na nowym schemacie.
 2. Sekrety (`npx wrangler secret put NAZWA`): `P24_MERCHANT_ID`, `P24_API_KEY`, `P24_CRC` (opcjonalnie `P24_POS_ID`),
-   `SHIPX_TOKEN`, `SHIPX_ORG_ID`, `RESEND_API_KEY`, `MAIL_FROM`, `SHOP_EMAIL`, `ADMIN_PASSWORD`.
+   `SHIPX_TOKEN`, `SHIPX_ORG_ID`, `RESEND_API_KEY`, `MAIL_FROM`, `SHOP_EMAIL`, `ADMIN_PASSWORD` (min. 12 znaków),
+   `TURNSTILE_SECRET`, `CLIENT_HASH_SALT` (losowy ciąg). Zmienna buildu: `PUBLIC_TURNSTILE_SITE_KEY`
+   (Cloudflare → Turnstile → dodaj witrynę, tryb „Managed”).
    Brak P24 = API odpowiada 503 (zamówienia nie przechodzą bez płatności); brak ShipX/Resend = ostrzeżenie w logach.
 3. Testy na sandboxach (`SANDBOX=1` w `wrangler.jsonc` → `vars`): zamówienie, płatność testowa, przesyłka w sandbox-Managerze Paczek.
 4. Produkcja: `SANDBOX` na `"0"`, prawdziwe klucze, `PUBLIC_CHECKOUT_ENDPOINT=/api/orders` w zmiennych buildu.

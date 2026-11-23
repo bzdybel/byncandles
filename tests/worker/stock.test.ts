@@ -14,6 +14,7 @@ const newOrder = (createdAt = NOW, number?: string): NewOrder => {
     number: number ?? `BN-T${seq}`,
     correlationId: 'c',
     createdAt,
+    clientHash: null,
     customerName: 'Anna Kowalska',
     email: 'a@b.pl',
     phone: '600100200',

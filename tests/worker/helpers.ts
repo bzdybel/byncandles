@@ -27,7 +27,7 @@ function statement(db: DatabaseSync, sql: string, params: Value[] = []): D1Prepa
   };
 }
 
-export const MIGRATIONS = ['0001_orders.sql', '0002_sales_and_lease.sql'];
+export const MIGRATIONS = ['0001_orders.sql', '0002_sales_and_lease.sql', '0003_client_hash.sql'];
 
 /** @param migrations domyślnie wszystkie - test migracji podaje tylko część */
 export function createD1(migrations = MIGRATIONS): D1Database & { raw: DatabaseSync } {
@@ -72,6 +72,7 @@ export function testEnv(overrides: Partial<Env> = {}): Env & { DB: ReturnType<ty
   return {
     ASSETS: assets(),
     DB: createD1(),
+    SANDBOX: '1', // adaptery MOCK działają tylko w sandboxie
     MOCK_PAYMENTS: '1',
     MOCK_INPOST: '1',
     MOCK_EMAIL: '1',

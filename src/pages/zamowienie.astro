@@ -2,7 +2,8 @@
 import Base from '../layouts/Base.astro';
 import CartTotals from '../components/CartTotals.astro';
 import { cart, checkout as t, common } from '../i18n/pl';
-import type { Field } from '../lib/checkout';
+import { MAX_UNITS_PER_ORDER, type Field } from '../lib/checkout';
+import { fill } from '../lib/i18n';
 import { SITE } from '../lib/site';
 import { STORAGE_KEY } from '../scripts/cart-store';
 
@@ -10,12 +11,15 @@ import { STORAGE_KEY } from '../scripts/cart-store';
 const geoToken = import.meta.env.PUBLIC_INPOST_GEOWIDGET_TOKEN ?? '';
 // API zamówień i płatności (Worker, zwykle `/api/orders`). Bez niego - podsumowanie do wysłania na Instagramie.
 const endpoint = import.meta.env.PUBLIC_CHECKOUT_ENDPOINT ?? '';
+// Cloudflare Turnstile („nie jestem robotem”) - klucz strony z panelu Cloudflare; sekret: TURNSTILE_SECRET w Workerze.
+const turnstileKey = endpoint ? (import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '') : '';
 
 const ERRORS: Record<Field, string> = { name: t.nameError, email: t.emailError, phone: t.phoneError, locker: t.lockerError, terms: t.termsError };
 // Teksty potrzebne skryptowi strony - osadzone tutaj, a nie importowane w JS (mniejsza wspólna paczka).
 const clientTexts = {
   text: t.text, free: cart.free, submitting: t.submitting, submitPay: t.submitPay, submitError: t.submitError,
   errorRef: t.errorRef, stockError: t.stockError, rateLimited: t.rateLimited, lockerNotFound: t.lockerNotFound,
+  pendingLimit: t.pendingLimit, captchaError: t.captchaError, tooManyItems: fill(t.tooManyItems, { max: MAX_UNITS_PER_ORDER }),
   copied: t.copied, copyFailed: t.copyFailed, lockerSelected: t.lockerSelected,
 };
 export type ClientTexts = typeof clientTexts;
@@ -91,6 +95,7 @@ const fields = [
         </label>
         <p class="err" id="co-terms-err" data-msg={ERRORS.terms}></p>
 
+        {turnstileKey && <div class="cf-turnstile captcha" data-sitekey={turnstileKey} data-language="pl" data-appearance="interaction-only" data-size="flexible"></div>}
         <button class="btn btn--block btn--lg" type="submit" data-co-submit>{endpoint ? t.submitPay : t.submitPrepare}</button>
         {endpoint && <p class="t-small t-muted center">{t.payments}</p>}
       </form>
@@ -116,6 +121,7 @@ const fields = [
   </section>
 
   <script type="application/json" id="checkout-texts" set:html={JSON.stringify(clientTexts)} />
+  {turnstileKey && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
 
   {geoToken && (
     <dialog class="geo" data-geo aria-label={t.mapLabel}>
@@ -126,7 +132,7 @@ const fields = [
 </Base>
 
 <script>
-  import { FIELDS, normalizeLocker, normalizePhone, summaryText, validate, type Field, type OrderForm } from '../lib/checkout';
+  import { FIELDS, normalizeLocker, normalizePhone, summaryText, validate, withinOrderLimits, type Field, type OrderForm } from '../lib/checkout';
   import { fill } from '../lib/i18n';
   import { formatGrosze } from '../lib/money';
   import { totals } from '../lib/pricing';
@@ -202,11 +208,15 @@ const fields = [
       btn.textContent = loading ? t.submitting : t.submitPay;
     };
     // Kod błędu = początek correlationId żądania: po nim znajdę dokładnie to zamówienie w logach.
+    // Token Turnstile jest jednorazowy - po każdej nieudanej próbie potrzebny nowy.
+    const resetCaptcha = () => (window as unknown as { turnstile?: { reset(): void } }).turnstile?.reset();
     const fail = (message: string, ref: string) => {
       setLoading(false);
+      resetCaptcha();
       alert(ref ? `${message}\n\n${fill(t.errorRef, { ref: ref.slice(0, 8) })}` : message);
     };
 
+    if (!withinOrderLimits(items)) return alert(t.tooManyItems);
     setLoading(true);
     let previous: string | null = null;
     try { previous = localStorage.getItem(PENDING_ORDER_KEY); } catch { /* tryb prywatny */ }
@@ -222,6 +232,7 @@ const fields = [
           locker: normalizeLocker(data.locker),
           items: items.map(({ id, qty }) => ({ id, qty })),
           ...(previous && { previous }),
+          captcha: new FormData(form).get('cf-turnstile-response') ?? undefined,
         }),
       });
     } catch {
@@ -241,7 +252,12 @@ const fields = [
       render();
       return fail(t.stockError, '');
     }
-    if (res.status === 400 && showServerFields(json)) return setLoading(false);
+    if (res.status === 400 && showServerFields(json)) {
+      resetCaptcha();
+      return setLoading(false);
+    }
+    if (json.error === 'captcha') return fail(t.captchaError, '');
+    if (json.error === 'pending_limit') return fail(t.pendingLimit, '');
     if (res.status === 429) return fail(t.rateLimited, '');
     fail(t.submitError, ref);
   }
@@ -338,6 +354,7 @@ const fields = [
   .err:empty { display: none; }
   .check { display: flex; gap: var(--sp-3); align-items: flex-start; min-height: var(--tap); cursor: pointer; }
   .check input { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--c-accent); flex: none; }
+  .captcha { margin-bottom: var(--sp-4); }
   .center { text-align: center; max-width: none; margin-top: var(--sp-3); }
 
   .side { background: var(--c-surface); border-radius: var(--r-md); padding: var(--sp-6); }

@@ -310,6 +310,9 @@ export const checkout = {
   /** Dopisywany do komunikatu błędu - po tym kodzie znajdę żądanie w logach. */
   errorRef: 'Kod błędu: {ref}',
   rateLimited: 'Zbyt wiele prób w krótkim czasie - odczekaj minutę i spróbuj ponownie.',
+  pendingLimit: 'Masz już nieopłacone zamówienia - dokończ płatność albo spróbuj ponownie za kilkadziesiąt minut. W razie problemu napisz do mnie.',
+  captchaError: 'Nie udało się potwierdzić, że nie jesteś robotem - spróbuj ponownie.',
+  tooManyItems: 'Zamówienie może mieć najwyżej {max} sztuk. Przy większych zamówieniach napisz do mnie.',
   stockError: 'Ktoś właśnie kupił ostatnie sztuki części produktów - zaktualizowałam koszyk. Sprawdź podsumowanie i spróbuj ponownie.',
   summary: 'Podsumowanie',
   due: 'Do zapłaty',

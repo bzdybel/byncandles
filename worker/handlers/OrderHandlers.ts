@@ -6,8 +6,8 @@
  */
 import { checkPrerequisites } from '../config/prerequisites.ts';
 import { publicStatus } from '../domain/order.ts';
-import { ConfigurationError, NotFoundError, UnsupportedMediaTypeError } from '../errors/AppError.ts';
-import { json, readBody, readJson } from '../utils/http.ts';
+import { CaptchaError, ConfigurationError, NotFoundError, UnsupportedMediaTypeError } from '../errors/AppError.ts';
+import { clientHash, clientIp, json, readBody, readJson } from '../utils/http.ts';
 import { isUuid } from '../utils/ports.ts';
 import type { Handler } from './types.ts';
 
@@ -16,7 +16,11 @@ export const CreateOrderHandler: Handler = async ({ request, url, services: s })
   if (!config.passed) throw new ConfigurationError(config.errors);
   if (!request.headers.get('Content-Type')?.toLowerCase().startsWith('application/json')) throw new UnsupportedMediaTypeError();
 
-  const placed = await s.placeOrder.place(await readJson(request), url.origin);
+  const body = await readJson(request);
+  const captcha = await s.captcha.verify((body as { captcha?: unknown } | null)?.captcha, clientIp(request));
+  if (captcha) throw new CaptchaError(captcha);
+
+  const placed = await s.placeOrder.place(body, { origin: url.origin, clientHash: await clientHash(request, s.config.clientHashSalt) });
   return json(placed, 201);
 };
 

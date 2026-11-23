@@ -8,13 +8,14 @@ import type { Env } from '../config/env.ts';
 import { EmailNoop } from '../email/EmailNoop.ts';
 import type { EmailProvider } from '../email/EmailProvider.ts';
 import { ResendProvider } from '../email/ResendProvider.ts';
-import { PaymentNoop } from '../payments/PaymentNoop.ts';
+import { PaymentNoop, PaymentUnavailable } from '../payments/PaymentNoop.ts';
 import type { PaymentProvider } from '../payments/PaymentProvider.ts';
 import { Przelewy24Provider } from '../payments/Przelewy24Provider.ts';
 import { InPostPoints, PointsNoop } from '../shipping/PointsDirectory.ts';
 import { ShipXProvider } from '../shipping/ShipXProvider.ts';
 import { ShippingNoop } from '../shipping/ShippingNoop.ts';
 import type { ShippingProvider } from '../shipping/ShippingProvider.ts';
+import { CaptchaNoop, TurnstileVerifier, type CaptchaVerifier } from '../security/Captcha.ts';
 import { OrderStorage } from '../storage/OrderStorage.ts';
 import type { LoggerPort } from '../utils/logger.ts';
 import { CryptoIdProvider, SystemClock, type ClockPort } from '../utils/ports.ts';
@@ -38,11 +39,15 @@ export interface Services {
   placeOrder: PlaceOrderService;
   payment: PaymentService;
   fulfillment: FulfillmentService;
+  captcha: CaptchaVerifier;
 }
 
-/** Puste sloty (brak konfiguracji) - PlaceOrderService i tak nie ruszy bez płatności (prerequisites → 503). */
-const paymentProvider = (c: AppConfig, siteUrl: string): PaymentProvider =>
-  c.payments.kind === 'przelewy24' ? new Przelewy24Provider(c.payments.config) : new PaymentNoop(siteUrl);
+/** Brak konfiguracji → dostawca odrzucający wszystko (nigdy noop - ten przyjmuje powiadomienia bez podpisu). */
+function paymentProvider(c: AppConfig, siteUrl: string): PaymentProvider {
+  if (c.payments.kind === 'przelewy24') return new Przelewy24Provider(c.payments.config);
+  if (c.payments.kind === 'noop') return new PaymentNoop(siteUrl);
+  return new PaymentUnavailable();
+}
 
 const shippingProvider = (c: AppConfig): ShippingProvider | null =>
   c.shipping.kind === 'shipx' ? new ShipXProvider(c.shipping.config) : c.shipping.kind === 'noop' ? new ShippingNoop() : null;
@@ -75,6 +80,7 @@ export function createServices(env: Env, logger: LoggerPort, origin?: string): S
     stock,
     catalog,
     fulfillment,
+    captcha: config.turnstileSecret ? new TurnstileVerifier(config.turnstileSecret, logger) : CaptchaNoop,
     payment: new PaymentService({ storage, journal, logger, clock, payments, fulfillment }),
     placeOrder: new PlaceOrderService({
       storage, journal, logger, clock, catalog, stock, payments,

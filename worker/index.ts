@@ -18,7 +18,7 @@ import { reconcileOrders } from './jobs/ReconcileOrdersJob.ts';
 import { createServices, type Services } from './services/init.ts';
 import { WEBHOOK_PATH } from './services/PlaceOrderService.ts';
 import type { ExecutionContext, ScheduledController } from './storage/d1.ts';
-import { CORRELATION_HEADER, json, requireAdmin } from './utils/http.ts';
+import { clientIp, CORRELATION_HEADER, json, requireAdmin } from './utils/http.ts';
 import { createLogger, type LoggerPort } from './utils/logger.ts';
 import { CryptoIdProvider, isUuid, Stopwatch, SystemClock } from './utils/ports.ts';
 
@@ -28,21 +28,24 @@ interface Route {
   handler: Handler;
   /** Basic auth hasłem ADMIN_PASSWORD. */
   admin?: boolean;
-  /** Limit żądań per IP (wiązanie RATE_LIMITER) - przed rezerwowaniem sztuk seryjnymi zamówieniami i zgadywaniem hasła. */
-  rateLimit?: string;
+  /**
+   * Limit żądań per IP: `write` (RATE_LIMITER, ostry) - zamówienia i panel admina (rezerwowanie sztuk seryjnymi
+   * zamówieniami, zgadywanie hasła); `read` (READ_LIMITER, łagodny) - odczyty odpytywane przez koszyki.
+   */
+  rateLimit?: { kind: 'write' | 'read'; key: string };
   /** Nie loguj udanych, szybkich odpowiedzi (odpytywane co minutę przez każdy koszyk). */
   quiet?: boolean;
 }
 
 const ROUTES: Route[] = [
-  { method: 'GET', pattern: /^\/katalog\.json$/, handler: CatalogHandler, quiet: true },
-  { method: 'POST', pattern: /^\/api\/orders\/?$/, handler: CreateOrderHandler, rateLimit: 'orders' },
-  { method: 'GET', pattern: /^\/api\/orders\/(?<id>[^/]+)\/?$/, handler: OrderStatusHandler },
+  { method: 'GET', pattern: /^\/katalog\.json$/, handler: CatalogHandler, quiet: true, rateLimit: { kind: 'read', key: 'catalog' } },
+  { method: 'POST', pattern: /^\/api\/orders\/?$/, handler: CreateOrderHandler, rateLimit: { kind: 'write', key: 'orders' } },
+  { method: 'GET', pattern: /^\/api\/orders\/(?<id>[^/]+)\/?$/, handler: OrderStatusHandler, rateLimit: { kind: 'read', key: 'status' } },
   { method: 'POST', pattern: new RegExp(`^${WEBHOOK_PATH}/?$`), handler: PaymentWebhookHandler },
   { method: 'GET', pattern: /^\/api\/dev\/payments\/(?<id>[^/]+)\/complete\/?$/, handler: DevPaymentHandler },
-  { method: 'GET', pattern: /^\/api\/admin\/orders\/?$/, handler: AdminListOrdersHandler, admin: true, rateLimit: 'admin' },
-  { method: 'GET', pattern: /^\/api\/admin\/orders\/(?<key>[^/]+)\/?$/, handler: AdminOrderHandler, admin: true, rateLimit: 'admin' },
-  { method: 'POST', pattern: /^\/api\/admin\/orders\/(?<key>[^/]+)\/retry\/?$/, handler: AdminRetryOrderHandler, admin: true, rateLimit: 'admin' },
+  { method: 'GET', pattern: /^\/api\/admin\/orders\/?$/, handler: AdminListOrdersHandler, admin: true, rateLimit: { kind: 'write', key: 'admin' } },
+  { method: 'GET', pattern: /^\/api\/admin\/orders\/(?<key>[^/]+)\/?$/, handler: AdminOrderHandler, admin: true, rateLimit: { kind: 'write', key: 'admin' } },
+  { method: 'POST', pattern: /^\/api\/admin\/orders\/(?<key>[^/]+)\/retry\/?$/, handler: AdminRetryOrderHandler, admin: true, rateLimit: { kind: 'write', key: 'admin' } },
 ];
 
 const SLOW_MS = 1000;
@@ -57,9 +60,9 @@ function errorResponse(error: unknown, logger: LoggerPort): Response {
 }
 
 async function guard(route: Route, request: Request, env: Env, s: Services): Promise<void> {
-  if (route.rateLimit && env.RATE_LIMITER) {
-    const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
-    const { success } = await env.RATE_LIMITER.limit({ key: `${route.rateLimit}:${ip}` });
+  const limiter = route.rateLimit && (route.rateLimit.kind === 'write' ? env.RATE_LIMITER : env.READ_LIMITER);
+  if (limiter) {
+    const { success } = await limiter.limit({ key: `${route.rateLimit!.key}:${clientIp(request)}` });
     if (!success) throw new RateLimitedError();
   }
   if (route.admin) requireAdmin(request, s.config.adminPassword);

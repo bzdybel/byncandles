@@ -42,8 +42,8 @@ export class PaymentService {
   }
 
   /**
-   * Powiadomienie od dostawcy. Każde - także odrzucone i powtórzone - trafia do webhook_events
-   * z surową treścią, żeby dało się odtworzyć, co dokładnie przyszło.
+   * Powiadomienie od dostawcy. Każde dotyczące istniejącego zamówienia - także odrzucone i powtórzone - trafia
+   * do webhook_events z surową treścią, żeby dało się odtworzyć, co dokładnie przyszło.
    */
   async handleNotification(raw: string): Promise<NotificationResult> {
     const { payments, storage } = this.d;
@@ -53,7 +53,9 @@ export class PaymentService {
     const order = isUuid(sessionId) ? await storage.getById(sessionId) : null;
 
     const result = await this.process(parsed, order, reference);
-    await this.recordWebhook(raw, order, reference, parsed.valid, result.outcome);
+    // Do bazy tylko powiadomienia dotyczące istniejących zamówień (UUID nie do zgadnięcia). Śmieci z internetu
+    // zostają w logach - inaczej każdy mógłby zapychać D1 i zużywać dzienny limit zapisów.
+    if (order) await this.recordWebhook(raw, order, reference, parsed.valid, result.outcome);
     return result;
   }
 
@@ -86,13 +88,13 @@ export class PaymentService {
     }
   }
 
-  private async recordWebhook(raw: string, order: Order | null, reference: string | null, signatureValid: boolean, outcome: WebhookOutcomeType) {
+  private async recordWebhook(raw: string, order: Order, reference: string | null, signatureValid: boolean, outcome: WebhookOutcomeType) {
     const { storage, clock, logger, payments } = this.d;
     try {
       await storage.recordWebhook({
         receivedAt: clock.now(),
         provider: payments.name,
-        orderId: order?.id ?? null,
+        orderId: order.id,
         paymentReference: reference,
         signatureValid,
         outcome,
@@ -100,7 +102,7 @@ export class PaymentService {
         rawPayload: raw,
       });
     } catch (error) {
-      logger.error({ message: 'Webhook record failed', metadata: { [LogKey.ORDER_ID]: order?.id, raw }, error });
+      logger.error({ message: 'Webhook record failed', metadata: { [LogKey.ORDER_ID]: order.id, raw }, error });
     }
   }
 

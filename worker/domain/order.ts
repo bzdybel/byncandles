@@ -34,6 +34,13 @@ export const MAX_ATTEMPTS = 3;
 /** Kwota minimalna transakcji w P24 (grosze). */
 export const MIN_ORDER_TOTAL = 100;
 
+// ── Limity przeciw blokowaniu sklepu (rezerwacja bez płatności zabiera sztuki innym na RESERVATION_MS) ──
+
+/** Sztuk na produkt / łącznie / różnych produktów - wspólne z formularzem (src/lib/checkout.ts). */
+export { MAX_LINES_PER_ORDER, MAX_QTY_PER_LINE, MAX_UNITS_PER_ORDER } from '../../src/lib/checkout.ts';
+/** Nieopłaconych rezerwacji jednocześnie na klienta (IP) - ponowna próba zwalnia poprzednią, więc klientowi wystarcza 1. */
+export const MAX_PENDING_PER_CLIENT = 2;
+
 // ── Typy ───────────────────────────────────────────────────────
 
 export interface Order {
@@ -64,6 +71,8 @@ export interface Order {
   emailAttempts: number;
   shopNotifiedAt: number | null;
   shopNotifyAttempts: number;
+  /** Skrót IP klienta (bez samego IP) - limit nieopłaconych rezerwacji. */
+  clientHash: string | null;
 }
 
 export interface OrderItem {
@@ -75,7 +84,7 @@ export interface OrderItem {
 
 export type NewOrder = Pick<
   Order,
-  'id' | 'number' | 'correlationId' | 'createdAt' | 'customerName' | 'email' | 'phone' | 'deliveryPointId' | 'gift' | 'notes' | 'itemsTotal' | 'discount' | 'deliveryCost' | 'total'
+  'id' | 'number' | 'correlationId' | 'createdAt' | 'clientHash' | 'customerName' | 'email' | 'phone' | 'deliveryPointId' | 'gift' | 'notes' | 'itemsTotal' | 'discount' | 'deliveryCost' | 'total'
 >;
 
 /** Minimum do dziennika i logów. */

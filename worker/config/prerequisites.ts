@@ -27,8 +27,7 @@ export function checkPrerequisites(c: AppConfig): PrerequisiteResult {
   if (!c.adminPassword) warnings.push('ADMIN_PASSWORD pusty - podgląd zamówień /api/admin/* wyłączony');
   else if (c.adminPassword.length < MIN_ADMIN_PASSWORD) warnings.push(`ADMIN_PASSWORD krótsze niż ${MIN_ADMIN_PASSWORD} znaków - łatwe do zgadnięcia`);
 
-  const mocks = [c.payments, c.shipping, c.email].some((p) => p.kind === 'noop');
-  if (!c.sandbox && mocks) warnings.push('Tryb produkcyjny (SANDBOX≠1) z adapterami MOCK - sprawdź zmienne środowiska');
+  if (!c.turnstileSecret) warnings.push('TURNSTILE_SECRET pusty - boty zmieniające IP mogą blokować sztuki nieopłaconymi zamówieniami');
 
   return { passed: errors.length === 0, errors, warnings };
 }

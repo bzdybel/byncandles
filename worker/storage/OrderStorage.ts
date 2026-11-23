@@ -6,8 +6,8 @@
  * wymusza tę kolejność w SQLite - więc czytają tylko zamówienia czekające na płatność, nie całą historię.
  */
 import type { OrderEventType, WebhookOutcomeType } from '../domain/events.ts';
-import { AWAITING_PAYMENT, OrderStatus, type NewOrder, type Order, type OrderItem, type OrderStatusType, type ReleasedStatus } from '../domain/order.ts';
-import { InsufficientStockError } from '../errors/AppError.ts';
+import { AWAITING_PAYMENT, MAX_PENDING_PER_CLIENT, OrderStatus, type NewOrder, type Order, type OrderItem, type OrderStatusType, type ReleasedStatus } from '../domain/order.ts';
+import { InsufficientStockError, TooManyPendingOrdersError } from '../errors/AppError.ts';
 import type { D1Database, D1PreparedStatement } from './d1.ts';
 
 export interface OrderEventRecord {
@@ -45,7 +45,7 @@ const ORDER_COLUMNS = `id, number, status, correlation_id AS correlationId, crea
   gift, notes, items_total AS itemsTotal, discount, delivery_cost AS deliveryCost, total, shipment_id AS shipmentId,
   shipment_status AS shipmentStatus, shipment_attempts AS shipmentAttempts, shipment_error AS shipmentError,
   email_sent_at AS emailSentAt, email_attempts AS emailAttempts, shop_notified_at AS shopNotifiedAt,
-  shop_notify_attempts AS shopNotifyAttempts`;
+  shop_notify_attempts AS shopNotifyAttempts, client_hash AS clientHash`;
 
 const AWAITING_SQL = AWAITING_PAYMENT.map((s) => `'${s}'`).join(', ');
 
@@ -89,9 +89,11 @@ export class OrderStorage {
    * Zapis zamówienia + rezerwacja sztuk w jednym batchu (transakcja D1).
    * Brak sztuk → INSERT z NULL w kolumnie NOT NULL → błąd → nic nie zostaje zapisane.
    * D1 ma jednego zapisującego, więc dwie osoby nie kupią tej samej ostatniej sztuki.
+   * Ten sam mechanizm pilnuje limitu nieopłaconych rezerwacji klienta (status NULL → błąd), także przy równoległych żądaniach.
    * @param stock stan z panelu (przed odjęciem sprzedaży i rezerwacji) dla każdego produktu w zamówieniu
    * @param cancelPreviousId nieopłacone zamówienie z tej samej przeglądarki - zwalniamy jego sztuki
-   * @throws InsufficientStockError | DuplicateOrderNumberError
+   *   (tylko z tym samym e-mailem: samo id nie wystarczy, żeby anulować cudze zamówienie)
+   * @throws InsufficientStockError | TooManyPendingOrdersError | DuplicateOrderNumberError
    */
   async insertWithReservation(
     order: NewOrder,
@@ -103,18 +105,23 @@ export class OrderStorage {
     const statements: D1PreparedStatement[] = [];
     if (cancelPreviousId) {
       statements.push(
-        this.db.prepare(`UPDATE orders SET status = '${OrderStatus.CANCELED}' WHERE id = ? AND status IN (${AWAITING_SQL})`).bind(cancelPreviousId),
+        this.db
+          .prepare(`UPDATE orders SET status = '${OrderStatus.CANCELED}' WHERE id = ? AND email = ? AND status IN (${AWAITING_SQL})`)
+          .bind(cancelPreviousId, order.email),
       );
     }
     statements.push(
       this.db
         .prepare(
-          `INSERT INTO orders (id, number, status, correlation_id, created_at, customer_name, email, phone, delivery_point_id, gift, notes, items_total, discount, delivery_cost, total)
-           VALUES (?, ?, '${OrderStatus.CREATED}', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO orders (id, number, status, correlation_id, created_at, client_hash, customer_name, email, phone, delivery_point_id, gift, notes, items_total, discount, delivery_cost, total)
+           SELECT ?1, ?2, CASE WHEN ?3 IS NULL OR (
+               SELECT COUNT(*) FROM orders WHERE client_hash = ?3 AND status IN (${AWAITING_SQL}) AND created_at > ?4
+             ) < ${MAX_PENDING_PER_CLIENT} THEN '${OrderStatus.CREATED}' END,
+             ?5, ?6, ?3, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16`,
         )
         .bind(
-          order.id, order.number, order.correlationId, order.createdAt, order.customerName, order.email, order.phone,
-          order.deliveryPointId, order.gift ? 1 : 0, order.notes, order.itemsTotal, order.discount, order.deliveryCost, order.total,
+          order.id, order.number, order.clientHash, cutoff, order.correlationId, order.createdAt, order.customerName, order.email,
+          order.phone, order.deliveryPointId, order.gift ? 1 : 0, order.notes, order.itemsTotal, order.discount, order.deliveryCost, order.total,
         ),
     );
     for (const item of items) {
@@ -135,6 +142,7 @@ export class OrderStorage {
       return { canceledPrevious: Boolean(cancelPreviousId && results[0].meta.changes > 0) };
     } catch (e) {
       if (isConstraint(e, /NOT NULL constraint failed: order_items\.quantity/i)) throw new InsufficientStockError(items.map((i) => i.productId));
+      if (isConstraint(e, /NOT NULL constraint failed: orders\.status/i)) throw new TooManyPendingOrdersError();
       if (isConstraint(e, /UNIQUE constraint failed: orders\.number/i)) throw new DuplicateOrderNumberError();
       throw e;
     }

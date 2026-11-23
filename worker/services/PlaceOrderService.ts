@@ -6,7 +6,7 @@ import type { Catalog } from '../../src/scripts/cart-store.ts';
 import { LogKey } from '../constants/logKeys.ts';
 import { OrderEvent } from '../domain/events.ts';
 import { orderNumber, OrderStatus, type NewOrder, type OrderItem } from '../domain/order.ts';
-import { InsufficientStockError, ValidationError } from '../errors/AppError.ts';
+import { InsufficientStockError, TooManyPendingOrdersError, ValidationError } from '../errors/AppError.ts';
 import type { PaymentProvider } from '../payments/PaymentProvider.ts';
 import type { PointsDirectory } from '../shipping/PointsDirectory.ts';
 import { DuplicateOrderNumberError, type OrderStorage } from '../storage/OrderStorage.ts';
@@ -45,16 +45,19 @@ export class PlaceOrderService {
     this.d = deps;
   }
 
-  /** @param origin adres strony z żądania - powrót z P24 i powiadomienia trafiają do tego samego wdrożenia (także podglądów) */
-  async place(body: unknown, origin: string): Promise<PlacedOrder> {
+  /**
+   * @param ctx.origin adres strony z żądania - powrót z P24 i powiadomienia trafiają do tego samego wdrożenia (także podglądów)
+   * @param ctx.clientHash skrót IP klienta - limit nieopłaconych rezerwacji (MAX_PENDING_PER_CLIENT)
+   */
+  async place(body: unknown, ctx: { origin: string; clientHash: string | null }): Promise<PlacedOrder> {
     const { catalog, stock } = this.d;
     const [base, cfg] = await Promise.all([catalog.catalog(), catalog.config()]);
     const previous = (body as { previous?: unknown } | null)?.previous;
     const parsed = parseOrderRequest(body, await stock.available(base, isUuid(previous) ? previous : undefined), cfg);
     await this.assertDeliveryPoint(parsed.fields.deliveryPointId);
 
-    const order = await this.save(parsed, base);
-    return { orderId: order.id, number: order.number, redirect: await this.registerPayment(order, origin) };
+    const order = await this.save(parsed, base, ctx.clientHash);
+    return { orderId: order.id, number: order.number, redirect: await this.registerPayment(order, ctx.origin) };
   }
 
   /** Nieistniejący paczkomat = błąd pola; niedostępne API InPost nie blokuje zamówienia (sprawdzi ShipX). */
@@ -65,13 +68,13 @@ export class PlaceOrderService {
   }
 
   /** Zapis z rezerwacją; przy (bardzo rzadkiej) kolizji numeru losujemy nowy. */
-  private async save(parsed: ParsedOrder, base: Catalog): Promise<NewOrder> {
+  private async save(parsed: ParsedOrder, base: Catalog, clientHash: string | null): Promise<NewOrder> {
     const { storage, journal, logger, ids, clock, stock } = this.d;
     const stockByProduct = Object.fromEntries(parsed.items.map((i) => [i.productId, base[i.productId][2]]));
     const meta = { [LogKey.ITEMS]: summarize(parsed.items), [LogKey.AMOUNT]: parsed.fields.total };
 
     for (let attempt = 1; ; attempt++) {
-      const order: NewOrder = { id: ids.uuid(), number: orderNumber(ids.bytes(6)), correlationId: logger.correlationId, createdAt: clock.now(), ...parsed.fields };
+      const order: NewOrder = { id: ids.uuid(), number: orderNumber(ids.bytes(6)), correlationId: logger.correlationId, createdAt: clock.now(), clientHash, ...parsed.fields };
       try {
         const { canceledPrevious } = await storage.insertWithReservation(order, parsed.items, stockByProduct, stock.cutoff(), parsed.previousOrderId);
         await journal.info(order, OrderEvent.ORDER_CREATED, {
@@ -87,6 +90,7 @@ export class PlaceOrderService {
       } catch (e) {
         if (e instanceof DuplicateOrderNumberError && attempt < NUMBER_ATTEMPTS) continue;
         if (e instanceof InsufficientStockError) logger.warn({ message: 'Order rejected: stock', metadata: meta });
+        if (e instanceof TooManyPendingOrdersError) logger.warn({ message: 'Order rejected: too many unpaid orders from client', metadata: { ...meta, clientHash } });
         throw e;
       }
     }

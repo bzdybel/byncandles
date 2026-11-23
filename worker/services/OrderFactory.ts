@@ -7,15 +7,12 @@
  * 3. Ceny i nazwy wyłącznie z katalogu z buildu - klient przysyła tylko id + qty.
  */
 import * as z from 'zod/mini';
-import { parseOrderForm, type Field } from '../../src/lib/checkout.ts';
+import { parseOrderForm, withinOrderLimits, type Field } from '../../src/lib/checkout.ts';
 import { totals, type ShopConfig } from '../../src/lib/pricing.ts';
 import type { Catalog } from '../../src/scripts/cart-store.ts';
-import { MIN_ORDER_TOTAL, type NewOrder, type OrderItem } from '../domain/order.ts';
+import { MAX_LINES_PER_ORDER, MAX_QTY_PER_LINE, MIN_ORDER_TOTAL, type NewOrder, type OrderItem } from '../domain/order.ts';
 import { InsufficientStockError, ValidationError } from '../errors/AppError.ts';
 import { uuidSchema } from '../utils/ports.ts';
-
-const MAX_QTY = 50;
-const MAX_LINES = 30;
 
 /** Tekst z pola: zły typ → '', bez znaków sterujących (nowa linia dozwolona w uwagach), przycięty do `max`. */
 const text = (max: number, multiline = false) =>
@@ -32,11 +29,14 @@ const text = (max: number, multiline = false) =>
 /** Wyłącznie `true` z JSON-a (nie "true", nie 1) - zgoda na regulamin musi być jawna. */
 const flag = z.catch(z.boolean(), false);
 
-export const itemsSchema = z.array(z.object({ id: z.string().check(z.minLength(1), z.maxLength(100)), qty: z.int().check(z.gte(1), z.lte(MAX_QTY)) })).check(
-  z.minLength(1),
-  z.maxLength(MAX_LINES),
-  z.refine((items) => new Set(items.map((i) => i.id)).size === items.length, 'duplicate product'),
-);
+export const itemsSchema = z
+  .array(z.object({ id: z.string().check(z.minLength(1), z.maxLength(100)), qty: z.int().check(z.gte(1), z.lte(MAX_QTY_PER_LINE)) }))
+  .check(
+    z.minLength(1),
+    z.maxLength(MAX_LINES_PER_ORDER),
+    z.refine((items) => new Set(items.map((i) => i.id)).size === items.length, 'duplicate product'),
+    z.refine(withinOrderLimits, 'order limits'),
+  );
 
 export const requestSchema = z.pipe(
   z.transform((v: unknown) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {})),

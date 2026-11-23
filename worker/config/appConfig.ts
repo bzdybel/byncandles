@@ -38,6 +38,8 @@ export const envSchema = z.object({
   MAIL_FROM: text,
   SHOP_EMAIL: z.pipe(text, z.optional(z.email())),
   ADMIN_PASSWORD: text,
+  TURNSTILE_SECRET: text,
+  CLIENT_HASH_SALT: text,
 });
 type ParsedEnv = z.infer<typeof envSchema>;
 
@@ -55,6 +57,8 @@ export interface AppConfig {
   validatePoints: boolean;
   shopEmail?: string;
   adminPassword?: string;
+  turnstileSecret?: string;
+  clientHashSalt: string;
   /** Niepoprawne wartości zmiennych (zignorowane), np. "SHIPX_PARCEL: Invalid option". */
   issues: string[];
 }
@@ -92,8 +96,24 @@ function email(e: ParsedEnv): EmailConfig {
   return e.RESEND_API_KEY && e.MAIL_FROM ? { kind: 'resend', apiKey: e.RESEND_API_KEY, from: e.MAIL_FROM } : { kind: 'disabled' };
 }
 
+/** Stała sól, gdy nie ustawiono CLIENT_HASH_SALT - skrót i tak nie wychodzi poza bazę. */
+const DEFAULT_SALT = 'byncandles-client';
+
+/**
+ * Adaptery „na niby” tylko w sandboxie: MOCK_PAYMENTS na produkcji oznaczałby zamówienia opłacane jednym
+ * żądaniem bez pieniędzy (i prawdziwe przesyłki). Poza SANDBOX=1 flagi MOCK_* są ignorowane z ostrzeżeniem.
+ */
+function enforceSandbox(e: ParsedEnv, issues: string[]): ParsedEnv {
+  if (e.SANDBOX) return e;
+  const mocks = (['MOCK_PAYMENTS', 'MOCK_INPOST', 'MOCK_EMAIL'] as const).filter((k) => e[k]);
+  for (const k of mocks) issues.push(`${k}: dozwolone tylko z SANDBOX=1 - zignorowane`);
+  return { ...e, MOCK_PAYMENTS: false, MOCK_INPOST: false, MOCK_EMAIL: false };
+}
+
 export function loadConfig(env: Env): AppConfig {
-  const { values: e, issues } = parseEnv(env);
+  const parsed = parseEnv(env);
+  const issues = parsed.issues;
+  const e = enforceSandbox(parsed.values, issues);
   return {
     sandbox: e.SANDBOX,
     siteUrl: e.SITE_URL,
@@ -103,6 +123,8 @@ export function loadConfig(env: Env): AppConfig {
     validatePoints: !e.MOCK_INPOST,
     shopEmail: e.SHOP_EMAIL,
     adminPassword: e.ADMIN_PASSWORD,
+    turnstileSecret: e.TURNSTILE_SECRET,
+    clientHashSalt: e.CLIENT_HASH_SALT ?? DEFAULT_SALT,
     issues,
   };
 }

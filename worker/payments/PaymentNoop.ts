@@ -38,3 +38,23 @@ export class PaymentNoop implements PaymentProvider {
     return { state: 'unpaid', providerStatus: 'noop' };
   }
 }
+
+/**
+ * Brak skonfigurowanego dostawcy (np. usunięte klucze P24): każda operacja odrzucona. NIE noop - noop przyjmuje
+ * powiadomienia bez podpisu, więc jako „zapas” pozwoliłby opłacić istniejące zamówienia jednym żądaniem.
+ */
+export class PaymentUnavailable implements PaymentProvider {
+  readonly name = 'unavailable';
+  async register(): Promise<never> {
+    throw new Error('Payments are not configured');
+  }
+  async parseNotification(): Promise<ParsedNotification> {
+    return { valid: false, reason: 'payments_not_configured' };
+  }
+  async verify(): Promise<never> {
+    throw new Error('Payments are not configured');
+  }
+  async status(): Promise<never> {
+    throw new Error('Payments are not configured');
+  }
+}
