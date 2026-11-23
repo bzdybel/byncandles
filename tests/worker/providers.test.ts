@@ -4,6 +4,8 @@ import { createHash } from 'node:crypto';
 import { p24Sign, Przelewy24Provider } from '../../worker/payments/Przelewy24Provider.ts';
 import { shipmentBody, ShipXProvider } from '../../worker/shipping/ShipXProvider.ts';
 import { ProviderError } from '../../worker/errors/AppError.ts';
+import { InPostPoints } from '../../worker/shipping/PointsDirectory.ts';
+import { callProvider } from '../../worker/utils/providerHttp.ts';
 
 const cfg = { merchantId: 11111, posId: 11111, apiKey: 'key', crc: 'crc123', sandbox: true };
 type Call = { url: string; init: RequestInit };
@@ -73,4 +75,31 @@ test('ShipX: przesyłka paczkomatowa z imieniem, nazwiskiem i kodem paczkomatu',
   assert.deepEqual(await shipx.createShipment(input), { id: '123', status: 'created' });
   assert.equal(calls[0].url, 'https://sandbox-api-shipx-pl.easypack24.net/v1/organizations/42/shipments');
   await assert.rejects(shipx.createShipment(input), (e: unknown) => e instanceof ProviderError && /does_not_exist/.test(JSON.stringify(e.details)));
+});
+
+test('dostawca: zawieszone API → ProviderError „timeout” zamiast wiszącego żądania', async () => {
+  const hanging = ((_: string, init: RequestInit) =>
+    new Promise((_, reject) => init.signal?.addEventListener('abort', () => reject(init.signal!.reason)))) as unknown as typeof fetch;
+  const keepAlive = setTimeout(() => {}, 1000); // w Node timer AbortSignal.timeout nie podtrzymuje procesu
+  await assert.rejects(callProvider('x', 'https://x', {}, hanging, 20), (e: unknown) => e instanceof ProviderError && /timeout after 20 ms/.test(e.message));
+  clearTimeout(keepAlive);
+});
+
+test('P24: powiadomienie bez podpisu, z obcym merchantem albo niepełne → odrzucone', async () => {
+  const p24 = new Przelewy24Provider(cfg);
+  const n = await notification();
+  assert.equal((await p24.parseNotification(JSON.stringify({ ...n, sign: undefined }))).valid, false);
+  assert.equal((await p24.parseNotification('null')).valid, false);
+  assert.deepEqual(await p24.parseNotification(JSON.stringify({ ...n, amount: '5499' })), { valid: false, reason: 'invalid_payload', sessionId: 's1', reference: '777' }, 'kwota jako tekst');
+  const foreign = await notification({ merchantId: 999 });
+  assert.deepEqual(await p24.parseNotification(JSON.stringify(foreign)), { valid: false, reason: 'merchant_mismatch', sessionId: 's1', reference: '777' });
+});
+
+test('paczkomaty: 200 istnieje, 404 nie istnieje, awaria API = nie wiadomo (nie blokuje)', async () => {
+  const { fn } = mockFetch([[200, { name: 'KRA01M' }], [404, {}], [500, {}]]);
+  const points = new InPostPoints(fn);
+  assert.equal(await points.exists('KRA01M'), true);
+  assert.equal(await points.exists('XXX99'), false);
+  assert.equal(await points.exists('KRA01M'), null);
+  assert.equal(await new InPostPoints((() => Promise.reject(new Error('offline'))) as unknown as typeof fetch).exists('KRA01M'), null);
 });

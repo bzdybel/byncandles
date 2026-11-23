@@ -1,26 +1,7 @@
-/** Statusy zamówienia (kolumna orders.status) i zdarzenia dziennika (order_events.type). */
-
-export const OrderStatus = {
-  /** Zapisane, sztuki zarezerwowane, transakcja w P24 jeszcze niezarejestrowana. */
-  CREATED: 'CREATED',
-  /** Klient przekierowany do płatności. */
-  PAYMENT_PENDING: 'PAYMENT_PENDING',
-  PAID: 'PAID',
-  /** Nie udało się zarejestrować płatności - sztuki zwolnione. */
-  FAILED: 'FAILED',
-  /** Nieopłacone w czasie rezerwacji (potwierdzone w P24 przez zadanie cykliczne). */
-  EXPIRED: 'EXPIRED',
-  /** Zastąpione nową próbą z tej samej przeglądarki albo anulowane ręcznie. */
-  CANCELED: 'CANCELED',
-} as const;
-export type OrderStatusType = (typeof OrderStatus)[keyof typeof OrderStatus];
-
-/** Statusy, które trzymają sztuki (CREATED/PAYMENT_PENDING tylko do upływu rezerwacji). */
-export const HOLDING_STATUSES: readonly OrderStatusType[] = [OrderStatus.CREATED, OrderStatus.PAYMENT_PENDING];
+/** Zdarzenia dziennika zamówienia (order_events.type) i wyniki powiadomień płatności (webhook_events.outcome). */
 
 export const OrderEvent = {
   ORDER_CREATED: 'order_created',
-  ORDER_REJECTED_STOCK: 'order_rejected_stock',
   ORDER_CANCELED_BY_RETRY: 'order_canceled_by_retry',
   PAYMENT_REGISTERED: 'payment_registered',
   PAYMENT_REGISTER_FAILED: 'payment_register_failed',
@@ -44,7 +25,6 @@ export const OrderEvent = {
 } as const;
 export type OrderEventType = (typeof OrderEvent)[keyof typeof OrderEvent];
 
-/** Wynik obsługi powiadomienia płatności (webhook_events.outcome). */
 export const WebhookOutcome = {
   ACCEPTED: 'ACCEPTED',
   DUPLICATE: 'DUPLICATE',
@@ -52,6 +32,3 @@ export const WebhookOutcome = {
   ERROR: 'ERROR',
 } as const;
 export type WebhookOutcomeType = (typeof WebhookOutcome)[keyof typeof WebhookOutcome];
-
-/** Ile razy zadanie cykliczne ponawia przesyłkę / e-mail, zanim zostawi to człowiekowi. */
-export const MAX_ATTEMPTS = 3;

@@ -291,6 +291,7 @@ export const checkout = {
   lockerHintBefore: 'Kod znajdziesz na ',
   lockerHintLink: 'mapie paczkomatów InPost',
   lockerError: 'Podaj kod paczkomatu, np. KRA01M.',
+  lockerNotFound: 'Nie znalazłam takiego paczkomatu - sprawdź kod na mapie InPost.',
   lockerSelected: 'Wybrano: {name}',
   gift: 'Zapakuj na prezent',
   giftHint: '(różowe pudełko lub celofan ze sznurkiem)',
@@ -308,6 +309,10 @@ export const checkout = {
   submitError: 'Nie udało się utworzyć zamówienia. Spróbuj ponownie za chwilę albo napisz do mnie na Instagramie.',
   /** Dopisywany do komunikatu błędu - po tym kodzie znajdę żądanie w logach. */
   errorRef: 'Kod błędu: {ref}',
+  rateLimited: 'Zbyt wiele prób w krótkim czasie - odczekaj minutę i spróbuj ponownie.',
+  pendingLimit: 'Masz już nieopłacone zamówienia - dokończ płatność albo spróbuj ponownie za kilkadziesiąt minut. W razie problemu napisz do mnie.',
+  captchaError: 'Nie udało się potwierdzić, że nie jesteś robotem - spróbuj ponownie.',
+  tooManyItems: 'Zamówienie może mieć najwyżej {max} sztuk. Przy większych zamówieniach napisz do mnie.',
   stockError: 'Ktoś właśnie kupił ostatnie sztuki części produktów - zaktualizowałam koszyk. Sprawdź podsumowanie i spróbuj ponownie.',
   summary: 'Podsumowanie',
   due: 'Do zapłaty',
@@ -371,6 +376,7 @@ export const emails = {
   shopShipmentFailed: 'UWAGA: przesyłki nie udało się założyć automatycznie ({error}). Załóż ją ręcznie w Managerze Paczek.',
   shopShipmentDisabled: 'Automatyczne przesyłki są wyłączone - załóż przesyłkę w Managerze Paczek.',
   shopLate: 'UWAGA: płatność przyszła po czasie rezerwacji - sprawdź, czy wszystkie sztuki są na stanie.',
+  shopCustomerEmailFailed: 'UWAGA: klient nie dostał e-maila z potwierdzeniem - wyślij je ręcznie (wymóg prawny).',
   shopDetails: 'Szczegóły i historia zamówienia: {url}',
 } as const;
 

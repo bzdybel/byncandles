@@ -75,7 +75,7 @@ export type ClientTexts = typeof clientTexts;
       const res = await fetch(`/api/orders/${id}`, { cache: 'no-store' });
       if (res.status === 404) return show('missing');
       if (!res.ok) throw new Error(String(res.status));
-      const { number, status } = (await res.json()) as { number: string; status: 'paid' | 'pending' | 'expired' };
+      const { number, status } = (await res.json()) as { number: string; status: string };
       if (status === 'paid') {
         clear();
         try { localStorage.removeItem(PENDING_ORDER_KEY); } catch { /* tryb prywatny */ }
@@ -86,7 +86,7 @@ export type ClientTexts = typeof clientTexts;
         setTimeout(() => void check(poll + 1), POLL_MS);
         return;
       }
-      show(status, number);
+      show(status === 'pending' || status === 'expired' ? status : 'missing', number);
     } catch {
       if (poll < MAX_POLLS) setTimeout(() => void check(poll + 1), POLL_MS);
       else show('missing');

@@ -24,3 +24,12 @@ test('podsumowanie do wiadomości', () => {
   assert.match(text, /Pakowanie na prezent: tak/);
   assert.doesNotMatch(text, /Uwagi/);
 });
+
+test('schemat formularza (Zod): normalizuje dane - ten sam w przeglądarce i w API', async () => {
+  const { parseOrderForm } = await import('../src/lib/checkout.ts');
+  const r = parseOrderForm({ ...ok, name: '  Anna   Kowalska ', email: ' anna@example.pl ', phone: '0048 600-100-200', locker: ' kra01m ' });
+  assert.ok(r.ok);
+  if (r.ok) assert.deepEqual([r.data.name, r.data.email, r.data.phone, r.data.locker], ['Anna   Kowalska', 'anna@example.pl', '600100200', 'KRA01M']);
+  assert.deepEqual(parseOrderForm({ ...ok, terms: 'true' }), { ok: false, fields: ['terms'] }, 'zgoda tylko jako true');
+  assert.deepEqual(parseOrderForm({}), { ok: false, fields: ['name', 'email', 'phone', 'locker', 'terms'] });
+});

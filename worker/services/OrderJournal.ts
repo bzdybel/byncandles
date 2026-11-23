@@ -4,16 +4,15 @@
  * Błąd zapisu dziennika nigdy nie przerywa obsługi zamówienia - zostaje w logach.
  */
 import { LogKey } from '../constants/logKeys.ts';
-import type { OrderEventType } from '../constants/orderStatus.ts';
+import type { OrderEventType } from '../domain/events.ts';
+import type { OrderRef } from '../domain/order.ts';
 import { serializeError } from '../errors/AppError.ts';
 import type { OrderStorage } from '../storage/OrderStorage.ts';
 import type { LoggerPort } from '../utils/logger.ts';
 import type { ClockPort } from '../utils/ports.ts';
 
-export interface OrderRef {
-  id: string;
-  number: string;
-}
+type Level = 'info' | 'warn' | 'error';
+type Data = Record<string, unknown>;
 
 export class OrderJournal {
   private readonly deps: { storage: OrderStorage; logger: LoggerPort; clock: ClockPort };
@@ -21,17 +20,11 @@ export class OrderJournal {
     this.deps = deps;
   }
 
-  info(order: OrderRef, type: OrderEventType, data?: Record<string, unknown>) {
-    return this.record('info', order, type, data);
-  }
-  warn(order: OrderRef, type: OrderEventType, data?: Record<string, unknown>, error?: unknown) {
-    return this.record('warn', order, type, data, error);
-  }
-  error(order: OrderRef, type: OrderEventType, data?: Record<string, unknown>, error?: unknown) {
-    return this.record('error', order, type, data, error);
-  }
+  info = (order: OrderRef, type: OrderEventType, data?: Data) => this.record('info', order, type, data);
+  warn = (order: OrderRef, type: OrderEventType, data?: Data, error?: unknown) => this.record('warn', order, type, data, error);
+  error = (order: OrderRef, type: OrderEventType, data?: Data, error?: unknown) => this.record('error', order, type, data, error);
 
-  private async record(level: 'info' | 'warn' | 'error', order: OrderRef, type: OrderEventType, data?: Record<string, unknown>, error?: unknown) {
+  private async record(level: Level, order: OrderRef, type: OrderEventType, data?: Data, error?: unknown): Promise<void> {
     const { storage, logger, clock } = this.deps;
     logger[level]({
       message: `Order ${type}`,

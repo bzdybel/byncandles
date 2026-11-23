@@ -2,7 +2,8 @@
 import Base from '../layouts/Base.astro';
 import CartTotals from '../components/CartTotals.astro';
 import { cart, checkout as t, common } from '../i18n/pl';
-import type { Field } from '../lib/checkout';
+import { MAX_UNITS_PER_ORDER, type Field } from '../lib/checkout';
+import { fill } from '../lib/i18n';
 import { SITE } from '../lib/site';
 import { STORAGE_KEY } from '../scripts/cart-store';
 
@@ -10,12 +11,15 @@ import { STORAGE_KEY } from '../scripts/cart-store';
 const geoToken = import.meta.env.PUBLIC_INPOST_GEOWIDGET_TOKEN ?? '';
 // API zamówień i płatności (Worker, zwykle `/api/orders`). Bez niego - podsumowanie do wysłania na Instagramie.
 const endpoint = import.meta.env.PUBLIC_CHECKOUT_ENDPOINT ?? '';
+// Cloudflare Turnstile („nie jestem robotem”) - klucz strony z panelu Cloudflare; sekret: TURNSTILE_SECRET w Workerze.
+const turnstileKey = endpoint ? (import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '') : '';
 
 const ERRORS: Record<Field, string> = { name: t.nameError, email: t.emailError, phone: t.phoneError, locker: t.lockerError, terms: t.termsError };
 // Teksty potrzebne skryptowi strony - osadzone tutaj, a nie importowane w JS (mniejsza wspólna paczka).
 const clientTexts = {
   text: t.text, free: cart.free, submitting: t.submitting, submitPay: t.submitPay, submitError: t.submitError,
-  errorRef: t.errorRef, stockError: t.stockError,
+  errorRef: t.errorRef, stockError: t.stockError, rateLimited: t.rateLimited, lockerNotFound: t.lockerNotFound,
+  pendingLimit: t.pendingLimit, captchaError: t.captchaError, tooManyItems: fill(t.tooManyItems, { max: MAX_UNITS_PER_ORDER }),
   copied: t.copied, copyFailed: t.copyFailed, lockerSelected: t.lockerSelected,
 };
 export type ClientTexts = typeof clientTexts;
@@ -91,6 +95,7 @@ const fields = [
         </label>
         <p class="err" id="co-terms-err" data-msg={ERRORS.terms}></p>
 
+        {turnstileKey && <div class="cf-turnstile captcha" data-sitekey={turnstileKey} data-language="pl" data-appearance="interaction-only" data-size="flexible"></div>}
         <button class="btn btn--block btn--lg" type="submit" data-co-submit>{endpoint ? t.submitPay : t.submitPrepare}</button>
         {endpoint && <p class="t-small t-muted center">{t.payments}</p>}
       </form>
@@ -116,6 +121,7 @@ const fields = [
   </section>
 
   <script type="application/json" id="checkout-texts" set:html={JSON.stringify(clientTexts)} />
+  {turnstileKey && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
 
   {geoToken && (
     <dialog class="geo" data-geo aria-label={t.mapLabel}>
@@ -126,7 +132,7 @@ const fields = [
 </Base>
 
 <script>
-  import { FIELDS, normalizeLocker, normalizePhone, summaryText, validate, type Field, type OrderForm } from '../lib/checkout';
+  import { FIELDS, normalizeLocker, normalizePhone, summaryText, validate, withinOrderLimits, type Field, type OrderForm } from '../lib/checkout';
   import { fill } from '../lib/i18n';
   import { formatGrosze } from '../lib/money';
   import { totals } from '../lib/pricing';
@@ -163,10 +169,10 @@ const fields = [
     return { name: str('name'), email: str('email'), phone: str('phone'), locker: str('locker'), notes: str('notes'), gift: d.has('gift'), terms: d.has('terms') };
   }
 
-  function showError(field: Field, invalid: boolean) {
+  function showError(field: Field, invalid: boolean, message?: string) {
     const err = q(`#co-${field}-err`);
     q(`#co-${field}`).setAttribute('aria-invalid', String(invalid));
-    err.textContent = invalid ? (err.dataset.msg ?? '') : '';
+    err.textContent = invalid ? (message ?? err.dataset.msg ?? '') : '';
   }
 
   const check = (field: Field) => showError(field, validate(readForm()).includes(field));
@@ -182,22 +188,42 @@ const fields = [
     el.value = normalizeLocker(el.value);
   });
 
+  interface ApiError { error?: string; fields?: string[]; reasons?: Record<string, string> }
+
+  /** Błędy pól zwrócone przez serwer (te same reguły + np. nieistniejący paczkomat). true = pokazano przy polach. */
+  function showServerFields(json: ApiError): boolean {
+    const fields = (json.fields ?? []).filter((f): f is Field => (FIELDS as string[]).includes(f));
+    if (!fields.length) return false;
+    fields.forEach((f) => showError(f, true, json.reasons?.[f] === 'not_found' ? t.lockerNotFound : undefined));
+    q(`#co-${fields[0]}`).focus();
+    return true;
+  }
+
   async function submitToApi(endpoint: string, data: OrderForm, items: ReturnType<typeof read>) {
-    // API przelicza ceny po stronie serwera, rezerwuje stan atomowo i zwraca link do płatności (worker/handlers/CreateOrderHandler.ts).
+    // API przelicza ceny po stronie serwera, rezerwuje stan atomowo i zwraca link do płatności (worker/services/PlaceOrderService.ts).
     const btn = q<HTMLButtonElement>('[data-co-submit]');
-    const reset = () => {
-      btn.dataset.state = '';
-      btn.disabled = false;
-      btn.textContent = t.submitPay;
+    const setLoading = (loading: boolean) => {
+      btn.dataset.state = loading ? 'loading' : '';
+      btn.disabled = loading;
+      btn.textContent = loading ? t.submitting : t.submitPay;
     };
-    btn.dataset.state = 'loading';
-    btn.disabled = true;
-    btn.textContent = t.submitting;
+    // Kod błędu = początek correlationId żądania: po nim znajdę dokładnie to zamówienie w logach.
+    // Token Turnstile jest jednorazowy - po każdej nieudanej próbie potrzebny nowy.
+    const resetCaptcha = () => (window as unknown as { turnstile?: { reset(): void } }).turnstile?.reset();
+    const fail = (message: string, ref: string) => {
+      setLoading(false);
+      resetCaptcha();
+      alert(ref ? `${message}\n\n${fill(t.errorRef, { ref: ref.slice(0, 8) })}` : message);
+    };
+
+    if (!withinOrderLimits(items)) return alert(t.tooManyItems);
+    setLoading(true);
     let previous: string | null = null;
     try { previous = localStorage.getItem(PENDING_ORDER_KEY); } catch { /* tryb prywatny */ }
-    let ref = '';
+
+    let res: Response;
     try {
-      const res = await fetch(endpoint, {
+      res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -206,26 +232,34 @@ const fields = [
           locker: normalizeLocker(data.locker),
           items: items.map(({ id, qty }) => ({ id, qty })),
           ...(previous && { previous }),
+          captcha: new FormData(form).get('cf-turnstile-response') ?? undefined,
         }),
       });
-      ref = res.headers.get('correlation-id') ?? '';
-      const json = await res.json().catch(() => ({}));
-      if (res.status === 409 && json.error === 'stock') {
-        // Ktoś kupił ostatnie sztuki - uzgodnij koszyk i pokaż, co się zmieniło.
-        await sync(true);
-        render();
-        reset();
-        alert(t.stockError);
-        return;
-      }
-      if (!res.ok || !json.redirect) throw new Error(json.error);
-      try { localStorage.setItem(PENDING_ORDER_KEY, json.orderId); } catch { /* bez ponownej próby - rezerwacja wygaśnie sama */ }
-      location.href = json.redirect;
     } catch {
-      reset();
-      // Kod błędu = correlationId żądania: po nim znajdę dokładnie to zamówienie w logach.
-      alert(ref ? `${t.submitError}\n\n${fill(t.errorRef, { ref: ref.slice(0, 8) })}` : t.submitError);
+      return fail(t.submitError, ''); // offline / sieć
     }
+    const ref = res.headers.get('correlation-id') ?? '';
+    const json = (await res.json().catch(() => ({}))) as ApiError & { orderId?: string; redirect?: string };
+
+    if (res.ok && json.redirect) {
+      try { localStorage.setItem(PENDING_ORDER_KEY, json.orderId ?? ''); } catch { /* rezerwacja wygaśnie sama */ }
+      location.href = json.redirect;
+      return;
+    }
+    if (res.status === 409 && json.error === 'stock') {
+      // Ktoś kupił ostatnie sztuki - uzgodnij koszyk i pokaż, co się zmieniło.
+      await sync(true);
+      render();
+      return fail(t.stockError, '');
+    }
+    if (res.status === 400 && showServerFields(json)) {
+      resetCaptcha();
+      return setLoading(false);
+    }
+    if (json.error === 'captcha') return fail(t.captchaError, '');
+    if (json.error === 'pending_limit') return fail(t.pendingLimit, '');
+    if (res.status === 429) return fail(t.rateLimited, '');
+    fail(t.submitError, ref);
   }
 
   form.addEventListener('submit', async (e) => {
@@ -320,6 +354,7 @@ const fields = [
   .err:empty { display: none; }
   .check { display: flex; gap: var(--sp-3); align-items: flex-start; min-height: var(--tap); cursor: pointer; }
   .check input { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--c-accent); flex: none; }
+  .captcha { margin-bottom: var(--sp-4); }
   .center { text-align: center; max-width: none; margin-top: var(--sp-3); }
 
   .side { background: var(--c-surface); border-radius: var(--r-md); padding: var(--sp-6); }

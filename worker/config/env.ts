@@ -41,6 +41,19 @@ export interface Env {
 
   /** Hasło do /api/admin/* (Basic auth, użytkownik dowolny). Bez niego panel jest wyłączony. */
   ADMIN_PASSWORD?: string;
+
+  /** Sekret Cloudflare Turnstile („nie jestem robotem”). Klucz strony: zmienna buildu PUBLIC_TURNSTILE_SITE_KEY. */
+  TURNSTILE_SECRET?: string;
+  /** Sól skrótu IP klienta (limit nieopłaconych rezerwacji). Bez niej - stała domyślna. */
+  CLIENT_HASH_SALT?: string;
+
+  /** Cloudflare Rate Limiting (wrangler.jsonc → ratelimits). Brak wiązania = bez limitu (np. testy). */
+  RATE_LIMITER?: RateLimiter;
+  /** Łagodniejszy limit dla odczytów (/katalog.json, status zamówienia). */
+  READ_LIMITER?: RateLimiter;
 }
 
-export const flag = (v: string | undefined) => v === '1' || v === 'true';
+export interface RateLimiter {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
+}
+

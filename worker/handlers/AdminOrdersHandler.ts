@@ -1,34 +1,40 @@
 /**
- * Podgląd zamówień dla sklepu / dewelopera (Basic auth, hasło = ADMIN_PASSWORD):
+ * Podgląd zamówień dla sklepu / dewelopera (Basic auth i limit żądań - w routerze, worker/index.ts):
  *
- *   GET  /api/admin/orders?status=PAID&limit=20   lista ostatnich zamówień
+ *   GET  /api/admin/orders?status=PAID&limit=20   lista ostatnich zamówień z problemami
  *   GET  /api/admin/orders/BN-7K3Q9X              zamówienie + pozycje + dziennik + surowe powiadomienia P24
  *   POST /api/admin/orders/BN-7K3Q9X/retry        ponów brakujące kroki (przesyłka, e-maile) po naprawie przyczyny
  *
  * `correlationIds` w odpowiedzi = filtry do Cloudflare → Workers → Logs (pełne logi ze stosem błędów).
  */
+import * as z from 'zod/mini';
 import { LogKey } from '../constants/logKeys.ts';
-import { OrderStatus, type OrderStatusType } from '../constants/orderStatus.ts';
+import { orderProblems, OrderStatus, type Order } from '../domain/order.ts';
 import { AppError, NotFoundError } from '../errors/AppError.ts';
-import { json, requireAdmin } from '../utils/http.ts';
+import { json } from '../utils/http.ts';
 import { isUuid } from '../utils/ports.ts';
 import type { Handler, HandlerContext } from './types.ts';
 
 const iso = (ms: number | null) => (ms ? new Date(ms).toISOString() : null);
 
-async function findOrder({ params, services: s }: HandlerContext) {
+/** ?status=paid&limit=20 - status bez względu na wielkość liter; zły limit → domyślny, zły status → 400. */
+const limit = z.pipe(z.pipe(z.string().check(z.regex(/^\d+$/)), z.transform((v: string) => Number(v))), z.int().check(z.gte(1), z.lte(100)));
+const listQuery = z.object({
+  status: z.optional(z.pipe(z.string().check(z.toUpperCase()), z.enum(Object.values(OrderStatus)))),
+  limit: z.catch(limit, 20),
+});
+
+async function findOrder({ params, services: s }: HandlerContext): Promise<Order> {
   const key = params.key ?? '';
   const order = isUuid(key) ? await s.storage.getById(key) : await s.storage.getByNumber(key);
   if (!order) throw new NotFoundError('Order');
   return order;
 }
 
-export const AdminListOrdersHandler: Handler = async ({ request, url, env, services: s }) => {
-  requireAdmin(request, env.ADMIN_PASSWORD);
-  const status = url.searchParams.get('status')?.toUpperCase() as OrderStatusType | undefined;
-  if (status && !Object.values(OrderStatus).includes(status)) throw new AppError('Unknown status', { statusCode: 400, code: 'invalid' });
-  const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 20, 1), 100);
-  const orders = await s.storage.listRecent(limit, status);
+export const AdminListOrdersHandler: Handler = async ({ url, services: s }) => {
+  const query = z.safeParse(listQuery, Object.fromEntries(url.searchParams));
+  if (!query.success) throw new AppError('Unknown status', { statusCode: 400, code: 'invalid' });
+  const orders = await s.storage.listRecent(query.data.limit, query.data.status);
   return json(
     orders.map((o) => ({
       number: o.number,
@@ -37,16 +43,12 @@ export const AdminListOrdersHandler: Handler = async ({ request, url, env, servi
       total: o.total,
       customer: o.customerName,
       shipmentId: o.shipmentId,
-      problems: [
-        o.status === OrderStatus.PAID && !o.shipmentId && 'brak przesyłki',
-        o.status === OrderStatus.PAID && !o.emailSentAt && 'brak e-maila do klienta',
-      ].filter(Boolean),
+      problems: orderProblems(o),
     })),
   );
 };
 
 export const AdminOrderHandler: Handler = async (ctx) => {
-  requireAdmin(ctx.request, ctx.env.ADMIN_PASSWORD);
   const s = ctx.services;
   const order = await findOrder(ctx);
   const [items, events, webhooks] = await Promise.all([s.storage.getItems(order.id), s.storage.listEvents(order.id), s.storage.listWebhooks(order.id)]);
@@ -59,21 +61,23 @@ export const AdminOrderHandler: Handler = async (ctx) => {
       emailSentAt: iso(order.emailSentAt),
       shopNotifiedAt: iso(order.shopNotifiedAt),
     },
+    problems: orderProblems(order),
     items,
     events: events.map((e) => ({ ...e, createdAt: iso(e.createdAt) })),
-    webhooks: webhooks.map((w) => ({ ...w, receivedAt: iso(w.receivedAt as number) })),
+    webhooks: webhooks.map((w) => ({ ...w, receivedAt: iso(w.receivedAt) })),
     correlationIds: [...new Set([order.correlationId, ...events.map((e) => e.correlationId)].filter(Boolean))],
   });
 };
 
+/** Ręczne ponowienie: nowa pula prób dla kroków, które się nie udały (np. po poprawieniu tokenu ShipX). */
 export const AdminRetryOrderHandler: Handler = async (ctx) => {
-  requireAdmin(ctx.request, ctx.env.ADMIN_PASSWORD);
   const s = ctx.services;
   const order = await findOrder(ctx);
   if (order.status !== OrderStatus.PAID) throw new AppError(`Order is ${order.status}, not PAID`, { statusCode: 409, code: 'not_paid' });
-  // Ręczne ponowienie: nowa pula prób dla kroków, które się nie udały.
   await s.storage.resetAttempts(order.id);
   s.logger.info({ message: 'Admin retry', metadata: { [LogKey.ORDER_ID]: order.id, [LogKey.ORDER_NUMBER]: order.number } });
-  await s.paymentStatus.fulfill((await s.storage.getById(order.id))!);
+  const fresh = await s.storage.getById(order.id);
+  const results = fresh ? await s.fulfillment.fulfill(fresh) : null;
+  if (!results) throw new AppError('Order is being processed right now, try again in a minute', { statusCode: 409, code: 'busy' });
   return AdminOrderHandler(ctx);
 };

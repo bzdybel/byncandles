@@ -1,92 +1,91 @@
 /**
- * Składanie zależności z konfiguracji (env) - jedyne miejsce, które wybiera adapter: prawdziwy czy noop.
+ * Składanie zależności (composition root) - jedyne miejsce, które wybiera adapter: prawdziwy, noop czy brak.
+ * Konfigurację interpretuje config/appConfig.ts; tu tylko ją realizujemy.
  * Wywoływane raz na żądanie / przebieg crona z loggerem przypiętym do jego correlationId.
  */
-import { flag, type Env } from '../config/env.ts';
+import { loadConfig, type AppConfig } from '../config/appConfig.ts';
+import type { Env } from '../config/env.ts';
 import { EmailNoop } from '../email/EmailNoop.ts';
 import type { EmailProvider } from '../email/EmailProvider.ts';
 import { ResendProvider } from '../email/ResendProvider.ts';
-import { PaymentNoop } from '../payments/PaymentNoop.ts';
+import { PaymentNoop, PaymentUnavailable } from '../payments/PaymentNoop.ts';
 import type { PaymentProvider } from '../payments/PaymentProvider.ts';
 import { Przelewy24Provider } from '../payments/Przelewy24Provider.ts';
+import { InPostPoints, PointsNoop } from '../shipping/PointsDirectory.ts';
 import { ShipXProvider } from '../shipping/ShipXProvider.ts';
 import { ShippingNoop } from '../shipping/ShippingNoop.ts';
 import type { ShippingProvider } from '../shipping/ShippingProvider.ts';
+import { CaptchaNoop, TurnstileVerifier, type CaptchaVerifier } from '../security/Captcha.ts';
 import { OrderStorage } from '../storage/OrderStorage.ts';
 import type { LoggerPort } from '../utils/logger.ts';
-import { CryptoIdProvider, SystemClock, type ClockPort, type IdProviderPort } from '../utils/ports.ts';
+import { CryptoIdProvider, SystemClock, type ClockPort } from '../utils/ports.ts';
 import { CatalogService } from './CatalogService.ts';
+import { FulfillmentService } from './FulfillmentService.ts';
 import { OrderJournal } from './OrderJournal.ts';
-import { PaymentStatusService } from './PaymentStatusService.ts';
+import { PaymentService } from './PaymentService.ts';
+import { PlaceOrderService } from './PlaceOrderService.ts';
 import { StockService } from './StockService.ts';
 
-/** Adres strony do linków w e-mailach i w P24 - w cronie nie ma żądania, z którego dałoby się go wziąć. */
+/** Adres strony do linków w e-mailach - w cronie nie ma żądania, z którego dałoby się go wziąć. */
 export const DEFAULT_SITE_URL = 'https://byncandles.devbz.workers.dev';
 
 export interface Services {
+  config: AppConfig;
   logger: LoggerPort;
   clock: ClockPort;
-  ids: IdProviderPort;
   storage: OrderStorage;
-  journal: OrderJournal;
-  catalog: CatalogService;
   stock: StockService;
-  payments: PaymentProvider;
-  shipping: ShippingProvider | null;
-  email: EmailProvider | null;
-  paymentStatus: PaymentStatusService;
-  siteUrl: string;
-  shopEmail?: string;
+  catalog: CatalogService;
+  placeOrder: PlaceOrderService;
+  payment: PaymentService;
+  fulfillment: FulfillmentService;
+  captcha: CaptchaVerifier;
 }
 
+/** Brak konfiguracji → dostawca odrzucający wszystko (nigdy noop - ten przyjmuje powiadomienia bez podpisu). */
+function paymentProvider(c: AppConfig, siteUrl: string): PaymentProvider {
+  if (c.payments.kind === 'przelewy24') return new Przelewy24Provider(c.payments.config);
+  if (c.payments.kind === 'noop') return new PaymentNoop(siteUrl);
+  return new PaymentUnavailable();
+}
+
+const shippingProvider = (c: AppConfig): ShippingProvider | null =>
+  c.shipping.kind === 'shipx' ? new ShipXProvider(c.shipping.config) : c.shipping.kind === 'noop' ? new ShippingNoop() : null;
+
+const emailProvider = (c: AppConfig, logger: LoggerPort): EmailProvider | null =>
+  c.email.kind === 'resend' ? new ResendProvider(c.email) : c.email.kind === 'noop' ? new EmailNoop(logger) : null;
+
 export function createServices(env: Env, logger: LoggerPort, origin?: string): Services {
+  const config = loadConfig(env);
   const clock = SystemClock;
-  const siteUrl = (origin ?? env.SITE_URL ?? DEFAULT_SITE_URL).replace(/\/$/, '');
-  const sandbox = env.SANDBOX === '1';
+  const siteUrl = (origin ?? config.siteUrl ?? DEFAULT_SITE_URL).replace(/\/$/, '');
   const storage = new OrderStorage(env.DB);
   const journal = new OrderJournal({ storage, logger, clock });
+  const stock = new StockService({ storage, clock });
+  const catalog = new CatalogService(env.ASSETS, siteUrl);
+  const payments = paymentProvider(config, siteUrl);
 
-  const payments: PaymentProvider = flag(env.MOCK_PAYMENTS)
-    ? new PaymentNoop(siteUrl)
-    : new Przelewy24Provider({
-        merchantId: Number(env.P24_MERCHANT_ID),
-        posId: Number(env.P24_POS_ID || env.P24_MERCHANT_ID),
-        apiKey: env.P24_API_KEY ?? '',
-        crc: env.P24_CRC ?? '',
-        sandbox,
-      });
-
-  const shipping: ShippingProvider | null = flag(env.MOCK_INPOST)
-    ? new ShippingNoop()
-    : env.SHIPX_TOKEN && env.SHIPX_ORG_ID
-      ? new ShipXProvider({
-          token: env.SHIPX_TOKEN,
-          organizationId: env.SHIPX_ORG_ID,
-          sandbox,
-          parcelTemplate: env.SHIPX_PARCEL || 'small',
-          sendingMethod: env.SHIPX_SENDING_METHOD || 'parcel_locker',
-        })
-      : null;
-
-  const email: EmailProvider | null = flag(env.MOCK_EMAIL)
-    ? new EmailNoop(logger)
-    : env.RESEND_API_KEY && env.MAIL_FROM
-      ? new ResendProvider({ apiKey: env.RESEND_API_KEY, from: env.MAIL_FROM })
-      : null;
+  const fulfillment = new FulfillmentService({
+    storage, journal, logger, clock, siteUrl,
+    shipping: shippingProvider(config),
+    email: emailProvider(config, logger),
+    shopEmail: config.shopEmail,
+  });
 
   return {
+    config,
     logger,
     clock,
-    ids: CryptoIdProvider,
     storage,
-    journal,
-    catalog: new CatalogService(env.ASSETS, siteUrl),
-    stock: new StockService({ storage, clock }),
-    payments,
-    shipping,
-    email,
-    paymentStatus: new PaymentStatusService({ storage, journal, clock, payments, shipping, email, shopEmail: env.SHOP_EMAIL, siteUrl }),
-    siteUrl,
-    shopEmail: env.SHOP_EMAIL,
+    stock,
+    catalog,
+    fulfillment,
+    captcha: config.turnstileSecret ? new TurnstileVerifier(config.turnstileSecret, logger) : CaptchaNoop,
+    payment: new PaymentService({ storage, journal, logger, clock, payments, fulfillment }),
+    placeOrder: new PlaceOrderService({
+      storage, journal, logger, clock, catalog, stock, payments,
+      ids: CryptoIdProvider,
+      points: config.validatePoints ? new InPostPoints() : PointsNoop,
+    }),
   };
 }

@@ -25,12 +25,10 @@ export const LogKey = {
   PROVIDER_STATUS: 'providerStatus',
 
   // E-mail
-  TO: 'to',
   MESSAGE_ID: 'messageId',
 
   // Zadania
   JOB: 'job',
-  CHECKED: 'checked',
   ATTEMPT: 'attempt',
 
   // Konfiguracja

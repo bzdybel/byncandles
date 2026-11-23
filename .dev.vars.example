@@ -1,6 +1,8 @@
 # Lokalny Worker (`npm run worker:dev`): skopiuj do .dev.vars (plik jest w .gitignore).
 # Domyślnie wszystko „na niby” - pełny przepływ zamówienia bez kont u dostawców:
 # formularz → rezerwacja w lokalnej D1 → symulowana płatność → przesyłka i e-maile w logach.
+# Adaptery MOCK działają tylko z SANDBOX=1 (poza sandboxem są ignorowane - ochrona przed darmowymi zamówieniami).
+SANDBOX=1
 MOCK_PAYMENTS=1
 MOCK_INPOST=1
 MOCK_EMAIL=1
@@ -20,3 +22,7 @@ SHOP_EMAIL=sklep@example.com
 # Resend (usuń MOCK_EMAIL)
 # RESEND_API_KEY=
 # MAIL_FROM=by N. candles <zamowienia@twoja-domena.pl>
+
+# Turnstile („nie jestem robotem”). Klucze testowe Cloudflare: 1x0000000000000000000000000000000AA (zawsze przechodzi),
+# 2x0000000000000000000000000000000AA (zawsze odrzuca). Klucz strony: PUBLIC_TURNSTILE_SITE_KEY w .env (build).
+# TURNSTILE_SECRET=
