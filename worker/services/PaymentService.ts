@@ -145,20 +145,29 @@ export class PaymentService {
   }
 
   /**
-   * Cron: zamówienie bez rozstrzygnięcia płatności. Opłacone u dostawcy (zgubione powiadomienie) → opłacamy;
-   * nieopłacone po czasie rezerwacji → EXPIRED.
+   * Pyta dostawcę o stan transakcji; opłacona → confirmPaid. Nie wygasza zamówień.
+   * Źródła: cron (zgubione powiadomienie), strona podziękowania (powiadomienie jeszcze w drodze - albo nie dotrze,
+   * np. lokalnie, gdy P24 nie widzi localhost), panel admina („klient pisze, że zapłacił”).
    */
+  async checkWithProvider(order: Order, source: 'cron' | 'return_page' | 'admin'): Promise<{ result: 'paid' | 'unpaid' | 'unchanged'; providerStatus: unknown }> {
+    const state = await this.d.payments.status(order.id);
+    if (state.state === 'unpaid') return { result: 'unpaid', providerStatus: state.providerStatus };
+    // Dla crona to anomalia (powiadomienie zginęło), dla strony powrotu - zwykły wyścig z powiadomieniem.
+    const level = source === 'cron' ? 'warn' : 'info';
+    await this.d.journal[level](order, OrderEvent.PAYMENT_RECOVERED, { source, [LogKey.PAYMENT_REFERENCE]: state.reference, [LogKey.PROVIDER_STATUS]: state.providerStatus });
+    const notification = { sessionId: order.id, reference: state.reference, amount: state.amount, currency: 'PLN' };
+    const first = await this.confirmPaid(order, notification, state.state === 'paid_unverified');
+    return { result: first ? 'paid' : 'unchanged', providerStatus: state.providerStatus };
+  }
+
+  /** Cron: opłacone u dostawcy → opłacamy; nieopłacone po czasie rezerwacji → EXPIRED. */
   async reconcile(order: Order): Promise<'paid' | 'expired' | 'unchanged'> {
-    const { payments, journal, storage, clock } = this.d;
-    const state = await payments.status(order.id);
-    if (state.state !== 'unpaid') {
-      await journal.warn(order, OrderEvent.PAYMENT_RECOVERED, { [LogKey.PAYMENT_REFERENCE]: state.reference, [LogKey.PROVIDER_STATUS]: state.providerStatus });
-      const notification = { sessionId: order.id, reference: state.reference, amount: state.amount, currency: 'PLN' };
-      return (await this.confirmPaid(order, notification, state.state === 'paid_unverified')) ? 'paid' : 'unchanged';
-    }
+    const { journal, storage, clock } = this.d;
+    const { result, providerStatus } = await this.checkWithProvider(order, 'cron');
+    if (result !== 'unpaid') return result;
     if (order.createdAt > reservationCutoff(clock.now())) return 'unchanged';
     if (!(await storage.markReleased(order.id, OrderStatus.EXPIRED))) return 'unchanged';
-    await journal.info(order, OrderEvent.ORDER_EXPIRED, { [LogKey.PROVIDER_STATUS]: state.providerStatus });
+    await journal.info(order, OrderEvent.ORDER_EXPIRED, { [LogKey.PROVIDER_STATUS]: providerStatus });
     return 'expired';
   }
 }

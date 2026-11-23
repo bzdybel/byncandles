@@ -26,7 +26,9 @@ export type ClientTexts = typeof clientTexts;
     <div data-state="pending" hidden>
       <h1>{t.pendingTitle}</h1>
       <p class="t-lead" data-lead></p>
+      <p>{t.pendingRetry}</p>
       <div class="actions">
+        <a class="btn btn--lg" href="/zamowienie/">{t.retry}</a>
         <a class="btn btn--ghost btn--lg" href={SITE.instagram} target="_blank" rel="noopener">{common.openInstagram}</a>
       </div>
     </div>

@@ -8,7 +8,9 @@ import { SITE } from '../lib/site';
 import { STORAGE_KEY } from '../scripts/cart-store';
 
 // Token Geowidgetu z Managera Paczek InPost (zmienna buildu). Bez tokenu - pole na kod paczkomatu.
+// Token z sandboxa (sandbox-manager.paczkomaty.pl) działa tylko ze skryptem z hosta sandboxa: PUBLIC_INPOST_GEOWIDGET_SANDBOX=1.
 const geoToken = import.meta.env.PUBLIC_INPOST_GEOWIDGET_TOKEN ?? '';
+const geoHost = import.meta.env.PUBLIC_INPOST_GEOWIDGET_SANDBOX === '1' ? 'https://sandbox-easy-geowidget-sdk.easypack24.net' : 'https://geowidget.inpost.pl';
 // API zamówień i płatności (Worker, zwykle `/api/orders`). Bez niego - podsumowanie do wysłania na Instagramie.
 const endpoint = import.meta.env.PUBLIC_CHECKOUT_ENDPOINT ?? '';
 // Cloudflare Turnstile („nie jestem robotem”) - klucz strony z panelu Cloudflare; sekret: TURNSTILE_SECRET w Workerze.
@@ -126,7 +128,7 @@ const fields = [
   {geoToken && (
     <dialog class="geo" data-geo aria-label={t.mapLabel}>
       <button type="button" class="icon-btn geo-close" data-geo-close aria-label={t.mapClose}>×</button>
-      <div class="geo-map" data-geo-map data-token={geoToken}></div>
+      <div class="geo-map" data-geo-map data-token={geoToken} data-host={geoHost}></div>
     </dialog>
   )}
 </Base>
@@ -192,7 +194,7 @@ const fields = [
 
   /** Błędy pól zwrócone przez serwer (te same reguły + np. nieistniejący paczkomat). true = pokazano przy polach. */
   function showServerFields(json: ApiError): boolean {
-    const fields = (json.fields ?? []).filter((f): f is Field => (FIELDS as string[]).includes(f));
+    const fields = (json.fields ?? []).filter((f): f is Field => (FIELDS as readonly string[]).includes(f));
     if (!fields.length) return false;
     fields.forEach((f) => showError(f, true, json.reasons?.[f] === 'not_found' ? t.lockerNotFound : undefined));
     q(`#co-${fields[0]}`).focus();
@@ -293,30 +295,45 @@ const fields = [
     }
   });
 
-  // InPost Geowidget - ładowany dopiero po kliknięciu
+  // InPost Geowidget v5 - ładowany dopiero po kliknięciu (skrypt ~1 MB nie obciąża strony, dopóki klient go nie potrzebuje).
+  // Dokumentacja: https://dokumentacja-inpost.atlassian.net/wiki/spaces/PL/pages/50069505/Geowidget+v5+PL+Market
+  interface GeoPoint { name?: string; address?: { line1?: string; line2?: string } }
+  const POINT_CALLBACK = 'bynPointSelected';
   const geo = document.querySelector<HTMLDialogElement>('[data-geo]');
+
+  function onPointSelected(point: GeoPoint | undefined) {
+    const name = normalizeLocker(point?.name ?? '');
+    if (!name || !geo) return;
+    const input = q<HTMLInputElement>('#co-locker');
+    input.value = name;
+    const address = [point?.address?.line1, point?.address?.line2].filter(Boolean).join(', ');
+    q('[data-locker-hint]').textContent = fill(t.lockerSelected, { name: address ? `${name} - ${address}` : name });
+    check('locker');
+    geo.close();
+    input.focus();
+  }
+
   if (geo) {
+    const map = q('[data-geo-map]');
     let loaded = false;
     q('[data-geo-open]').addEventListener('click', () => {
       if (!loaded) {
         loaded = true;
-        const map = q('[data-geo-map]');
-        const el = document.createElement('inpost-geowidget');
-        Object.entries({ token: map.dataset.token ?? '', language: 'pl', config: 'parcelcollect', onpoint: 'byn-point' }).forEach(([k, v]) => el.setAttribute(k, v));
-        map.append(el);
-        document.head.append(
-          Object.assign(document.createElement('link'), { rel: 'stylesheet', href: 'https://geowidget.inpost.pl/inpost-geowidget.css' }),
-          Object.assign(document.createElement('script'), { src: 'https://geowidget.inpost.pl/inpost-geowidget.js', defer: true }),
-        );
-        document.addEventListener('byn-point', (ev) => {
-          const name = (ev as CustomEvent<{ name?: string }>).detail?.name ?? '';
-          const input = q<HTMLInputElement>('#co-locker');
-          input.value = name;
-          q('[data-locker-hint]').textContent = fill(t.lockerSelected, { name });
-          check('locker');
-          geo.close();
-          input.focus();
+        // Dokumentacja pokazuje dwa warianty `onpoint`: funkcja globalna (punkt jako argument) albo zdarzenie DOM
+        // (punkt w `detail` lub `details` - przykłady są niespójne). Obsługujemy oba; podwójne wywołanie nic nie psuje.
+        (window as unknown as Record<string, unknown>)[POINT_CALLBACK] = onPointSelected;
+        document.addEventListener(POINT_CALLBACK, (ev) => {
+          const e = ev as CustomEvent<GeoPoint> & { details?: GeoPoint };
+          onPointSelected(e.detail ?? e.details);
         });
+        const el = document.createElement('inpost-geowidget');
+        Object.entries({ token: map.dataset.token ?? '', language: 'pl', config: 'parcelCollect', onpoint: POINT_CALLBACK }).forEach(([k, v]) => el.setAttribute(k, v));
+        map.append(el);
+        const host = map.dataset.host;
+        document.head.append(
+          Object.assign(document.createElement('link'), { rel: 'stylesheet', href: `${host}/inpost-geowidget.css` }),
+          Object.assign(document.createElement('script'), { src: `${host}/inpost-geowidget.js`, defer: true }),
+        );
       }
       geo.showModal();
     });

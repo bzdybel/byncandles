@@ -201,6 +201,37 @@ test('P24: powiadomienie zginęło → cron pyta P24 i opłaca; nieopłacone po 
   assert.equal((await admin(env, unpaid.number)).order.status, 'EXPIRED');
 });
 
+test('P24: powiadomienie nie dociera (np. localhost) → strona powrotu pyta P24 i pokazuje „opłacone”', async () => {
+  const env = testEnv(P24_ENV);
+  const { orderId, number } = await p24Order(env);
+  globalThis.fetch = routeFetch([[`/by/sessionId/${orderId}`, 200, { data: { status: 0, orderId: 0, amount: 0 } }]]);
+  assert.equal((await (await call(env, `/api/orders/${orderId}`)).json()).status, 'pending', 'jeszcze nie zapłacone');
+
+  globalThis.fetch = routeFetch([]); // P24 niedostępne - strona działa, status z bazy
+  assert.equal((await call(env, `/api/orders/${orderId}`)).status, 200);
+
+  globalThis.fetch = routeFetch([
+    [`/by/sessionId/${orderId}`, 200, { data: { status: 1, orderId: 555, amount: 5499 } }],
+    ['/transaction/verify', 200, { data: { status: 'success' } }],
+  ]);
+  assert.equal((await (await call(env, `/api/orders/${orderId}`)).json()).status, 'paid');
+  const detail = await admin(env, number);
+  assert.equal(detail.order.paymentReference, '555');
+  const recovered = detail.events.find((e: { type: string }) => e.type === OrderEvent.PAYMENT_RECOVERED);
+  assert.deepEqual([recovered.level, recovered.data.source], ['info', 'return_page']);
+  assert.ok(types(detail).includes(OrderEvent.PAYMENT_VERIFIED), 'wpłata wstępna potwierdzona w P24');
+});
+
+test('admin: „klient pisze, że zapłacił” → sprawdzenie płatności w P24 na żądanie', async () => {
+  const env = testEnv(P24_ENV);
+  const { orderId, number } = await p24Order(env);
+  globalThis.fetch = routeFetch([[`/by/sessionId/${orderId}`, 200, { data: { status: 2, orderId: 777, amount: 5499 } }]]);
+  const res = await call(env, `/api/admin/orders/${number}/check-payment`, { method: 'POST', headers: adminAuth });
+  assert.equal((await res.json()).order.status, 'PAID');
+  assert.equal((await call(env, `/api/admin/orders/${number}/check-payment`, { method: 'POST', headers: adminAuth })).status, 409, 'już opłacone');
+  assert.equal((await call(env, `/api/admin/orders/${number}/check-payment`, { method: 'POST' })).status, 401);
+});
+
 test('ShipX niedostępny: błąd w dzienniku, sklep czeka, cron kończy; po wyczerpaniu prób sklep dostaje ostrzeżenie', async () => {
   const env = testEnv({ MOCK_INPOST: undefined, SHIPX_TOKEN: 't', SHIPX_ORG_ID: '1' });
   globalThis.fetch = routeFetch([['/points/', 200, {}], ['/shipments', 503, { error: 'down' }]]);

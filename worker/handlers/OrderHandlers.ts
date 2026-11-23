@@ -5,7 +5,8 @@
  *   POST /api/payments/webhook     powiadomienie Przelewy24 (urlStatus)
  */
 import { checkPrerequisites } from '../config/prerequisites.ts';
-import { publicStatus } from '../domain/order.ts';
+import { LogKey } from '../constants/logKeys.ts';
+import { isAwaitingPayment, publicStatus } from '../domain/order.ts';
 import { CaptchaError, ConfigurationError, NotFoundError, UnsupportedMediaTypeError } from '../errors/AppError.ts';
 import { clientHash, clientIp, json, readBody, readJson } from '../utils/http.ts';
 import { isUuid } from '../utils/ports.ts';
@@ -24,10 +25,22 @@ export const CreateOrderHandler: Handler = async ({ request, url, services: s })
   return json(placed, 201);
 };
 
-/** Klucz to UUID z linku powrotu - nie do zgadnięcia; zwracamy tylko numer i status, bez danych osobowych. */
+/**
+ * Status dla strony podziękowania. Klucz to UUID z linku powrotu - nie do zgadnięcia; zwracamy tylko numer i status.
+ * Zamówienie czekające na płatność sprawdzamy od razu u dostawcy: klient wraca z P24 zwykle szybciej niż powiadomienie,
+ * a gdy powiadomienie nie dotrze (awaria, lokalnie localhost), i tak zobaczy „opłacone”. Limit odczytów: READ_LIMITER.
+ */
 export const OrderStatusHandler: Handler = async ({ params, services: s }) => {
-  const order = isUuid(params.id) ? await s.storage.getById(params.id) : null;
+  let order = isUuid(params.id) ? await s.storage.getById(params.id) : null;
   if (!order) throw new NotFoundError('Order');
+  if (s.config.payments.kind === 'przelewy24' && isAwaitingPayment(order) && order.paymentPendingAt) {
+    try {
+      if ((await s.payment.checkWithProvider(order, 'return_page')).result !== 'unpaid') order = (await s.storage.getById(order.id)) ?? order;
+    } catch (error) {
+      // Niedostępny dostawca nie psuje strony - zostaje status z bazy, a powiadomienie / cron dokończą sprawę.
+      s.logger.warn({ message: 'Payment check on return page failed', metadata: { [LogKey.ORDER_ID]: order.id }, error });
+    }
+  }
   return json({ number: order.number, status: publicStatus(order, s.clock.now()) });
 };
 

@@ -9,7 +9,7 @@ import type { Env } from './config/env.ts';
 import { checkPrerequisites } from './config/prerequisites.ts';
 import { LogKey } from './constants/logKeys.ts';
 import { AppError, RateLimitedError, ValidationError } from './errors/AppError.ts';
-import { AdminListOrdersHandler, AdminOrderHandler, AdminRetryOrderHandler } from './handlers/AdminOrdersHandler.ts';
+import { AdminCheckPaymentHandler, AdminListOrdersHandler, AdminOrderHandler, AdminRetryOrderHandler } from './handlers/AdminOrdersHandler.ts';
 import { CatalogHandler } from './handlers/CatalogHandler.ts';
 import { DevPaymentHandler } from './handlers/DevPaymentHandler.ts';
 import { CreateOrderHandler, OrderStatusHandler, PaymentWebhookHandler } from './handlers/OrderHandlers.ts';
@@ -46,6 +46,7 @@ const ROUTES: Route[] = [
   { method: 'GET', pattern: /^\/api\/admin\/orders\/?$/, handler: AdminListOrdersHandler, admin: true, rateLimit: { kind: 'write', key: 'admin' } },
   { method: 'GET', pattern: /^\/api\/admin\/orders\/(?<key>[^/]+)\/?$/, handler: AdminOrderHandler, admin: true, rateLimit: { kind: 'write', key: 'admin' } },
   { method: 'POST', pattern: /^\/api\/admin\/orders\/(?<key>[^/]+)\/retry\/?$/, handler: AdminRetryOrderHandler, admin: true, rateLimit: { kind: 'write', key: 'admin' } },
+  { method: 'POST', pattern: /^\/api\/admin\/orders\/(?<key>[^/]+)\/check-payment\/?$/, handler: AdminCheckPaymentHandler, admin: true, rateLimit: { kind: 'write', key: 'admin' } },
 ];
 
 const SLOW_MS = 1000;
