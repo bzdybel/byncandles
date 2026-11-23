@@ -1,0 +1,102 @@
+---
+/**
+ * Powrót z Przelewy24 (urlReturn). Status pobieramy z API, bo P24 wraca tu także po anulowaniu płatności.
+ * Opłacone → czyścimy koszyk. Czeka → odpytujemy jeszcze chwilę (powiadomienie P24 bywa sekundy za klientem).
+ */
+import Base from '../../layouts/Base.astro';
+import { common, orderResult as t } from '../../i18n/pl';
+import { SITE } from '../../lib/site';
+
+const clientTexts = { paidLead: t.paidLead, pendingLead: t.pendingLead, expiredLead: t.expiredLead };
+export type ClientTexts = typeof clientTexts;
+---
+<Base title={t.metaTitle} noindex>
+  <section class="container section result" aria-live="polite">
+    <div data-state="checking">
+      <p class="t-lead">{t.checking}</p>
+    </div>
+
+    <div data-state="paid" hidden>
+      <h1>{t.paidTitle}</h1>
+      <p class="t-lead" data-lead></p>
+      <p>{t.paidNext}</p>
+      <div class="actions"><a class="btn btn--lg" href="/sklep/">{t.backToShop}</a></div>
+    </div>
+
+    <div data-state="pending" hidden>
+      <h1>{t.pendingTitle}</h1>
+      <p class="t-lead" data-lead></p>
+      <div class="actions">
+        <a class="btn btn--ghost btn--lg" href={SITE.instagram} target="_blank" rel="noopener">{common.openInstagram}</a>
+      </div>
+    </div>
+
+    <div data-state="expired" hidden>
+      <h1>{t.expiredTitle}</h1>
+      <p class="t-lead" data-lead></p>
+      <div class="actions"><a class="btn btn--lg" href="/zamowienie/">{t.retry}</a></div>
+    </div>
+
+    <div data-state="missing" hidden>
+      <h1>{t.notFoundTitle}</h1>
+      <p class="t-lead">{t.notFoundLead}</p>
+      <div class="actions">
+        <a class="btn btn--lg" href="/sklep/">{t.backToShop}</a>
+        <a class="btn btn--ghost btn--lg" href={SITE.instagram} target="_blank" rel="noopener">{common.openInstagram}</a>
+      </div>
+    </div>
+  </section>
+
+  <script type="application/json" id="result-texts" set:html={JSON.stringify(clientTexts)} />
+</Base>
+
+<script>
+  import { fill } from '../../lib/i18n';
+  import { clear, PENDING_ORDER_KEY } from '../../scripts/cart-store';
+
+  type State = 'checking' | 'paid' | 'pending' | 'expired' | 'missing';
+  const t = JSON.parse(document.getElementById('result-texts')?.textContent ?? '{}') as import('./dziekuje.astro').ClientTexts;
+  const id = new URLSearchParams(location.search).get('id') ?? '';
+  const POLL_MS = 3000;
+  const MAX_POLLS = 10;
+
+  function show(state: State, number = '') {
+    document.querySelectorAll<HTMLElement>('[data-state]').forEach((el) => {
+      el.hidden = el.dataset.state !== state;
+      const lead = el.querySelector<HTMLElement>('[data-lead]');
+      const key = `${state}Lead` as keyof typeof t;
+      if (lead && key in t) lead.textContent = fill(t[key], { number });
+    });
+  }
+
+  async function check(poll = 0): Promise<void> {
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return show('missing');
+    try {
+      const res = await fetch(`/api/orders/${id}`, { cache: 'no-store' });
+      if (res.status === 404) return show('missing');
+      if (!res.ok) throw new Error(String(res.status));
+      const { number, status } = (await res.json()) as { number: string; status: 'paid' | 'pending' | 'expired' };
+      if (status === 'paid') {
+        clear();
+        try { localStorage.removeItem(PENDING_ORDER_KEY); } catch { /* tryb prywatny */ }
+        return show('paid', number);
+      }
+      if (status === 'pending' && poll < MAX_POLLS) {
+        if (poll === 0) show('checking');
+        setTimeout(() => void check(poll + 1), POLL_MS);
+        return;
+      }
+      show(status, number);
+    } catch {
+      if (poll < MAX_POLLS) setTimeout(() => void check(poll + 1), POLL_MS);
+      else show('missing');
+    }
+  }
+
+  void check();
+</script>
+
+<style>
+  .result { max-width: 44rem; }
+  .actions { margin-top: var(--sp-6); }
+</style>

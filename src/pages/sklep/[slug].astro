@@ -87,12 +87,14 @@ const crumbs = [
           data-max={p.stan}
           data-img={miniatura.src}
           data-url={urlProduktu(produkt)}
+          data-sold-out={status.wyprzedany}
           disabled={!kupno}
         >
           {kupno ? t.addToCart : status[p.status]}
         </button>
         <p class="note center">{wysylka}</p>
-        {kupno && p.stan <= 3 && <p class="note center">{fill(t.lowStock, { n: p.stan })}</p>}
+        {/* Stan z panelu = sztuki wystawione łącznie; ile zostało po sprzedaży, wie tylko /katalog.json (Worker + D1). */}
+        {kupno && <p class="note center" data-low-stock={t.lowStock} hidden></p>}
 
         {p.opis && <div class="desc">{paras(p.opis).map((para) => <p>{para}</p>)}</div>}
 
@@ -123,6 +125,33 @@ const crumbs = [
     </div>
   </div>
 </Base>
+
+<script>
+  // Aktualny stan (po sprzedaży online) z /katalog.json - limit w koszyku, „Zostało N szt.” i wyprzedanie bez przebudowy strony.
+  import { fill } from '../../lib/i18n';
+  import type { Catalog } from '../../scripts/cart-store';
+
+  const LOW_STOCK = 3;
+  const btn = document.querySelector<HTMLButtonElement>('[data-add-to-cart]');
+  const note = document.querySelector<HTMLElement>('[data-low-stock]');
+  if (btn && !btn.disabled) {
+    fetch('/katalog.json', { cache: 'no-cache' })
+      .then((r) => (r.ok ? (r.json() as Promise<Catalog>) : null))
+      .then((catalog) => {
+        if (!catalog) return;
+        const left = catalog[btn.dataset.id ?? '']?.[2] ?? 0;
+        btn.dataset.max = String(left);
+        if (left <= 0) {
+          btn.disabled = true;
+          btn.textContent = btn.dataset.soldOut ?? '';
+        } else if (note && left <= LOW_STOCK) {
+          note.textContent = fill(note.dataset.lowStock ?? '', { n: left });
+          note.hidden = false;
+        }
+      })
+      .catch(() => { /* offline - koszyk i serwer i tak pilnują stanu */ });
+  }
+</script>
 
 <style>
   @media (min-width: 56rem) { .info { position: sticky; top: var(--sp-5); } }

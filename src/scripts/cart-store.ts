@@ -62,6 +62,15 @@ export function setQty(id: string, qty: number): void {
 
 export const remove = (id: string): void => write(read().filter((i) => i.id !== id));
 
+/** Czyści koszyk - po potwierdzonej płatności. */
+export const clear = (): void => write([]);
+
+/**
+ * Ostatnie nieopłacone zamówienie z tej przeglądarki (UUID). Przy ponownej próbie serwer je anuluje
+ * i zwalnia sztuki - inaczej klient blokowałby sam sobie ostatnią sztukę do końca rezerwacji.
+ */
+export const PENDING_ORDER_KEY = 'byn-pending-order';
+
 /** Konfiguracja sklepu osadzona raz na stronie (Base.astro → #shop-config). */
 export function readConfig(): ShopConfig {
   const el = document.getElementById('shop-config');

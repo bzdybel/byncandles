@@ -1,14 +1,36 @@
 {
-  // Cloudflare Workers — strona w 100% statyczna (tylko assets, bez skryptu Workera).
-  // Żądania do plików statycznych są darmowe i nie liczą się do limitów Workers.
-  // Jawna konfiguracja wyłącza automatyczną konfigurację Cloudflare podczas buildu.
+  // Cloudflare Workers: statyczna strona (dist/) + Worker z API zamówień (worker/index.ts).
+  // Worker dostaje wyłącznie ścieżki z `run_worker_first` - cała reszta to darmowe pliki statyczne z CDN.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "byncandles",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-11-01",
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
     "html_handling": "auto-trailing-slash",
-    "not_found_handling": "404-page"
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*", "/katalog.json"]
+  },
+  // Zamówienia, dziennik zdarzeń i powiadomienia P24. Utworzenie: `npx wrangler d1 create byncandles`
+  // → wklej database_id poniżej; schemat: `npm run db:migrate`.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "byncandles",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  // Co 10 min: zgubione powiadomienia P24, wygasłe rezerwacje, ponowienie przesyłek i e-maili (worker/jobs/).
+  "triggers": { "crons": ["*/10 * * * *"] },
+  // Logi Workera (JSON z correlationId) w Cloudflare → Workers → byncandles → Logs.
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  // Jawne, niesekretne ustawienia. Sekrety: `npx wrangler secret put NAZWA` (lista w README).
+  "vars": {
+    "SANDBOX": "1",
+    "SHIPX_PARCEL": "small",
+    "SHIPX_SENDING_METHOD": "parcel_locker"
   },
   "workers_dev": true,
   // Osobny link podglądu dla każdej gałęzi / PR.

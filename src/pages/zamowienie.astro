@@ -8,13 +8,14 @@ import { STORAGE_KEY } from '../scripts/cart-store';
 
 // Token Geowidgetu z Managera Paczek InPost (zmienna buildu). Bez tokenu - pole na kod paczkomatu.
 const geoToken = import.meta.env.PUBLIC_INPOST_GEOWIDGET_TOKEN ?? '';
-// API zamówień/płatności (kolejny etap). Bez niego - podsumowanie do wysłania na Instagramie.
+// API zamówień i płatności (Worker, zwykle `/api/orders`). Bez niego - podsumowanie do wysłania na Instagramie.
 const endpoint = import.meta.env.PUBLIC_CHECKOUT_ENDPOINT ?? '';
 
 const ERRORS: Record<Field, string> = { name: t.nameError, email: t.emailError, phone: t.phoneError, locker: t.lockerError, terms: t.termsError };
 // Teksty potrzebne skryptowi strony - osadzone tutaj, a nie importowane w JS (mniejsza wspólna paczka).
 const clientTexts = {
   text: t.text, free: cart.free, submitting: t.submitting, submitPay: t.submitPay, submitError: t.submitError,
+  errorRef: t.errorRef, stockError: t.stockError,
   copied: t.copied, copyFailed: t.copyFailed, lockerSelected: t.lockerSelected,
 };
 export type ClientTexts = typeof clientTexts;
@@ -129,7 +130,7 @@ const fields = [
   import { fill } from '../lib/i18n';
   import { formatGrosze } from '../lib/money';
   import { totals } from '../lib/pricing';
-  import { CHANGE_EVENT, read, readConfig, sync } from '../scripts/cart-store';
+  import { CHANGE_EVENT, PENDING_ORDER_KEY, read, readConfig, sync } from '../scripts/cart-store';
   import { renderTotals } from '../scripts/cart-ui';
 
   const q = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector<T>(s)!;
@@ -182,25 +183,48 @@ const fields = [
   });
 
   async function submitToApi(endpoint: string, data: OrderForm, items: ReturnType<typeof read>) {
-    // Kolejny etap: API przelicza ceny po stronie serwera, rezerwuje stan atomowo i zwraca link do Przelewy24.
+    // API przelicza ceny po stronie serwera, rezerwuje stan atomowo i zwraca link do płatności (worker/handlers/CreateOrderHandler.ts).
     const btn = q<HTMLButtonElement>('[data-co-submit]');
+    const reset = () => {
+      btn.dataset.state = '';
+      btn.disabled = false;
+      btn.textContent = t.submitPay;
+    };
     btn.dataset.state = 'loading';
     btn.disabled = true;
     btn.textContent = t.submitting;
+    let previous: string | null = null;
+    try { previous = localStorage.getItem(PENDING_ORDER_KEY); } catch { /* tryb prywatny */ }
+    let ref = '';
     try {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, phone: normalizePhone(data.phone), locker: normalizeLocker(data.locker), items: items.map(({ id, qty }) => ({ id, qty })) }),
+        body: JSON.stringify({
+          ...data,
+          phone: normalizePhone(data.phone),
+          locker: normalizeLocker(data.locker),
+          items: items.map(({ id, qty }) => ({ id, qty })),
+          ...(previous && { previous }),
+        }),
       });
-      const json = await res.json();
+      ref = res.headers.get('correlation-id') ?? '';
+      const json = await res.json().catch(() => ({}));
+      if (res.status === 409 && json.error === 'stock') {
+        // Ktoś kupił ostatnie sztuki - uzgodnij koszyk i pokaż, co się zmieniło.
+        await sync(true);
+        render();
+        reset();
+        alert(t.stockError);
+        return;
+      }
       if (!res.ok || !json.redirect) throw new Error(json.error);
+      try { localStorage.setItem(PENDING_ORDER_KEY, json.orderId); } catch { /* bez ponownej próby - rezerwacja wygaśnie sama */ }
       location.href = json.redirect;
     } catch {
-      btn.dataset.state = '';
-      btn.disabled = false;
-      btn.textContent = t.submitPay;
-      alert(t.submitError);
+      reset();
+      // Kod błędu = correlationId żądania: po nim znajdę dokładnie to zamówienie w logach.
+      alert(ref ? `${t.submitError}\n\n${fill(t.errorRef, { ref: ref.slice(0, 8) })}` : t.submitError);
     }
   }
 

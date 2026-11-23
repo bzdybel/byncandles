@@ -8,7 +8,7 @@ Instagram: [@by_n.candles](https://www.instagram.com/by_n.candles/)
 - [Astro](https://astro.build) - statyczny HTML, minimum JS (priorytet: SEO i szybkość)
 - Hosting: Cloudflare Workers - statyczne assets (darmowe, adres tymczasowy `byncandles.devbz.workers.dev`)
 - Keystatic (CMS na plikach w repo)
-- Planowane: Cloudflare D1 (zamówienia), InPost Geowidget + ShipX, Przelewy24
+- Worker (`worker/`) - API zamówień: Cloudflare D1, Przelewy24, InPost ShipX, Resend
 
 ## Uruchomienie
 
@@ -21,6 +21,11 @@ npm run build    # wynik w dist/
 npm run preview
 npm test         # testy logiki (ceny, koszyk, walidacja, teksty)
 npm run check    # typy
+
+# API zamówień lokalnie (Worker + lokalna D1, płatności/przesyłki/e-maile „na niby”):
+cp .dev.vars.example .dev.vars
+npm run db:migrate:local
+npm run worker:dev   # http://localhost:8787 - cała strona + /api/*
 ```
 
 ## Architektura
@@ -61,9 +66,8 @@ tests/                  # npm test (node --test, bez zależności)
 - Koszyk każdego klienta żyje w jego przeglądarce; synchronizuje się między kartami (`storage`).
 - Ceny i stany w koszyku są uzgadniane z `/katalog.json` (najwyżej raz na minutę, walidacja ETag → zwykle 304)
   oraz zawsze przed złożeniem zamówienia: produkt wyprzedany znika, zmieniona cena się aktualizuje, ilość jest przycinana.
-- **Wymóg dla API zamówień (kolejny etap):** serwer przelicza ceny sam (klient wysyła tylko `id` + `qty`)
-  i rezerwuje stan atomowo, np. w D1: `UPDATE produkty SET stan = stan - ? WHERE id = ? AND stan >= ?` -
-  inaczej dwie osoby mogą kupić ostatnią sztukę.
+- API zamówień przelicza ceny samo (klient wysyła tylko `id` + `qty`) i rezerwuje stan atomowo w D1 -
+  dwie osoby nie kupią ostatniej sztuki (szczegóły: sekcja „API zamówień”).
 
 ### Wydajność (decyzje)
 - Jost jako font zmienny (2 pliki zamiast 6); fonty 6 zapytań, ~90 KB, preload tylko łacińskich.
@@ -90,11 +94,69 @@ Logowanie przez GitHub dla Natalii (edycja bez lokalnego środowiska) - kolejny 
 
 - Koszyk: `src/scripts/cart-store.ts` + `src/lib/pricing.ts` + panel `src/components/CartDrawer.astro` (`<dialog>`) - szczegóły w sekcji Architektura.
 - Promocja 2+1 i koszty dostawy: **Ustawienia sklepu** w panelu Keystatic.
-- Zamówienie: `/zamowienie/`. Zmienne buildu (Cloudflare → Settings → Build → Variables):
+- Zamówienie: `/zamowienie/` → `POST /api/orders` → Przelewy24 → `/zamowienie/dziekuje/`.
+  Zmienne buildu (Cloudflare → Settings → Build → Variables):
+  - `PUBLIC_CHECKOUT_ENDPOINT=/api/orders` - włącza płatności online. Bez niego formularz tworzy
+    podsumowanie do wysłania na Instagramie (wyłącznik awaryjny: usuń zmienną i przebuduj).
   - `PUBLIC_INPOST_GEOWIDGET_TOKEN` - token Geowidgetu z Managera Paczek InPost (mapa paczkomatów).
     Bez niego klient wpisuje kod paczkomatu ręcznie.
-  - `PUBLIC_CHECKOUT_ENDPOINT` - API zamówień i płatności Przelewy24 (kolejny etap).
-    Bez niego formularz tworzy podsumowanie do wysłania w wiadomości na Instagramie.
+
+## API zamówień (worker/)
+
+Strona zostaje statyczna; Worker obsługuje tylko `/api/*` i `/katalog.json` (`run_worker_first` w `wrangler.jsonc`).
+Wzorce jak w lavirant-vc: porty i adaptery (prawdziwy dostawca / noop), handlery → serwisy → `OrderStorage` (cały SQL),
+`AppError` + centralna obsługa błędów, sprawdzenie konfiguracji (`config/prerequisites.ts`), logi strukturalne z `correlationId`.
+
+```
+worker/
+  index.ts                    # router, correlationId, log odpowiedzi, błędy, cron
+  handlers/                   # CreateOrder, PaymentWebhook, OrderStatus, Catalog, Admin*, DevPayment
+  services/                   # PaymentStatusService (po opłaceniu), OrderJournal, StockService, OrderFactory, init.ts
+  payments/ shipping/ email/  # port + adapter (Przelewy24 / ShipX / Resend) + noop
+  jobs/ReconcileOrdersJob.ts  # cron co 10 min - siatka bezpieczeństwa
+  storage/OrderStorage.ts     # D1
+migrations/                   # schemat D1
+```
+
+**Przepływ:** walidacja + ceny z katalogu z buildu (klient wysyła tylko `id` + `qty`) → zapis i **atomowa rezerwacja**
+sztuk w jednym batchu D1 → rejestracja transakcji P24 → klient płaci → powiadomienie P24 (podpis SHA-384) →
+weryfikacja → `PAID` → przesyłka ShipX → e-mail do klienta → powiadomienie sklepu.
+Każdy krok po opłaceniu jest osobny i idempotentny; nieudany ponawia cron (do 3 prób), potem decyduje człowiek.
+
+**Stan magazynowy:** dostępne = `stan` z panelu − sztuki w zamówieniach opłaconych i czekających na płatność
+(rezerwacja 45 min, P24 daje klientowi 30). `stan` w panelu = ile sztuk łącznie wystawiono - dorobione sztuki się **dodaje**,
+sprzedaż online odejmuje się sama. `/katalog.json` i strona produktu pokazują stan po sprzedaży.
+
+**Cron (co 10 min):** pyta P24 o zamówienia bez powiadomienia (zgubiony webhook → opłaca), wygasza nieopłacone (`EXPIRED`),
+ponawia brakującą przesyłkę / e-maile.
+
+### Co się stało z zamówieniem? (logi i dziennik)
+
+1. **Dziennik zamówienia** (trwały, w D1) - każdy krok z wynikiem, błędem i `correlationId`:
+   ```sh
+   curl -u admin:$ADMIN_PASSWORD https://<strona>/api/admin/orders/BN-7K3Q9X     # zamówienie, pozycje, dziennik, surowe webhooki P24
+   curl -u admin:$ADMIN_PASSWORD 'https://<strona>/api/admin/orders?status=PAID'  # lista z kolumną „problems”
+   curl -u admin:$ADMIN_PASSWORD -X POST https://<strona>/api/admin/orders/BN-7K3Q9X/retry  # ponów przesyłkę/e-maile po naprawie
+   ```
+   Albo SQL: `npx wrangler d1 execute byncandles --remote --command "SELECT * FROM order_events WHERE order_id = (SELECT id FROM orders WHERE number = 'BN-7K3Q9X')"`.
+2. **Logi Workera** (Cloudflare → Workers → byncandles → Logs, ze stosem błędów i odpowiedziami dostawców):
+   filtr `correlationId` z dziennika albo `metadata.orderNumber`. Klient przy błędzie widzi „Kod błędu” =
+   pierwsze 8 znaków `correlationId` (filtr „contains”). Każda odpowiedź API ma nagłówek `correlation-id`.
+3. **Powiadomienia P24** - tabela `webhook_events`: każde, także odrzucone (zły podpis) i powtórzone, z surową treścią.
+
+Typy zdarzeń: `worker/constants/orderStatus.ts` (`OrderEvent`), klucze metadanych w logach: `worker/constants/logKeys.ts`.
+
+### Uruchomienie produkcyjne (jednorazowo)
+
+1. `npx wrangler d1 create byncandles` → `database_id` do `wrangler.jsonc`; `npm run db:migrate`
+   (każda nowa migracja: `npm run db:migrate` **przed** wdrożeniem kodu, który jej potrzebuje).
+2. Sekrety (`npx wrangler secret put NAZWA`): `P24_MERCHANT_ID`, `P24_API_KEY`, `P24_CRC` (opcjonalnie `P24_POS_ID`),
+   `SHIPX_TOKEN`, `SHIPX_ORG_ID`, `RESEND_API_KEY`, `MAIL_FROM`, `SHOP_EMAIL`, `ADMIN_PASSWORD`.
+   Brak P24 = API odpowiada 503 (zamówienia nie przechodzą bez płatności); brak ShipX/Resend = ostrzeżenie w logach.
+3. Testy na sandboxach (`SANDBOX=1` w `wrangler.jsonc` → `vars`): zamówienie, płatność testowa, przesyłka w sandbox-Managerze Paczek.
+4. Produkcja: `SANDBOX` na `"0"`, prawdziwe klucze, `PUBLIC_CHECKOUT_ENDPOINT=/api/orders` w zmiennych buildu.
+   W panelu P24 nie trzeba ustawiać adresu powiadomień - Worker podaje go przy każdej transakcji.
+5. Przed startem: treść regulaminu i polityki prywatności (zamówienie z obowiązkiem zapłaty, dane osobowe w D1, Resend, InPost).
 
 ## SEO - zasady
 
@@ -106,7 +168,7 @@ Logowanie przez GitHub dla Natalii (edycja bez lokalnego środowiska) - kolejny 
 ## Deploy (Cloudflare Workers)
 
 Repo jest podpięte do Workers Builds - każdy push na `main` wdraża stronę, a każda gałąź/PR
-dostaje własny link podglądu. Konfiguracja: `wrangler.jsonc` (sama statyczna strona, bez skryptu Workera).
+dostaje własny link podglądu. Konfiguracja: `wrangler.jsonc` (statyczna strona + Worker API zamówień).
 
 - Build command: `npm run build` · Deploy command: `npx wrangler deploy`
 - Wersja Node z `.nvmrc`
