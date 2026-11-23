@@ -8,8 +8,10 @@ export const OrderEvent = {
   WEBHOOK_RECEIVED: 'webhook_received',
   WEBHOOK_REJECTED: 'webhook_rejected',
   WEBHOOK_DUPLICATE: 'webhook_duplicate',
-  /** Wpłata znaleziona przez cron - powiadomienie od P24 nie dotarło. */
+  /** Wpłata znaleziona przez cron - powiadomienie od P24 nie dotarło (anomalia). */
   PAYMENT_RECOVERED: 'payment_recovered',
+  /** Wpłata znaleziona przy sprawdzeniu na żądanie (strona podziękowania, admin) - zwykle wyprzedza powiadomienie. */
+  PAYMENT_CONFIRMED_BY_CHECK: 'payment_confirmed_by_check',
   PAYMENT_AMOUNT_MISMATCH: 'payment_amount_mismatch',
   PAYMENT_VERIFIED: 'payment_verified',
   PAYMENT_VERIFY_FAILED: 'payment_verify_failed',

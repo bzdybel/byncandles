@@ -14,7 +14,12 @@ import { MAX_ATTEMPTS } from '../../worker/domain/order.ts';
 import { adminAuth, captureConsole, ORDER_BODY, rateLimiter, routeFetch, testEnv } from './helpers.ts';
 
 const ORIGIN = 'https://sklep.test';
-const ctx = { waitUntil: () => {} };
+/** Zadania w tle (waitUntil) - `settle()` czeka na ich koniec, jak runtime Workers po odpowiedzi. */
+let background: Promise<unknown>[] = [];
+const ctx = { waitUntil: (task: Promise<unknown>) => void background.push(task) };
+const settle = async () => {
+  while (background.length) await Promise.all(background.splice(0));
+};
 type TestEnv = ReturnType<typeof testEnv>;
 
 const call = (env: TestEnv, path: string, init: RequestInit = {}) => worker.fetch(new Request(`${ORIGIN}${path}`, init), env, ctx);
@@ -26,7 +31,10 @@ const types = (detail: { events: Array<{ type: string }> }) => detail.events.map
 
 let con: ReturnType<typeof captureConsole>;
 const realFetch = globalThis.fetch;
-beforeEach(() => (con = captureConsole()));
+beforeEach(() => {
+  con = captureConsole();
+  background = [];
+});
 afterEach(() => {
   con.restore();
   globalThis.fetch = realFetch;
@@ -199,6 +207,44 @@ test('P24: powiadomienie zginęło → cron pyta P24 i opłaca; nieopłacone po 
   assert.deepEqual([stats.paid, stats.expired, stats.failed], [1, 1, 0]);
   assert.equal((await admin(env, paid.number)).order.status, 'PAID');
   assert.equal((await admin(env, unpaid.number)).order.status, 'EXPIRED');
+});
+
+test('P24: powiadomienie nie dociera (np. localhost) → strona powrotu pyta P24 i pokazuje „opłacone”', async () => {
+  const env = testEnv(P24_ENV);
+  const { orderId, number } = await p24Order(env);
+  globalThis.fetch = routeFetch([[`/by/sessionId/${orderId}`, 200, { data: { status: 0, orderId: 0, amount: 0 } }]]);
+  assert.equal((await (await call(env, `/api/orders/${orderId}`)).json()).status, 'pending', 'jeszcze nie zapłacone');
+
+  globalThis.fetch = routeFetch([]); // P24 niedostępne - strona działa, status z bazy, ostrzeżenie w logach
+  const down = await call(env, `/api/orders/${orderId}`);
+  assert.deepEqual([down.status, (await down.json()).status], [200, 'pending']);
+  assert.ok(con.logs.some((l) => l.level === 'warn' && l.message === 'Payment check on return page failed'));
+
+  globalThis.fetch = routeFetch([
+    [`/by/sessionId/${orderId}`, 200, { data: { status: 1, orderId: 555, amount: 5499 } }],
+    ['/transaction/verify', 200, { data: { status: 'success' } }],
+  ]);
+  assert.equal((await (await call(env, `/api/orders/${orderId}`)).json()).status, 'paid');
+  assert.equal(background.length, 1, 'przesyłka i e-maile w tle - klient nie czeka na ShipX i Resend');
+
+  await settle();
+  const detail = await admin(env, number);
+  assert.equal(detail.order.paymentReference, '555');
+  const checked = detail.events.find((e: { type: string }) => e.type === OrderEvent.PAYMENT_CONFIRMED_BY_CHECK);
+  assert.deepEqual([checked.level, checked.data.source], ['info', 'return_page']);
+  assert.ok(!types(detail).includes(OrderEvent.PAYMENT_RECOVERED), '„recovered” tylko dla crona (anomalia)');
+  assert.ok(types(detail).includes(OrderEvent.PAYMENT_VERIFIED), 'wpłata wstępna potwierdzona w P24');
+  assert.ok(types(detail).includes(OrderEvent.SHIPMENT_CREATED) && detail.order.emailSentAt, 'realizacja po odpowiedzi');
+});
+
+test('admin: „klient pisze, że zapłacił” → sprawdzenie płatności w P24 na żądanie', async () => {
+  const env = testEnv(P24_ENV);
+  const { orderId, number } = await p24Order(env);
+  globalThis.fetch = routeFetch([[`/by/sessionId/${orderId}`, 200, { data: { status: 2, orderId: 777, amount: 5499 } }]]);
+  const res = await call(env, `/api/admin/orders/${number}/check-payment`, { method: 'POST', headers: adminAuth });
+  assert.equal((await res.json()).order.status, 'PAID');
+  assert.equal((await call(env, `/api/admin/orders/${number}/check-payment`, { method: 'POST', headers: adminAuth })).status, 409, 'już opłacone');
+  assert.equal((await call(env, `/api/admin/orders/${number}/check-payment`, { method: 'POST' })).status, 401);
 });
 
 test('ShipX niedostępny: błąd w dzienniku, sklep czeka, cron kończy; po wyczerpaniu prób sklep dostaje ostrzeżenie', async () => {

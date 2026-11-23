@@ -9,7 +9,7 @@ import type { Env } from './config/env.ts';
 import { checkPrerequisites } from './config/prerequisites.ts';
 import { LogKey } from './constants/logKeys.ts';
 import { AppError, RateLimitedError, ValidationError } from './errors/AppError.ts';
-import { AdminListOrdersHandler, AdminOrderHandler, AdminRetryOrderHandler } from './handlers/AdminOrdersHandler.ts';
+import { AdminCheckPaymentHandler, AdminListOrdersHandler, AdminOrderHandler, AdminRetryOrderHandler } from './handlers/AdminOrdersHandler.ts';
 import { CatalogHandler } from './handlers/CatalogHandler.ts';
 import { DevPaymentHandler } from './handlers/DevPaymentHandler.ts';
 import { CreateOrderHandler, OrderStatusHandler, PaymentWebhookHandler } from './handlers/OrderHandlers.ts';
@@ -46,6 +46,7 @@ const ROUTES: Route[] = [
   { method: 'GET', pattern: /^\/api\/admin\/orders\/?$/, handler: AdminListOrdersHandler, admin: true, rateLimit: { kind: 'write', key: 'admin' } },
   { method: 'GET', pattern: /^\/api\/admin\/orders\/(?<key>[^/]+)\/?$/, handler: AdminOrderHandler, admin: true, rateLimit: { kind: 'write', key: 'admin' } },
   { method: 'POST', pattern: /^\/api\/admin\/orders\/(?<key>[^/]+)\/retry\/?$/, handler: AdminRetryOrderHandler, admin: true, rateLimit: { kind: 'write', key: 'admin' } },
+  { method: 'POST', pattern: /^\/api\/admin\/orders\/(?<key>[^/]+)\/check-payment\/?$/, handler: AdminCheckPaymentHandler, admin: true, rateLimit: { kind: 'write', key: 'admin' } },
 ];
 
 const SLOW_MS = 1000;
@@ -79,7 +80,7 @@ function logPrerequisitesOnce(s: Services): void {
 }
 
 export default {
-  async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const route = ROUTES.find((r) => r.method === request.method && r.pattern.test(url.pathname));
     // Ścieżka spoza API (np. HEAD /katalog.json) - zwykły plik statyczny.
@@ -96,7 +97,8 @@ export default {
       const services = createServices(env, logger, url.origin);
       logPrerequisitesOnce(services);
       await guard(route, request, env, services);
-      response = await route.handler({ request, url, env, services, params: { ...url.pathname.match(route.pattern)!.groups } });
+      const defer = (task: Promise<unknown>) => ctx.waitUntil(task);
+      response = await route.handler({ request, url, env, services, defer, params: { ...url.pathname.match(route.pattern)!.groups } });
     } catch (error) {
       response = errorResponse(error, logger);
     }

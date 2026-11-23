@@ -98,8 +98,10 @@ Logowanie przez GitHub dla Natalii (edycja bez lokalnego środowiska) - kolejny 
   Zmienne buildu (Cloudflare → Settings → Build → Variables):
   - `PUBLIC_CHECKOUT_ENDPOINT=/api/orders` - włącza płatności online. Bez niego formularz tworzy
     podsumowanie do wysłania na Instagramie (wyłącznik awaryjny: usuń zmienną i przebuduj).
-  - `PUBLIC_INPOST_GEOWIDGET_TOKEN` - token Geowidgetu z Managera Paczek InPost (mapa paczkomatów).
-    Bez niego klient wpisuje kod paczkomatu ręcznie.
+  - `PUBLIC_INPOST_GEOWIDGET_TOKEN` - token Geowidgetu (mapa paczkomatów): Manager Paczek → Moje konto → API → Geowidget → Generuj
+    (wymaga uzupełnionych danych firmy w zakładce „Dane”). Bez niego klient wpisuje kod paczkomatu ręcznie.
+  - `PUBLIC_INPOST_GEOWIDGET_SANDBOX=1` - token z sandboxa (sandbox-manager.paczkomaty.pl) i skrypt z hosta sandboxa.
+    Do testów na localhost: token z sandboxa wygenerowany **bez wpisanej domeny**.
 
 ## API zamówień (worker/)
 
@@ -161,6 +163,11 @@ dorobione sztuki się **dodaje**, sprzedaż online odejmuje się sama.
 | zamówienie z obcej strony (CSRF) | tylko `Content-Type: application/json` (preflight CORS) |
 | zgadywanie hasła admina | limit 10/min, porównanie w stałym czasie, ostrzeżenie przy haśle < 12 znaków |
 
+**Strona powrotu z P24** sama pyta P24 o stan transakcji (powiadomienie bywa sekundy za klientem albo nie dociera -
+np. lokalnie, bo P24 nie widzi `localhost`), więc klient od razu widzi „opłacone”; przesyłka i e-maile idą wtedy w tle
+(`waitUntil`). W dzienniku: `payment_confirmed_by_check` (zwykły wyścig) vs `payment_recovered` (cron - powiadomienie zginęło).
+P24 przy powrocie nie mówi, czy płatność odrzucono - nieopłacone zamówienie od razu pokazuje przycisk ponowienia.
+
 **Cron (co 10 min):** pyta P24 o zamówienia bez powiadomienia (zgubiony webhook → opłaca), wygasza nieopłacone (`EXPIRED`),
 ponawia brakującą przesyłkę / e-maile.
 
@@ -171,6 +178,7 @@ ponawia brakującą przesyłkę / e-maile.
    curl -u admin:$ADMIN_PASSWORD https://<strona>/api/admin/orders/BN-7K3Q9X     # zamówienie, pozycje, dziennik, surowe webhooki P24
    curl -u admin:$ADMIN_PASSWORD 'https://<strona>/api/admin/orders?status=PAID'  # lista z kolumną „problems”
    curl -u admin:$ADMIN_PASSWORD -X POST https://<strona>/api/admin/orders/BN-7K3Q9X/retry  # ponów przesyłkę/e-maile po naprawie
+   curl -u admin:$ADMIN_PASSWORD -X POST https://<strona>/api/admin/orders/BN-7K3Q9X/check-payment  # „klient pisze, że zapłacił”
    ```
    Albo SQL: `npx wrangler d1 execute byncandles --remote --command "SELECT * FROM order_events WHERE order_id = (SELECT id FROM orders WHERE number = 'BN-7K3Q9X')"`.
 2. **Logi Workera** (Cloudflare → Workers → byncandles → Logs, ze stosem błędów i odpowiedziami dostawców):
@@ -178,7 +186,7 @@ ponawia brakującą przesyłkę / e-maile.
    pierwsze 8 znaków `correlationId` (filtr „contains”). Każda odpowiedź API ma nagłówek `correlation-id`.
 3. **Powiadomienia P24** - tabela `webhook_events`: każde, także odrzucone (zły podpis) i powtórzone, z surową treścią.
 
-Typy zdarzeń: `worker/constants/orderStatus.ts` (`OrderEvent`), klucze metadanych w logach: `worker/constants/logKeys.ts`.
+Typy zdarzeń: `worker/domain/events.ts` (`OrderEvent`), klucze metadanych w logach: `worker/constants/logKeys.ts`.
 
 ### Uruchomienie produkcyjne (jednorazowo)
 

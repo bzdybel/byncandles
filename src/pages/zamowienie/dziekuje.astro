@@ -1,7 +1,8 @@
 ---
 /**
  * Powrót z Przelewy24 (urlReturn). Status pobieramy z API, bo P24 wraca tu także po anulowaniu płatności.
- * Opłacone → czyścimy koszyk. Czeka → odpytujemy jeszcze chwilę (powiadomienie P24 bywa sekundy za klientem).
+ * Opłacone → czyścimy koszyk. Czeka → od razu pokazujemy możliwość ponowienia (P24 nie mówi przy powrocie, czy płatność
+ * odrzucono), a w tle odpytujemy jeszcze chwilę - powiadomienie P24 bywa sekundy za klientem.
  */
 import Base from '../../layouts/Base.astro';
 import { common, orderResult as t } from '../../i18n/pl';
@@ -26,7 +27,10 @@ export type ClientTexts = typeof clientTexts;
     <div data-state="pending" hidden>
       <h1>{t.pendingTitle}</h1>
       <p class="t-lead" data-lead></p>
+      <p class="polling" data-polling hidden>{t.stillChecking}</p>
+      <p>{t.pendingRetry}</p>
       <div class="actions">
+        <a class="btn btn--lg" href="/zamowienie/">{t.retry}</a>
         <a class="btn btn--ghost btn--lg" href={SITE.instagram} target="_blank" rel="noopener">{common.openInstagram}</a>
       </div>
     </div>
@@ -60,13 +64,21 @@ export type ClientTexts = typeof clientTexts;
   const POLL_MS = 3000;
   const MAX_POLLS = 10;
 
+  let current: State = 'checking';
+
   function show(state: State, number = '') {
+    current = state;
     document.querySelectorAll<HTMLElement>('[data-state]').forEach((el) => {
       el.hidden = el.dataset.state !== state;
       const lead = el.querySelector<HTMLElement>('[data-lead]');
       const key = `${state}Lead` as keyof typeof t;
       if (lead && key in t) lead.textContent = fill(t[key], { number });
     });
+  }
+
+  function setPolling(on: boolean) {
+    const el = document.querySelector<HTMLElement>('[data-polling]');
+    if (el) el.hidden = !on;
   }
 
   async function check(poll = 0): Promise<void> {
@@ -81,15 +93,17 @@ export type ClientTexts = typeof clientTexts;
         try { localStorage.removeItem(PENDING_ORDER_KEY); } catch { /* tryb prywatny */ }
         return show('paid', number);
       }
-      if (status === 'pending' && poll < MAX_POLLS) {
-        if (poll === 0) show('checking');
-        setTimeout(() => void check(poll + 1), POLL_MS);
-        return;
-      }
+      const polling = status === 'pending' && poll < MAX_POLLS;
       show(status === 'pending' || status === 'expired' ? status : 'missing', number);
+      setPolling(polling);
+      if (polling) setTimeout(() => void check(poll + 1), POLL_MS);
     } catch {
       if (poll < MAX_POLLS) setTimeout(() => void check(poll + 1), POLL_MS);
-      else show('missing');
+      else {
+        setPolling(false);
+        // Chwilowy błąd sieci po pokazaniu „czeka” nie zamienia strony w „nie znaleziono”.
+        if (current === 'checking') show('missing');
+      }
     }
   }
 
@@ -99,4 +113,5 @@ export type ClientTexts = typeof clientTexts;
 <style>
   .result { max-width: 44rem; }
   .actions { margin-top: var(--sp-6); }
+  .polling { opacity: 0.75; font-style: italic; }
 </style>

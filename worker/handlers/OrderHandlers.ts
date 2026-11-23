@@ -24,10 +24,14 @@ export const CreateOrderHandler: Handler = async ({ request, url, services: s })
   return json(placed, 201);
 };
 
-/** Klucz to UUID z linku powrotu - nie do zgadnięcia; zwracamy tylko numer i status, bez danych osobowych. */
-export const OrderStatusHandler: Handler = async ({ params, services: s }) => {
-  const order = isUuid(params.id) ? await s.storage.getById(params.id) : null;
-  if (!order) throw new NotFoundError('Order');
+/**
+ * Status dla strony podziękowania (sprawdza też płatność u dostawcy - PaymentService.refreshForReturnPage).
+ * Klucz to UUID z linku powrotu - nie do zgadnięcia; zwracamy tylko numer i status. Limit odczytów: READ_LIMITER.
+ */
+export const OrderStatusHandler: Handler = async ({ params, services: s, defer }) => {
+  const stored = isUuid(params.id) ? await s.storage.getById(params.id) : null;
+  if (!stored) throw new NotFoundError('Order');
+  const order = await s.payment.refreshForReturnPage(stored, defer);
   return json({ number: order.number, status: publicStatus(order, s.clock.now()) });
 };
 

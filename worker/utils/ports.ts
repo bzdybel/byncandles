@@ -10,6 +10,9 @@ export interface IdProviderPort {
   bytes(n: number): Uint8Array;
 }
 
+/** Uruchamia zadanie w tle, po odpowiedzi (w Workers: ExecutionContext.waitUntil). */
+export type Defer = (task: Promise<unknown>) => void;
+
 export const SystemClock: ClockPort = { now: () => Date.now() };
 export const CryptoIdProvider: IdProviderPort = {
   uuid: () => crypto.randomUUID(),

@@ -4,12 +4,13 @@
  *   GET  /api/admin/orders?status=PAID&limit=20   lista ostatnich zamówień z problemami
  *   GET  /api/admin/orders/BN-7K3Q9X              zamówienie + pozycje + dziennik + surowe powiadomienia P24
  *   POST /api/admin/orders/BN-7K3Q9X/retry        ponów brakujące kroki (przesyłka, e-maile) po naprawie przyczyny
+ *   POST /api/admin/orders/BN-7K3Q9X/check-payment  zapytaj P24 o stan płatności („klient pisze, że zapłacił”)
  *
  * `correlationIds` w odpowiedzi = filtry do Cloudflare → Workers → Logs (pełne logi ze stosem błędów).
  */
 import * as z from 'zod/mini';
 import { LogKey } from '../constants/logKeys.ts';
-import { orderProblems, OrderStatus, type Order } from '../domain/order.ts';
+import { isAwaitingPayment, orderProblems, OrderStatus, type Order } from '../domain/order.ts';
 import { AppError, NotFoundError } from '../errors/AppError.ts';
 import { json } from '../utils/http.ts';
 import { isUuid } from '../utils/ports.ts';
@@ -79,5 +80,15 @@ export const AdminRetryOrderHandler: Handler = async (ctx) => {
   const fresh = await s.storage.getById(order.id);
   const results = fresh ? await s.fulfillment.fulfill(fresh) : null;
   if (!results) throw new AppError('Order is being processed right now, try again in a minute', { statusCode: 409, code: 'busy' });
+  return AdminOrderHandler(ctx);
+};
+
+/** „Klient pisze, że zapłacił”: zapytaj dostawcę płatności teraz, zamiast czekać na powiadomienie lub cron. */
+export const AdminCheckPaymentHandler: Handler = async (ctx) => {
+  const s = ctx.services;
+  const order = await findOrder(ctx);
+  if (!isAwaitingPayment(order)) throw new AppError(`Order is ${order.status}, not awaiting payment`, { statusCode: 409, code: 'not_awaiting' });
+  const { result, providerStatus } = await s.payment.checkWithProvider(order, 'admin');
+  s.logger.info({ message: 'Admin payment check', metadata: { [LogKey.ORDER_ID]: order.id, [LogKey.ORDER_NUMBER]: order.number, result, [LogKey.PROVIDER_STATUS]: providerStatus } });
   return AdminOrderHandler(ctx);
 };
