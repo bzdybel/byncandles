@@ -90,6 +90,7 @@ test('P24: powiadomienie bez podpisu, z obcym merchantem albo niepełne → odrz
   const n = await notification();
   assert.equal((await p24.parseNotification(JSON.stringify({ ...n, sign: undefined }))).valid, false);
   assert.equal((await p24.parseNotification('null')).valid, false);
+  assert.deepEqual(await p24.parseNotification(JSON.stringify({ ...n, amount: '5499' })), { valid: false, reason: 'invalid_payload', sessionId: 's1', reference: '777' }, 'kwota jako tekst');
   const foreign = await notification({ merchantId: 999 });
   assert.deepEqual(await p24.parseNotification(JSON.stringify(foreign)), { valid: false, reason: 'merchant_mismatch', sessionId: 's1', reference: '777' });
 });

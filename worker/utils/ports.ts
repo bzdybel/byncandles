@@ -1,4 +1,5 @@
 /** Porty czasu i identyfikatorów - w testach podmieniane na deterministyczne. */
+import * as z from 'zod/mini';
 
 export interface ClockPort {
   now(): number;
@@ -27,5 +28,6 @@ export class Stopwatch {
   }
 }
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export const isUuid = (v: unknown): v is string => typeof v === 'string' && UUID_RE.test(v);
+/** UUID (RFC 9562) - identyfikatory zamówień i correlationId. */
+export const uuidSchema = z.uuid();
+export const isUuid = (v: unknown): v is string => z.safeParse(uuidSchema, v).success;

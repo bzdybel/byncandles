@@ -3,8 +3,8 @@
  * Pojawia się w Managerze Paczek - sklep drukuje etykietę (i opłaca, jeśli konto nie ma umowy).
  * Dokumentacja: https://dokumentacja-inpost.atlassian.net/wiki/spaces/PL/pages/622754/API+ShipX
  */
-import { ProviderError } from '../errors/AppError.ts';
-import { callProvider, defaultFetch } from '../utils/providerHttp.ts';
+import * as z from 'zod/mini';
+import { callProvider, defaultFetch, expectResponse } from '../utils/providerHttp.ts';
 import type { ShipmentInput, ShipmentResult, ShippingProvider } from './ShippingProvider.ts';
 
 export interface ShipXConfig {
@@ -31,6 +31,8 @@ export function shipmentBody(cfg: Pick<ShipXConfig, 'parcelTemplate' | 'sendingM
   };
 }
 
+const shipmentResponse = z.object({ id: z.union([z.int(), z.string()]), status: z.optional(z.string()) });
+
 export class ShipXProvider implements ShippingProvider {
   readonly name = 'inpost_shipx';
   private readonly cfg: ShipXConfig;
@@ -42,7 +44,7 @@ export class ShipXProvider implements ShippingProvider {
   }
 
   async createShipment(input: ShipmentInput): Promise<ShipmentResult> {
-    const { ok, status, json } = await callProvider<{ id?: number | string; status?: string; message?: string; error?: string }>(
+    const res = await callProvider(
       this.name,
       `${shipxHost(this.cfg.sandbox)}/v1/organizations/${this.cfg.organizationId}/shipments`,
       {
@@ -52,8 +54,8 @@ export class ShipXProvider implements ShippingProvider {
       },
       this.fetchFn,
     );
-    // Pełna odpowiedź w błędzie: ShipX opisuje w `details`, które pole odrzucił (np. zły kod paczkomatu).
-    if (!ok || json.id === undefined) throw new ProviderError(this.name, `HTTP ${status} ${json.error ?? ''} ${json.message ?? ''}`.trim(), { response: json });
+    // W błędzie cała odpowiedź: ShipX opisuje w `details`, które pole odrzucił (np. zły kod paczkomatu).
+    const json = expectResponse(this.name, 'create shipment', res, shipmentResponse);
     return { id: String(json.id), status: json.status ?? 'created' };
   }
 }

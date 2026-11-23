@@ -124,6 +124,13 @@ worker/
 migrations/                   # schemat D1 (kolejne pliki = kolejne zmiany)
 ```
 
+**Walidacja (Zod, `zod/mini`):** jeden schemat formularza w `src/lib/checkout.ts` - ten sam w przeglądarce i w API
+(normalizuje telefon i kod paczkomatu). Po stronie serwera schematami są też: żądanie zamówienia (`OrderFactory`),
+powiadomienie P24, odpowiedzi P24/ShipX/Resend (`expectResponse` - zmiana API dostawcy = czytelny błąd w dzienniku),
+katalog i konfiguracja z buildu, zmienne środowiska (`appConfig` - zła wartość jest ignorowana z ostrzeżeniem)
+i parametry panelu admina. `zod/mini` zamiast `zod`: to samo API w wersji funkcyjnej, które się „wytrząsa” -
+strona zamówienia +5 KB gzip zamiast ~90 KB.
+
 **Przepływ:** walidacja + ceny z katalogu z buildu (klient wysyła tylko `id` + `qty`) → sprawdzenie, czy paczkomat
 istnieje (publiczne API InPost; awaria API nie blokuje) → zapis i **atomowa rezerwacja** sztuk w jednym batchu D1 →
 rejestracja transakcji P24 → klient płaci → powiadomienie P24 (podpis SHA-384) → weryfikacja → `PAID` + licznik sprzedaży →

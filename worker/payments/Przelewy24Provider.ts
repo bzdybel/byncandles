@@ -2,10 +2,10 @@
  * Przelewy24 REST API v1. Dokumentacja: https://developers.przelewy24.pl/
  * Podpisy: SHA-384 z JSON-a o ściśle określonej kolejności pól + klucz CRC.
  */
+import * as z from 'zod/mini';
 import { PAYMENT_TIME_LIMIT_MIN } from '../domain/order.ts';
-import { ProviderError } from '../errors/AppError.ts';
 import { safeEqual } from '../utils/http.ts';
-import { callProvider, defaultFetch } from '../utils/providerHttp.ts';
+import { callProvider, defaultFetch, expectResponse } from '../utils/providerHttp.ts';
 import type { ParsedNotification, PaymentNotification, PaymentProvider, ProviderPaymentState, RegisterPaymentInput } from './PaymentProvider.ts';
 
 export interface P24Config {
@@ -24,8 +24,26 @@ async function sha384(text: string): Promise<string> {
 /** JSON.stringify nie escapuje „/” ani polskich znaków - zgodnie z wymaganiem P24 (PHP: UNESCAPED_SLASHES|UNICODE). */
 export const p24Sign = (fields: Record<string, string | number>) => sha384(JSON.stringify(fields));
 
-/** Pola powiadomienia P24 w kolejności wymaganej do podpisu. */
-const NOTIFICATION_FIELDS = ['merchantId', 'posId', 'sessionId', 'amount', 'originAmount', 'currency', 'orderId', 'methodId', 'statement'] as const;
+/** Powiadomienie P24 (urlStatus). Kolejność kluczy = kolejność pól w podpisie. */
+export const notificationSchema = z.object({
+  merchantId: z.int(),
+  posId: z.int(),
+  sessionId: z.string(),
+  amount: z.int().check(z.positive()),
+  originAmount: z.int(),
+  currency: z.string(),
+  orderId: z.int(),
+  methodId: z.int(),
+  statement: z.string(),
+  sign: z.string(),
+});
+/** Tylko do opisu odrzuconego powiadomienia w dzienniku (bez ufania treści). */
+const looseIds = z.object({ sessionId: z.catch(z.optional(z.string()), undefined), orderId: z.catch(z.optional(z.union([z.int(), z.string()])), undefined) });
+
+const registerResponse = z.object({ data: z.object({ token: z.string().check(z.minLength(1)) }) });
+const verifyResponse = z.object({ data: z.object({ status: z.literal('success') }) });
+/** status: 0 brak wpłaty, 1 wpłata wstępna (do weryfikacji), 2 wpłata potwierdzona, 3 zwrot */
+const statusResponse = z.object({ data: z.object({ status: z.int(), orderId: z.int(), amount: z.int() }) });
 
 export class Przelewy24Provider implements PaymentProvider {
   readonly name = 'przelewy24';
@@ -41,8 +59,8 @@ export class Przelewy24Provider implements PaymentProvider {
     return this.cfg.sandbox ? 'https://sandbox.przelewy24.pl' : 'https://secure.przelewy24.pl';
   }
 
-  private call<T>(method: string, path: string, body?: unknown) {
-    return callProvider<T>(
+  private call(method: string, path: string, body?: unknown) {
+    return callProvider(
       this.name,
       `${this.host}${path}`,
       {
@@ -68,31 +86,30 @@ export class Przelewy24Provider implements PaymentProvider {
       encoding: 'UTF-8',
       sign: await p24Sign({ sessionId: input.sessionId, merchantId, amount: input.amount, currency: 'PLN', crc }),
     };
-    const { status, json } = await this.call<{ data?: { token?: string } }>('POST', '/api/v1/transaction/register', body);
-    const token = json.data?.token;
-    if (status !== 200 || !token) throw new ProviderError(this.name, `register HTTP ${status}`, { response: json });
+    const res = await this.call('POST', '/api/v1/transaction/register', body);
+    const { token } = expectResponse(this.name, 'register', res, registerResponse).data;
     return { redirectUrl: `${this.host}/trnRequest/${token}` };
   }
 
   async parseNotification(rawBody: string): Promise<ParsedNotification> {
-    let n: Record<string, unknown>;
+    let json: unknown;
     try {
-      n = JSON.parse(rawBody);
+      json = JSON.parse(rawBody);
     } catch {
       return { valid: false, reason: 'invalid_json' };
     }
-    if (!n || typeof n !== 'object') return { valid: false, reason: 'invalid_json' };
-    const sessionId = typeof n.sessionId === 'string' ? n.sessionId : undefined;
-    const reference = n.orderId !== undefined ? String(n.orderId) : undefined;
+    const ids = z.safeParse(looseIds, json);
+    const sessionId = ids.success ? ids.data.sessionId : undefined;
+    const reference = ids.success && ids.data.orderId !== undefined ? String(ids.data.orderId) : undefined;
     const rejected = (reason: string): ParsedNotification => ({ valid: false, reason, sessionId, reference });
 
-    if (typeof n.sign !== 'string') return rejected('missing_signature');
-    const signed = Object.fromEntries(NOTIFICATION_FIELDS.map((k) => [k, n[k] as string | number]));
-    if (!safeEqual(await p24Sign({ ...signed, crc: this.cfg.crc }), n.sign)) return rejected('bad_signature');
-    if (n.merchantId !== this.cfg.merchantId) return rejected('merchant_mismatch');
-    if (!sessionId || !reference || !Number.isInteger(n.amount)) return rejected('incomplete');
+    const parsed = z.safeParse(notificationSchema, json);
+    if (!parsed.success) return rejected('invalid_payload');
+    const { sign, ...fields } = parsed.data;
+    if (!safeEqual(await p24Sign({ ...fields, crc: this.cfg.crc }), sign)) return rejected('bad_signature');
+    if (fields.merchantId !== this.cfg.merchantId) return rejected('merchant_mismatch');
 
-    return { valid: true, notification: { sessionId, reference, amount: n.amount as number, currency: String(n.currency) } };
+    return { valid: true, notification: { sessionId: fields.sessionId, reference: String(fields.orderId), amount: fields.amount, currency: fields.currency } };
   }
 
   async verify(n: PaymentNotification): Promise<void> {
@@ -107,22 +124,16 @@ export class Przelewy24Provider implements PaymentProvider {
       orderId,
       sign: await p24Sign({ sessionId: n.sessionId, orderId, amount: n.amount, currency: n.currency, crc }),
     };
-    const { status, json } = await this.call<{ data?: { status?: string } }>('PUT', '/api/v1/transaction/verify', body);
-    if (status !== 200 || json.data?.status !== 'success') throw new ProviderError(this.name, `verify HTTP ${status}`, { response: json });
+    expectResponse(this.name, 'verify', await this.call('PUT', '/api/v1/transaction/verify', body), verifyResponse);
   }
 
   async status(sessionId: string): Promise<ProviderPaymentState> {
-    const { status, json } = await this.call<{ data?: { status?: number; orderId?: number; amount?: number } }>(
-      'GET',
-      `/api/v1/transaction/by/sessionId/${encodeURIComponent(sessionId)}`,
-    );
+    const res = await this.call('GET', `/api/v1/transaction/by/sessionId/${encodeURIComponent(sessionId)}`);
     // 404/400: klient nie wszedł do płatności - transakcji w P24 brak.
-    if (status === 404 || status === 400) return { state: 'unpaid', providerStatus: { httpStatus: status } };
-    const d = json.data;
-    if (status !== 200 || !d) throw new ProviderError(this.name, `status HTTP ${status}`, { response: json });
-    // 0 brak wpłaty, 1 wpłata wstępna (do weryfikacji), 2 wpłata potwierdzona, 3 zwrot
-    if (d.status === 1) return { state: 'paid_unverified', reference: String(d.orderId), amount: Number(d.amount), providerStatus: d.status };
-    if (d.status === 2) return { state: 'paid', reference: String(d.orderId), amount: Number(d.amount), providerStatus: d.status };
+    if (res.status === 404 || res.status === 400) return { state: 'unpaid', providerStatus: { httpStatus: res.status } };
+    const d = expectResponse(this.name, 'status', res, statusResponse).data;
+    if (d.status === 1) return { state: 'paid_unverified', reference: String(d.orderId), amount: d.amount, providerStatus: d.status };
+    if (d.status === 2) return { state: 'paid', reference: String(d.orderId), amount: d.amount, providerStatus: d.status };
     return { state: 'unpaid', providerStatus: d.status };
   }
 }

@@ -280,4 +280,5 @@ test('admin: bez hasła lub ze złym 401, lista z problemami', async () => {
   const list = await (await call(env, '/api/admin/orders?status=PAYMENT_PENDING', { headers: adminAuth })).json();
   assert.equal(list.length, 1);
   assert.equal((await call(env, '/api/admin/orders?status=XYZ', { headers: adminAuth })).status, 400);
+  assert.equal((await (await call(env, '/api/admin/orders?status=payment_pending&limit=abc', { headers: adminAuth })).json()).length, 1, 'wielkość liter i zły limit');
 });

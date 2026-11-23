@@ -7,15 +7,22 @@
  *
  * `correlationIds` w odpowiedzi = filtry do Cloudflare → Workers → Logs (pełne logi ze stosem błędów).
  */
+import * as z from 'zod/mini';
 import { LogKey } from '../constants/logKeys.ts';
-import { orderProblems, OrderStatus, type Order, type OrderStatusType } from '../domain/order.ts';
+import { orderProblems, OrderStatus, type Order } from '../domain/order.ts';
 import { AppError, NotFoundError } from '../errors/AppError.ts';
 import { json } from '../utils/http.ts';
 import { isUuid } from '../utils/ports.ts';
 import type { Handler, HandlerContext } from './types.ts';
 
 const iso = (ms: number | null) => (ms ? new Date(ms).toISOString() : null);
-const STATUSES = Object.values(OrderStatus) as string[];
+
+/** ?status=paid&limit=20 - status bez względu na wielkość liter; zły limit → domyślny, zły status → 400. */
+const limit = z.pipe(z.pipe(z.string().check(z.regex(/^\d+$/)), z.transform((v: string) => Number(v))), z.int().check(z.gte(1), z.lte(100)));
+const listQuery = z.object({
+  status: z.optional(z.pipe(z.string().check(z.toUpperCase()), z.enum(Object.values(OrderStatus)))),
+  limit: z.catch(limit, 20),
+});
 
 async function findOrder({ params, services: s }: HandlerContext): Promise<Order> {
   const key = params.key ?? '';
@@ -25,10 +32,9 @@ async function findOrder({ params, services: s }: HandlerContext): Promise<Order
 }
 
 export const AdminListOrdersHandler: Handler = async ({ url, services: s }) => {
-  const status = url.searchParams.get('status')?.toUpperCase();
-  if (status && !STATUSES.includes(status)) throw new AppError('Unknown status', { statusCode: 400, code: 'invalid' });
-  const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 20, 1), 100);
-  const orders = await s.storage.listRecent(limit, status as OrderStatusType | undefined);
+  const query = z.safeParse(listQuery, Object.fromEntries(url.searchParams));
+  if (!query.success) throw new AppError('Unknown status', { statusCode: 400, code: 'invalid' });
+  const orders = await s.storage.listRecent(query.data.limit, query.data.status);
   return json(
     orders.map((o) => ({
       number: o.number,

@@ -50,4 +50,3 @@ export interface RateLimiter {
   limit(options: { key: string }): Promise<{ success: boolean }>;
 }
 
-export const flag = (v: string | undefined) => v === '1' || v === 'true';

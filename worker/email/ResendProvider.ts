@@ -1,7 +1,9 @@
 /** Resend (https://resend.com/docs/api-reference/emails/send-email) - nadawca musi być w zweryfikowanej domenie. */
-import { ProviderError } from '../errors/AppError.ts';
-import { callProvider, defaultFetch } from '../utils/providerHttp.ts';
+import * as z from 'zod/mini';
+import { callProvider, defaultFetch, expectResponse } from '../utils/providerHttp.ts';
 import type { EmailMessage, EmailProvider } from './EmailProvider.ts';
+
+const sendResponse = z.object({ id: z.string().check(z.minLength(1)) });
 
 export class ResendProvider implements EmailProvider {
   readonly name = 'resend';
@@ -14,7 +16,7 @@ export class ResendProvider implements EmailProvider {
   }
 
   async send(m: EmailMessage): Promise<{ messageId: string }> {
-    const { ok, status, json } = await callProvider<{ id?: string; message?: string; name?: string }>(
+    const res = await callProvider(
       this.name,
       'https://api.resend.com/emails',
       {
@@ -24,7 +26,6 @@ export class ResendProvider implements EmailProvider {
       },
       this.fetchFn,
     );
-    if (!ok || !json.id) throw new ProviderError(this.name, `HTTP ${status} ${json.name ?? ''} ${json.message ?? ''}`.trim(), { response: json });
-    return { messageId: json.id };
+    return { messageId: expectResponse(this.name, 'send', res, sendResponse).id };
   }
 }
