@@ -80,7 +80,7 @@ function logPrerequisitesOnce(s: Services): void {
 }
 
 export default {
-  async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const route = ROUTES.find((r) => r.method === request.method && r.pattern.test(url.pathname));
     // Ścieżka spoza API (np. HEAD /katalog.json) - zwykły plik statyczny.
@@ -97,7 +97,8 @@ export default {
       const services = createServices(env, logger, url.origin);
       logPrerequisitesOnce(services);
       await guard(route, request, env, services);
-      response = await route.handler({ request, url, env, services, params: { ...url.pathname.match(route.pattern)!.groups } });
+      const defer = (task: Promise<unknown>) => ctx.waitUntil(task);
+      response = await route.handler({ request, url, env, services, defer, params: { ...url.pathname.match(route.pattern)!.groups } });
     } catch (error) {
       response = errorResponse(error, logger);
     }

@@ -4,12 +4,12 @@
  */
 import { LogKey } from '../constants/logKeys.ts';
 import { OrderEvent, WebhookOutcome, type WebhookOutcomeType } from '../domain/events.ts';
-import { isPaidLate, OrderStatus, reservationCutoff, type Order } from '../domain/order.ts';
+import { isAwaitingPayment, isPaidLate, OrderStatus, reservationCutoff, type Order } from '../domain/order.ts';
 import { AppError } from '../errors/AppError.ts';
 import type { PaymentNotification, PaymentProvider } from '../payments/PaymentProvider.ts';
 import type { OrderStorage } from '../storage/OrderStorage.ts';
 import type { LoggerPort } from '../utils/logger.ts';
-import { isUuid, type ClockPort } from '../utils/ports.ts';
+import { isUuid, type ClockPort, type Defer } from '../utils/ports.ts';
 import type { FulfillmentService } from './FulfillmentService.ts';
 import type { OrderJournal } from './OrderJournal.ts';
 
@@ -33,6 +33,15 @@ export interface NotificationResult {
   outcome: WebhookOutcomeType;
   /** Błąd do zwrócenia dostawcy (≠ 200 → P24 ponowi powiadomienie). */
   error?: unknown;
+}
+
+export type CheckSource = 'cron' | 'return_page' | 'admin';
+
+export interface ConfirmOptions {
+  /** false, gdy dostawca już potwierdził wpłatę (stan „paid” odczytany z jego API). */
+  verify?: boolean;
+  /** Realizacja (przesyłka, e-maile) w tle - gdy klient czeka na odpowiedź. Domyślnie od razu. */
+  defer?: Defer;
 }
 
 export class PaymentService {
@@ -108,12 +117,11 @@ export class PaymentService {
 
   /**
    * Potwierdza wpłatę u dostawcy i oznacza zamówienie jako opłacone; przy pierwszym opłaceniu - realizacja.
-   * @param verify false, gdy dostawca już ją potwierdził (stan „paid” odczytany przez cron)
    * @returns true przy pierwszym opłaceniu, false przy powtórzeniu
    * @throws przy niezgodnej kwocie lub nieudanej weryfikacji - P24 albo cron spróbują ponownie
    */
-  async confirmPaid(order: Order, n: PaymentNotification, verify = true): Promise<boolean> {
-    const { journal, payments, storage, clock, fulfillment } = this.d;
+  async confirmPaid(order: Order, n: PaymentNotification, { verify = true, defer }: ConfirmOptions = {}): Promise<boolean> {
+    const { journal, payments, storage, clock } = this.d;
     const meta = { [LogKey.PAYMENT_REFERENCE]: n.reference, [LogKey.AMOUNT]: n.amount, [LogKey.PROVIDER]: payments.name };
 
     if (n.amount !== order.total || n.currency !== 'PLN') {
@@ -130,8 +138,20 @@ export class PaymentService {
     if (late) await journal.warn(order, OrderEvent.PAID_AFTER_EXPIRY, { previousStatus: order.status, createdAt: order.createdAt });
 
     const paid = await storage.getById(order.id);
-    if (paid) await fulfillment.fulfill(paid, { paidLate: late });
+    if (!paid) return true;
+    const fulfill = this.fulfillSafely(paid, late);
+    if (defer) defer(fulfill);
+    else await fulfill;
     return true;
+  }
+
+  /** Błąd realizacji nie cofa opłacenia - zostaje w logach, a cron ponowi brakujące kroki. */
+  private async fulfillSafely(order: Order, paidLate: boolean): Promise<void> {
+    try {
+      await this.d.fulfillment.fulfill(order, { paidLate });
+    } catch (error) {
+      this.d.logger.error({ message: 'Fulfillment failed after payment', metadata: { [LogKey.ORDER_ID]: order.id, [LogKey.ORDER_NUMBER]: order.number }, error });
+    }
   }
 
   private async verify(order: Order, n: PaymentNotification, meta: Record<string, unknown>): Promise<void> {
@@ -149,15 +169,35 @@ export class PaymentService {
    * Źródła: cron (zgubione powiadomienie), strona podziękowania (powiadomienie jeszcze w drodze - albo nie dotrze,
    * np. lokalnie, gdy P24 nie widzi localhost), panel admina („klient pisze, że zapłacił”).
    */
-  async checkWithProvider(order: Order, source: 'cron' | 'return_page' | 'admin'): Promise<{ result: 'paid' | 'unpaid' | 'unchanged'; providerStatus: unknown }> {
+  async checkWithProvider(order: Order, source: CheckSource, defer?: Defer): Promise<{ result: 'paid' | 'unpaid' | 'unchanged'; providerStatus: unknown }> {
     const state = await this.d.payments.status(order.id);
     if (state.state === 'unpaid') return { result: 'unpaid', providerStatus: state.providerStatus };
-    // Dla crona to anomalia (powiadomienie zginęło), dla strony powrotu - zwykły wyścig z powiadomieniem.
-    const level = source === 'cron' ? 'warn' : 'info';
-    await this.d.journal[level](order, OrderEvent.PAYMENT_RECOVERED, { source, [LogKey.PAYMENT_REFERENCE]: state.reference, [LogKey.PROVIDER_STATUS]: state.providerStatus });
+    const data = { source, [LogKey.PAYMENT_REFERENCE]: state.reference, [LogKey.PROVIDER_STATUS]: state.providerStatus };
+    // Dla crona to anomalia (powiadomienie zginęło), przy sprawdzeniu na żądanie - zwykły wyścig z powiadomieniem.
+    if (source === 'cron') await this.d.journal.warn(order, OrderEvent.PAYMENT_RECOVERED, data);
+    else await this.d.journal.info(order, OrderEvent.PAYMENT_CONFIRMED_BY_CHECK, data);
     const notification = { sessionId: order.id, reference: state.reference, amount: state.amount, currency: 'PLN' };
-    const first = await this.confirmPaid(order, notification, state.state === 'paid_unverified');
+    const first = await this.confirmPaid(order, notification, { verify: state.state === 'paid_unverified', defer });
     return { result: first ? 'paid' : 'unchanged', providerStatus: state.providerStatus };
+  }
+
+  /**
+   * Strona podziękowania: zamówienie czekające na płatność sprawdzamy od razu u dostawcy - klient wraca z P24 zwykle
+   * szybciej niż powiadomienie, a gdy ono nie dotrze (awaria, lokalnie localhost), i tak zobaczy „opłacone”.
+   * Realizacja idzie w tle (`defer`), żeby klient nie czekał na ShipX i e-maile.
+   * Niedostępny dostawca nie psuje strony - zostaje stan z bazy, a powiadomienie / cron dokończą sprawę.
+   * @returns aktualne zamówienie
+   */
+  async refreshForReturnPage(order: Order, defer: Defer): Promise<Order> {
+    if (!isAwaitingPayment(order) || !order.paymentPendingAt) return order;
+    try {
+      const { result } = await this.checkWithProvider(order, 'return_page', defer);
+      if (result === 'unpaid') return order;
+      return (await this.d.storage.getById(order.id)) ?? order;
+    } catch (error) {
+      this.d.logger.warn({ message: 'Payment check on return page failed', metadata: { [LogKey.ORDER_ID]: order.id, [LogKey.ORDER_NUMBER]: order.number }, error });
+      return order;
+    }
   }
 
   /** Cron: opłacone u dostawcy → opłacamy; nieopłacone po czasie rezerwacji → EXPIRED. */

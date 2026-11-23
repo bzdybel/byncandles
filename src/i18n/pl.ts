@@ -345,6 +345,7 @@ export const orderResult = {
   pendingTitle: 'Czekam na potwierdzenie płatności',
   pendingLead:
     'Zamówienie {number} jest zapisane, ale Przelewy24 jeszcze nie potwierdziły wpłaty. Jeśli zapłaciłaś/eś, potwierdzenie przyjdzie e-mailem w ciągu kilku minut.',
+  stillChecking: 'Sprawdzam status płatności - jeśli się udała, potwierdzenie pojawi się tutaj za chwilę…',
   pendingRetry: 'Płatność została przerwana albo odrzucona? Produkty wciąż są w koszyku - możesz spróbować ponownie.',
   expiredTitle: 'Płatność nie doszła do skutku',
   expiredLead: 'Zamówienie {number} nie zostało opłacone. Produkty wciąż są w koszyku - możesz spróbować ponownie.',

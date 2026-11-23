@@ -164,7 +164,9 @@ dorobione sztuki się **dodaje**, sprzedaż online odejmuje się sama.
 | zgadywanie hasła admina | limit 10/min, porównanie w stałym czasie, ostrzeżenie przy haśle < 12 znaków |
 
 **Strona powrotu z P24** sama pyta P24 o stan transakcji (powiadomienie bywa sekundy za klientem albo nie dociera -
-np. lokalnie, bo P24 nie widzi `localhost`), więc klient od razu widzi „opłacone”.
+np. lokalnie, bo P24 nie widzi `localhost`), więc klient od razu widzi „opłacone”; przesyłka i e-maile idą wtedy w tle
+(`waitUntil`). W dzienniku: `payment_confirmed_by_check` (zwykły wyścig) vs `payment_recovered` (cron - powiadomienie zginęło).
+P24 przy powrocie nie mówi, czy płatność odrzucono - nieopłacone zamówienie od razu pokazuje przycisk ponowienia.
 
 **Cron (co 10 min):** pyta P24 o zamówienia bez powiadomienia (zgubiony webhook → opłaca), wygasza nieopłacone (`EXPIRED`),
 ponawia brakującą przesyłkę / e-maile.
@@ -184,7 +186,7 @@ ponawia brakującą przesyłkę / e-maile.
    pierwsze 8 znaków `correlationId` (filtr „contains”). Każda odpowiedź API ma nagłówek `correlation-id`.
 3. **Powiadomienia P24** - tabela `webhook_events`: każde, także odrzucone (zły podpis) i powtórzone, z surową treścią.
 
-Typy zdarzeń: `worker/constants/orderStatus.ts` (`OrderEvent`), klucze metadanych w logach: `worker/constants/logKeys.ts`.
+Typy zdarzeń: `worker/domain/events.ts` (`OrderEvent`), klucze metadanych w logach: `worker/constants/logKeys.ts`.
 
 ### Uruchomienie produkcyjne (jednorazowo)
 
