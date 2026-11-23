@@ -57,7 +57,13 @@ export default config({
           step: 0.01,
           validation: { min: 0 },
         }),
-        stan: fields.integer({ label: 'Stan magazynowy (szt.)', defaultValue: 0, validation: { min: 0 } }),
+        stan: fields.integer({
+          label: 'Stan magazynowy (szt.)',
+          description:
+            'Ile sztuk łącznie wystawiasz do sprzedaży. Sprzedaż w sklepie odejmuje się automatycznie - nie zmniejszaj tej liczby po zamówieniu. Gdy dorobisz nowe sztuki, DODAJ je do tej liczby (np. było 5, dorobiłaś 3 → wpisz 8). Sprzedałaś poza sklepem (np. na Instagramie)? Wtedy odejmij.',
+          defaultValue: 0,
+          validation: { min: 0 },
+        }),
         krotkiOpis: fields.text({
           label: 'Krótki opis',
           description: 'Do 160 znaków - wyświetlany w Google i na liście produktów.',

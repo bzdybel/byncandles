@@ -306,6 +306,9 @@ export const checkout = {
   submitting: 'Przekierowuję do płatności…',
   payments: 'Płatność kartą, BLIK lub przelewem przez Przelewy24.',
   submitError: 'Nie udało się utworzyć zamówienia. Spróbuj ponownie za chwilę albo napisz do mnie na Instagramie.',
+  /** Dopisywany do komunikatu błędu - po tym kodzie znajdę żądanie w logach. */
+  errorRef: 'Kod błędu: {ref}',
+  stockError: 'Ktoś właśnie kupił ostatnie sztuki części produktów - zaktualizowałam koszyk. Sprawdź podsumowanie i spróbuj ponownie.',
   summary: 'Podsumowanie',
   due: 'Do zapłaty',
   lockerShipping: 'Paczkomat InPost',
@@ -325,6 +328,50 @@ export const checkout = {
     gift: 'Pakowanie na prezent: tak',
     notes: 'Uwagi: {notes}',
   },
+} as const;
+
+/** Strona po powrocie z płatności (/zamowienie/dziekuje/). */
+export const orderResult = {
+  metaTitle: 'Zamówienie',
+  checking: 'Sprawdzam płatność…',
+  paidTitle: 'Dziękuję za zamówienie!',
+  paidLead: 'Płatność przyjęta. Potwierdzenie z numerem {number} wysłałam na Twój e-mail.',
+  paidNext: 'Gdy paczka zostanie nadana, InPost wyśle Ci SMS i e-mail z linkiem do śledzenia.',
+  pendingTitle: 'Czekam na potwierdzenie płatności',
+  pendingLead:
+    'Zamówienie {number} jest zapisane, ale Przelewy24 jeszcze nie potwierdziły wpłaty. Jeśli zapłaciłaś/eś, potwierdzenie przyjdzie e-mailem w ciągu kilku minut.',
+  expiredTitle: 'Płatność nie doszła do skutku',
+  expiredLead: 'Zamówienie {number} nie zostało opłacone. Produkty wciąż są w koszyku - możesz spróbować ponownie.',
+  notFoundTitle: 'Nie znalazłam zamówienia',
+  notFoundLead: 'Jeśli płatność się udała, potwierdzenie przyjdzie e-mailem. W razie wątpliwości napisz do mnie.',
+  retry: 'Wróć do zamówienia',
+  backToShop: 'Wróć do sklepu',
+} as const;
+
+/** E-maile wysyłane przez API zamówień (worker/email/templates.ts). Zwykły tekst - czytelny w każdym programie pocztowym. */
+export const emails = {
+  customerSubject: 'Dziękuję za zamówienie {number} - by N. candles',
+  customerGreeting: 'Cześć {name},',
+  customerIntro: 'dziękuję za zamówienie! Płatność została przyjęta - zabieram się za pakowanie.',
+  customerShipping: 'Gdy paczka zostanie nadana, InPost wyśle Ci SMS i e-mail z linkiem do śledzenia.',
+  customerQuestions: 'Masz pytanie? Po prostu odpowiedz na tę wiadomość.',
+  customerSignature: 'Natalia\nby N. candles',
+  number: 'Numer zamówienia: {number}',
+  line: '• {name} × {qty} - {price}',
+  discount: 'Promocja 2+1: −{price}',
+  shipping: 'Dostawa - Paczkomat InPost {locker}: {price}',
+  total: 'Razem zapłacono: {price}',
+  gift: 'Pakowanie na prezent: tak',
+  notes: 'Uwagi: {notes}',
+  legal: 'Regulamin sklepu: {url}',
+
+  shopSubject: 'Nowe zamówienie {number} - {total}',
+  shopCustomer: 'Klient: {name} · {email} · {phone}',
+  shopShipmentOk: 'Przesyłka założona w Managerze Paczek (ID {id}) - wydrukuj etykietę.',
+  shopShipmentFailed: 'UWAGA: przesyłki nie udało się założyć automatycznie ({error}). Załóż ją ręcznie w Managerze Paczek.',
+  shopShipmentDisabled: 'Automatyczne przesyłki są wyłączone - załóż przesyłkę w Managerze Paczek.',
+  shopLate: 'UWAGA: płatność przyszła po czasie rezerwacji - sprawdź, czy wszystkie sztuki są na stanie.',
+  shopDetails: 'Szczegóły i historia zamówienia: {url}',
 } as const;
 
 /** Teksty alternatywne zdjęć (dostępność + SEO grafiki). */

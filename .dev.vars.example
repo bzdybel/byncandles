@@ -1,0 +1,22 @@
+# Lokalny Worker (`npm run worker:dev`): skopiuj do .dev.vars (plik jest w .gitignore).
+# Domyślnie wszystko „na niby” - pełny przepływ zamówienia bez kont u dostawców:
+# formularz → rezerwacja w lokalnej D1 → symulowana płatność → przesyłka i e-maile w logach.
+MOCK_PAYMENTS=1
+MOCK_INPOST=1
+MOCK_EMAIL=1
+ADMIN_PASSWORD=lokalne-haslo
+SHOP_EMAIL=sklep@example.com
+
+# Sandbox Przelewy24 (usuń MOCK_PAYMENTS): https://panel.przelewy24.pl → konto testowe
+# SANDBOX=1
+# P24_MERCHANT_ID=
+# P24_API_KEY=
+# P24_CRC=
+
+# Sandbox ShipX (usuń MOCK_INPOST): https://sandbox-manager.paczkomaty.pl
+# SHIPX_TOKEN=
+# SHIPX_ORG_ID=
+
+# Resend (usuń MOCK_EMAIL)
+# RESEND_API_KEY=
+# MAIL_FROM=by N. candles <zamowienia@twoja-domena.pl>

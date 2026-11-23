@@ -27,4 +27,5 @@ export const NOINDEX_PATHS: readonly string[] = [
   '/regulamin/',
   '/polityka-prywatnosci/',
   '/zamowienie/',
+  '/zamowienie/dziekuje/',
 ];
